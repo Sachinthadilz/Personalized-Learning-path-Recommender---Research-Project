@@ -1,12 +1,14 @@
 // src/App.tsx
-import React, { useState } from "react";
-import { trainingData } from "./data/trainingData";
+import React, { useState, useEffect } from "react";
 import type {
   View,
   SubjectPerformance,
   QuizResult,
   StudyResource,
+  TrainingRecord,
 } from "./types";
+
+import { getTrainingData } from "./data/trainingData";
 
 import { StudentLogin } from "./components/StudentLogin";
 import { WeeklySubjectForm } from "./components/WeeklySubjectForm";
@@ -55,6 +57,24 @@ export const App: React.FC = () => {
   // subjects typed in first screen
   const [weeklySubjectNames, setWeeklySubjectNames] = useState<string[]>([]);
 
+  // 🔹 CSV training data (from final_training_dataset_mapped.csv)
+  const [trainingData, setTrainingData] = useState<TrainingRecord[]>([]);
+  const [isTrainingDataLoading, setIsTrainingDataLoading] = useState(true);
+
+  // load CSV once on app start
+  useEffect(() => {
+    getTrainingData()
+      .then((data) => {
+        setTrainingData(data);
+      })
+      .catch((err) => {
+        console.error("Error loading training data:", err);
+      })
+      .finally(() => {
+        setIsTrainingDataLoading(false);
+      });
+  }, []);
+
   const selectedSubject =
     subjects.find((s) => s.id === selectedSubjectId) || null;
 
@@ -91,6 +111,11 @@ export const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    // optional: show loading while CSV is still loading
+    if (isTrainingDataLoading) {
+      return <div>Loading training data...</div>;
+    }
+
     switch (view) {
       case "login":
         return (
@@ -151,25 +176,24 @@ export const App: React.FC = () => {
         );
 
       case "feedback":
-  return (
-    <FeedbackBand
-      result={quizResult}
-      onRetry={() => setView("package")}          // rescue = go back to package
-      onExploreNext={handleExploreNextSubject}
-      onGoDashboard={handleGoToDashboard}
-    />
-  );
-
+        return (
+          <FeedbackBand
+            result={quizResult}
+            onRetry={() => setView("package")} // go back to package
+            onExploreNext={handleExploreNextSubject}
+            onGoDashboard={handleGoToDashboard}
+          />
+        );
 
       case "dashboard":
-  return (
-    <ProgressDashboard
-      subjects={subjects}
-      lastQuizResult={quizResult}
-      trainingData={trainingData}   // <-- ADD THIS
-      onBack={() => setView("diagnosis")}
-    />
-  );
+        return (
+          <ProgressDashboard
+            subjects={subjects}
+            lastQuizResult={quizResult}
+            trainingData={trainingData}
+            onBack={() => setView("diagnosis")}
+          />
+        );
 
       default:
         return null;
