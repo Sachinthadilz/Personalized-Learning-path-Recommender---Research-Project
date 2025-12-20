@@ -41,12 +41,15 @@ export const WeeklySubjectForm: React.FC<Props> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Research input: weekly learner self-ratings (combined with historical CSV performance analytics)
     const data: SubjectPerformance[] = rows.map((row, index) => ({
       id: `week-${index}`,
       name: row.name,
       difficulty: row.difficulty,
       confidence: row.confidence,
     }));
+
     onSubmit(data);
   };
 
@@ -59,9 +62,16 @@ export const WeeklySubjectForm: React.FC<Props> = ({
         <h2 className="text-xl font-semibold text-slate-800">
           Subject Info Form (This Week)
         </h2>
+
         <p className="text-sm text-slate-600">
           Select the subjects you are focusing on this week and rate your
           difficulty and confidence.
+        </p>
+
+        {/* ✅ Research visibility line (UI-level) */}
+        <p className="text-xs text-slate-500">
+          These ratings are combined with historical quiz performance data (CSV)
+          to identify weak subjects and generate personalized support.
         </p>
 
         <div className="space-y-4">

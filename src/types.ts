@@ -2,10 +2,10 @@
 
 export type View =
   | "login"
-  | "subjectInfo"
   | "subjectForm"
   | "diagnosis"
   | "package"
+  | "weeklyPackage" 
   | "quiz"
   | "feedback"
   | "dashboard";
@@ -15,24 +15,19 @@ export interface SubjectPerformance {
   name: string;
   difficulty: number;
   confidence: number;
-  comments?: string;
   isWeak?: boolean;
 }
 
-// ✨ NEW: separate type for quiz band
-export type QuizBand = "A" | "B" | "C" | "FAIL";
-
 export interface QuizResult {
   subjectId: string;
-  subjectName: string;
   score: number;
-  passMark: number;
-  band: QuizBand;   // use QuizBand type
+  total: number;
+  band: "A" | "B" | "C" | "D";
 }
 
 export interface StudyResource {
   id: string;
-  type: "mindmap" | "notes" | "timetable" | "game";
+  type: "mindmap" | "timetable" | "notes" | "game";
   title: string;
   description: string;
 }
@@ -44,5 +39,5 @@ export interface TrainingRecord {
   confidence: number;
   quizScore: number;
   passMark: number;
-  band: "Critical Zone" | "Improvement Zone" | "Good Zone" | "Mastered Zone";
+  band: string;
 }
