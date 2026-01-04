@@ -10,10 +10,12 @@ from config import settings
 from models import (
     Course, CourseDetail, SearchQuery, RecommendationRequest,
     LearningPathRequest, Skill, University, StatsResponse,
-    AISearchQuery, AISearchResult
+    AISearchQuery, AISearchResult, LearningPathResponse
 )
 from services import CourseService, RecommendationService, StatsService
 from services.ai_search_service import AISearchService
+from services.learning_path_service import LearningPathService
+from services.cross_domain_service import CrossDomainService
 
 # Create FastAPI app
 app = FastAPI(
@@ -207,18 +209,48 @@ def get_all_universities(
 
 # ============= AI SEARCH ENDPOINTS =============
 
-@app.post("/ai-search", response_model=List[AISearchResult])
+@app.post("/ai-search", response_model=LearningPathResponse)
 def ai_semantic_search(search_query: AISearchQuery):
     """
-    AI-powered semantic search using vector embeddings
-    Search courses by natural language description
+    AI-powered semantic search with structured learning path
+    
+    Returns courses organized by difficulty (Beginner → Intermediate → Advanced)
+    plus cross-domain recommendations for broader learning opportunities.
     """
     try:
+        # Step 1: Get semantic search results
         results = AISearchService.semantic_search(
             query=search_query.query,
             limit=search_query.limit
         )
-        return results
+        
+        # Step 2: Build structured learning path
+        learning_path = LearningPathService.build_learning_path(results)
+        
+        # Step 3: Get top courses from learning path for cross-domain analysis
+        # Use top 5 courses (mix of beginner + intermediate)
+        core_courses = (
+            learning_path['beginner'][:3] + 
+            learning_path['intermediate'][:2]
+        )
+        
+        # Step 4: Find cross-domain courses
+        cross_domain = CrossDomainService.get_cross_domain_courses(
+            core_courses=core_courses,
+            all_search_results=results,
+            limit=3
+        )
+        
+        # Step 5: Get summary statistics
+        summary = LearningPathService.get_learning_path_summary(learning_path)
+        summary['cross_domain_count'] = len(cross_domain)
+        
+        return LearningPathResponse(
+            learning_path=learning_path,
+            cross_domain_courses=cross_domain,
+            summary=summary
+        )
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

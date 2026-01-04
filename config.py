@@ -28,7 +28,7 @@ class Settings:
     
     # Data Configuration
     DATA_PATH: str = "data/Coursera.csv"
-    DATA_LIMIT: int = int(os.getenv("DATA_LIMIT", "0"))  # 0 = load all rows
+    DATA_LIMIT: int = int(os.getenv("DATA_LIMIT", "0").split("#")[0].strip())  # 0 = load all rows
     
     # Recommendation Settings
     MAX_RECOMMENDATIONS: int = 10

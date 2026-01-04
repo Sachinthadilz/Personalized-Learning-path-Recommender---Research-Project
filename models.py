@@ -2,7 +2,7 @@
 Pydantic models for API request/response schemas
 """
 from pydantic import BaseModel, Field, HttpUrl, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from enum import Enum
 
 
@@ -107,6 +107,35 @@ class AISearchQuery(BaseModel):
 class AISearchResult(Course):
     """AI search result with similarity score"""
     similarity_score: float = Field(..., description="Cosine similarity score (0-1)")
+
+
+class CrossDomainCourse(BaseModel):
+    """Cross-domain course recommendation"""
+    course: str = Field(..., description="Course name")
+    id: str = Field(..., description="Course ID")
+    url: HttpUrl = Field(..., description="Course URL")
+    domain: str = Field(..., description="Inferred domain")
+    rating: float = Field(..., description="Course rating")
+    difficulty: str = Field(..., description="Difficulty level")
+    similarity_score: float = Field(..., description="Semantic similarity (0-1)")
+    skill_overlap: float = Field(..., description="Skill overlap ratio (0-1)")
+    reason: str = Field(..., description="Explanation for cross-domain relevance")
+
+
+class LearningPathResponse(BaseModel):
+    """Structured learning path with cross-domain recommendations"""
+    learning_path: Dict[str, List[AISearchResult]] = Field(
+        ..., 
+        description="Courses organized by difficulty: beginner, intermediate, advanced"
+    )
+    cross_domain_courses: List[CrossDomainCourse] = Field(
+        default=[],
+        description="Cross-domain courses that complement the learning path"
+    )
+    summary: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Summary statistics about the learning path"
+    )
 
 
 class StatsResponse(BaseModel):

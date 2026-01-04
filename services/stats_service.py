@@ -91,6 +91,11 @@ class StatsService:
             result = neo4j_conn.execute_query(query)
             stats[key] = result[0]['count'] if result else 0
         
+        # Average rating
+        avg_rating_query = "MATCH (c:Course) RETURN AVG(c.rating) as avg_rating"
+        avg_result = neo4j_conn.execute_query(avg_rating_query)
+        stats['avg_rating'] = round(avg_result[0]['avg_rating'], 2) if avg_result and avg_result[0]['avg_rating'] else 0.0
+        
         # Top 10 skills
         top_skills_query = """
         MATCH (s:Skill)<-[:TEACHES]-(c:Course)
@@ -99,7 +104,11 @@ class StatsService:
         ORDER BY course_count DESC
         LIMIT 10
         """
-        stats['top_skills'] = neo4j_conn.execute_query(top_skills_query)
+        skill_results = neo4j_conn.execute_query(top_skills_query)
+        stats['top_skills'] = [
+            {'name': r['skill'], 'course_count': r['course_count']}
+            for r in skill_results
+        ]
         
         # Top 10 universities
         top_unis_query = """
@@ -110,6 +119,10 @@ class StatsService:
         ORDER BY course_count DESC
         LIMIT 10
         """
-        stats['top_universities'] = neo4j_conn.execute_query(top_unis_query)
+        uni_results = neo4j_conn.execute_query(top_unis_query)
+        stats['top_universities'] = [
+            {'name': r['university'], 'course_count': r['course_count']}
+            for r in uni_results
+        ]
         
         return stats
