@@ -27,7 +27,7 @@ class Settings:
     API_RELOAD: bool = os.getenv("API_RELOAD", "True").lower() == "true"
     
     # Data Configuration
-    DATA_PATH: str = "data/Coursera.csv"
+    DATA_PATH: str = "data/processed/coursera_cleaned.csv"
     DATA_LIMIT: int = int(os.getenv("DATA_LIMIT", "0").split("#")[0].strip())  # 0 = load all rows
     
     # Recommendation Settings

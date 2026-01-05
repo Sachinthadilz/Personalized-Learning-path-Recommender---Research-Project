@@ -31,12 +31,16 @@ class CourseDataLoader:
             self.df = pd.read_csv(self.csv_path)
             logger.info(f"Loaded {len(self.df)} courses (all rows)")
         
-        # Clean data
-        self.df['Course Rating'] = pd.to_numeric(self.df['Course Rating'], errors='coerce')
+        # Clean data - handle both old and new column names
+        rating_col = 'rating' if 'rating' in self.df.columns else 'Course Rating'
+        desc_col = 'description' if 'description' in self.df.columns else 'Course Description'
+        skills_col = 'skills' if 'skills' in self.df.columns else 'Skills'
+        
+        self.df[rating_col] = pd.to_numeric(self.df[rating_col], errors='coerce')
         self.df = self.df.fillna({
-            'Course Rating': 0.0,
-            'Course Description': '',
-            'Skills': ''
+            rating_col: 0.0,
+            desc_col: '',
+            skills_col: ''
         })
         
         return self.df
@@ -63,15 +67,20 @@ class CourseDataLoader:
         
         logger.info("Starting course import...")
         
+        # Detect column names (handle both old and new formats)
+        name_col = 'course_name' if 'course_name' in self.df.columns else 'Course Name'
+        uni_col = 'university' if 'university' in self.df.columns else 'University'
+        skills_col = 'skills' if 'skills' in self.df.columns else 'Skills'
+        
         for idx, row in self.df.iterrows():
             try:
                 course_id = self.generate_course_id(
-                    row['Course Name'], 
-                    row['University']
+                    row[name_col], 
+                    row[uni_col]
                 )
                 
                 # Log current course being processed
-                logger.info(f"[{idx + 1}/{len(self.df)}] Importing: {row['Course Name']}")
+                logger.info(f"[{idx + 1}/{len(self.df)}] Importing: {row[name_col]}")
                 
                 # Create course node
                 self._create_course_node(row, course_id)
@@ -83,7 +92,7 @@ class CourseDataLoader:
                 self._create_difficulty_relationship(row, course_id)
                 
                 # Create skills and relationships
-                skills = self.parse_skills(row['Skills'])
+                skills = self.parse_skills(row[skills_col])
                 self._create_skill_relationships(course_id, skills)
                     
             except Exception as e:
@@ -94,6 +103,12 @@ class CourseDataLoader:
     
     def _create_course_node(self, row: pd.Series, course_id: str):
         """Create a course node in Neo4j"""
+        # Detect column names
+        name_col = 'course_name' if 'course_name' in row.index else 'Course Name'
+        url_col = 'url' if 'url' in row.index else 'Course URL'
+        desc_col = 'description' if 'description' in row.index else 'Course Description'
+        rating_col = 'rating' if 'rating' in row.index else 'Course Rating'
+        
         query = """
         MERGE (c:Course {id: $course_id})
         SET c.name = $name,
@@ -104,16 +119,18 @@ class CourseDataLoader:
         
         params = {
             'course_id': course_id,
-            'name': row['Course Name'],
-            'url': row['Course URL'],
-            'description': row['Course Description'],
-            'rating': float(row['Course Rating']) if pd.notna(row['Course Rating']) else 0.0
+            'name': row[name_col],
+            'url': row[url_col],
+            'description': row[desc_col],
+            'rating': float(row[rating_col]) if pd.notna(row[rating_col]) else 0.0
         }
         
         neo4j_conn.execute_write(query, params)
     
     def _create_university_relationship(self, row: pd.Series, course_id: str):
         """Create university node and relationship"""
+        uni_col = 'university' if 'university' in row.index else 'University'
+        
         query = """
         MATCH (c:Course {id: $course_id})
         MERGE (u:University {name: $university})
@@ -122,14 +139,15 @@ class CourseDataLoader:
         
         params = {
             'course_id': course_id,
-            'university': row['University']
+            'university': row[uni_col]
         }
         
         neo4j_conn.execute_write(query, params)
     
     def _create_difficulty_relationship(self, row: pd.Series, course_id: str):
         """Create difficulty level node and relationship"""
-        difficulty = row['Difficulty Level']
+        diff_col = 'difficulty' if 'difficulty' in row.index else 'Difficulty Level'
+        difficulty = row[diff_col]
         
         # Map difficulty to order
         difficulty_order = {

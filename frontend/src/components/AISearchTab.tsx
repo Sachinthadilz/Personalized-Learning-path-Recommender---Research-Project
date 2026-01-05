@@ -5,6 +5,7 @@ import {
   type AISearchResult,
   type CrossDomainCourse,
 } from "../api";
+import LearningPathGraphD3 from "./LearningPathGraphD3";
 
 // Course Card Component
 function CourseCard({
@@ -179,6 +180,7 @@ export default function AISearchTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTime, setSearchTime] = useState<number>(0);
+  const [viewMode, setViewMode] = useState<"list" | "graph">("list");
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -306,7 +308,7 @@ export default function AISearchTab() {
             ✨ Found {results.summary.total_courses} relevant courses in{" "}
             {searchTime.toFixed(2)}s
           </p>
-          <div className="mt-2 flex gap-4 text-sm">
+          <div className="mt-2 flex gap-4 text-sm items-center">
             <span className="text-green-600">
               🟢 Beginner: {results.summary.beginner_count}
             </span>
@@ -321,12 +323,44 @@ export default function AISearchTab() {
                 🌐 Cross-Domain: {results.summary.cross_domain_count}
               </span>
             )}
+
+            {/* View Mode Toggle */}
+            <div className="ml-auto flex gap-2 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`px-4 py-1 rounded-md font-medium text-sm transition-all ${
+                  viewMode === "list"
+                    ? "bg-white text-indigo-600 shadow"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                📋 List View
+              </button>
+              <button
+                onClick={() => setViewMode("graph")}
+                className={`px-4 py-1 rounded-md font-medium text-sm transition-all ${
+                  viewMode === "graph"
+                    ? "bg-white text-indigo-600 shadow"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                🔗 Graph View
+              </button>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Graph View */}
+      {!loading && results && viewMode === "graph" && (
+        <LearningPathGraphD3
+          learningPath={results.learning_path}
+          crossDomainCourses={results.cross_domain_courses}
+        />
+      )}
+
       {/* Learning Path Results */}
-      {!loading && results && (
+      {!loading && results && viewMode === "list" && (
         <div className="space-y-6">
           {/* Beginner Courses */}
           {results.learning_path.beginner.length > 0 && (

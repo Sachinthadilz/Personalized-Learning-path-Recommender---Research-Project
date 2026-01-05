@@ -144,5 +144,6 @@ class StatsResponse(BaseModel):
     total_universities: int
     total_skills: int
     total_relationships: int
+    avg_rating: float
     top_skills: Optional[List[dict]] = []
     top_universities: Optional[List[dict]] = []
