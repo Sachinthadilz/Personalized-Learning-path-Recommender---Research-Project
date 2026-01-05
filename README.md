@@ -1,7 +1,7 @@
 # Personalized Learning Path Recommender - Research Project
 
 <p align="center">
-  <img src="images/images/A_clean_professional_2k_202601050032.jpeg" alt="Learning Path Recommender Banner" width="100%" />
+  <img src="images/A_clean_professional_2k_202601050032.jpeg" alt="Learning Path Recommender Banner" width="100%" />
 </p>
 
 The Personalized Learning Path Recommender is an applied research and system-development project that leverages Neo4j knowledge graphs and AI-driven recommendations to create personalized learning paths for university students, optimizing their course selection and academic progression.
@@ -229,47 +229,62 @@ Explore the data and test queries in `notebook.ipynb`:
 
 ```
 up-knowledge-graph/
-├── backend/               # Backend application
-│   ├── main.py           # FastAPI application entry point
-│   ├── config.py         # Configuration settings
-│   ├── database.py       # Neo4j connection manager
-│   ├── data_loader.py    # CSV to Neo4j import script
-│   ├── models.py         # Pydantic data models
-│   ├── embedding_service.py  # AI embeddings
-│   ├── vector_setup.py   # Vector database setup
-│   ├── services/         # Business logic layer
+├── backend/                  # Backend application
+│   ├── main.py              # FastAPI application entry point
+│   ├── config.py            # Configuration settings
+│   ├── database.py          # Neo4j connection manager
+│   ├── data_loader.py       # CSV to Neo4j import script
+│   ├── models.py            # Pydantic data models
+│   ├── embedding_service.py # AI embeddings service
+│   ├── vector_setup.py      # Vector database setup
+│   ├── services/            # Business logic layer
+│   │   ├── __init__.py
 │   │   ├── course_service.py
 │   │   ├── recommendation_service.py
 │   │   ├── learning_path_service.py
 │   │   ├── ai_search_service.py
 │   │   ├── cross_domain_service.py
 │   │   └── stats_service.py
-│   ├── data/             # Course datasets
+│   ├── data/                # Course datasets
 │   │   ├── Coursera.csv
 │   │   └── processed/
 │   │       └── coursera_cleaned.csv
-│   └── notebooks/        # Data analysis notebooks
-│       ├── 01_data_exploration.ipynb
-│       ├── 02_data_cleaning.ipynb
-│       ├── 03_skill_domain_validation.ipynb
-│       └── 04_cross_domain_examples.ipynb
-├── frontend/             # React frontend application
+│   └── __pycache__/         # Python cache files
+├── frontend/                # React frontend application
 │   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── api.ts        # API client
-│   │   └── App.tsx       # Main app component
-│   ├── package.json
-│   └── vite.config.ts
-├── images/               # Documentation images
-│   ├── project-overview.png
-│   └── system-architecture.png
-├── run_backend.py        # Backend launcher script
-├── run_data_loader.py    # Data import script
-├── requirements.txt      # Python dependencies
-├── pyproject.toml        # Python project config
-├── .env.example          # Environment variables template
-├── README.md             # This file
-└── SETUP.md              # Setup guide
+│   │   ├── components/      # React components
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── CoursesTab.tsx
+│   │   │   ├── SkillsTab.tsx
+│   │   │   ├── LearningPathTab.tsx
+│   │   │   ├── LearningPathGraph.tsx
+│   │   │   ├── RecommendationsTab.tsx
+│   │   │   └── UniversitiesTab.tsx
+│   │   ├── api.ts           # API client
+│   │   ├── App.tsx          # Main app component
+│   │   └── main.tsx         # Entry point
+│   ├── public/              # Static assets
+│   ├── package.json         # Node dependencies
+│   ├── vite.config.ts       # Vite configuration
+│   └── tailwind.config.js   # TailwindCSS config
+├── notebooks/               # Data analysis notebooks (root level)
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_data_cleaning.ipynb
+│   ├── 03_skill_domain_validation.ipynb
+│   └── 04_cross_domain_examples.ipynb
+├── images/                  # Documentation images
+│   └── images/
+│       ├── A_clean_professional_2k_202601050032.jpeg
+│       └── Overall System Diagram.drawio.png
+├── .venv/                   # Python virtual environment
+├── requirements.txt         # Python dependencies
+├── pyproject.toml           # Python project config (uv)
+├── uv.lock                  # Dependency lock file
+├── .env                     # Environment variables (not in git)
+├── .env.example             # Environment template
+├── .gitignore               # Git ignore rules
+├── README.md                # This file
+└── SETUP.md                 # Setup guide
 ```
 
 ## 🔍 Example Queries
