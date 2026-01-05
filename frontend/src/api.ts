@@ -1,11 +1,11 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL = "http://127.0.0.1:5000";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -26,7 +26,7 @@ export interface CourseDetail extends Course {
 
 export interface Skill {
   name: string;
-  count: number;
+  course_count: number;
 }
 
 export interface University {
@@ -48,9 +48,37 @@ export interface AISearchResult extends Course {
   similarity_score: number;
 }
 
+export interface CrossDomainCourse {
+  course: string;
+  id: string;
+  url: string;
+  domain: string;
+  rating: number;
+  difficulty: string;
+  similarity_score: number;
+  skill_overlap: number;
+  reason: string;
+}
+
+export interface LearningPathResponse {
+  learning_path: {
+    beginner: AISearchResult[];
+    intermediate: AISearchResult[];
+    advanced: AISearchResult[];
+  };
+  cross_domain_courses: CrossDomainCourse[];
+  summary: {
+    total_courses: number;
+    beginner_count: number;
+    intermediate_count: number;
+    advanced_count: number;
+    cross_domain_count: number;
+  };
+}
+
 // Course endpoints
 export const getCourses = async (skip = 0, limit = 20): Promise<Course[]> => {
-  const response = await api.get('/courses', { params: { skip, limit } });
+  const response = await api.get("/courses", { params: { skip, limit } });
   return response.data;
 };
 
@@ -68,7 +96,7 @@ export const searchCourses = async (
   minRating?: number,
   limit = 20
 ): Promise<Course[]> => {
-  const response = await api.post('/courses/search', {
+  const response = await api.post("/courses/search", {
     query,
     skills,
     difficulty,
@@ -108,7 +136,7 @@ export const getRecommendations = async (
   difficulty?: string,
   limit = 10
 ): Promise<Course[]> => {
-  const response = await api.post('/recommendations', {
+  const response = await api.post("/recommendations", {
     course_id: courseId,
     skills,
     difficulty,
@@ -118,7 +146,7 @@ export const getRecommendations = async (
 };
 
 export const getPopularCourses = async (limit = 10): Promise<Course[]> => {
-  const response = await api.get('/recommendations/popular', {
+  const response = await api.get("/recommendations/popular", {
     params: { limit },
   });
   return response.data;
@@ -129,7 +157,7 @@ export const getLearningPath = async (
   startCourseId?: string,
   maxCourses = 5
 ): Promise<Course[]> => {
-  const response = await api.post('/learning-path', {
+  const response = await api.post("/learning-path", {
     target_skill: targetSkill,
     start_course_id: startCourseId,
     max_courses: maxCourses,
@@ -139,7 +167,7 @@ export const getLearningPath = async (
 
 // Skill endpoints
 export const getAllSkills = async (limit = 100): Promise<Skill[]> => {
-  const response = await api.get('/skills', { params: { limit } });
+  const response = await api.get("/skills", { params: { limit } });
   return response.data;
 };
 
@@ -160,13 +188,13 @@ export const getRelatedSkills = async (
 export const getAllUniversities = async (
   limit = 100
 ): Promise<University[]> => {
-  const response = await api.get('/universities', { params: { limit } });
+  const response = await api.get("/universities", { params: { limit } });
   return response.data;
 };
 
 // Stats endpoints
 export const getStats = async (): Promise<Stats> => {
-  const response = await api.get('/stats');
+  const response = await api.get("/stats");
   return response.data;
 };
 
@@ -174,14 +202,14 @@ export const getStats = async (): Promise<Stats> => {
 export const aiSemanticSearch = async (
   query: string,
   limit = 10
-): Promise<AISearchResult[]> => {
-  const response = await api.post('/ai-search', { query, limit });
+): Promise<LearningPathResponse> => {
+  const response = await api.post("/ai-search", { query, limit });
   return response.data;
 };
 
 // Health check
 export const healthCheck = async (): Promise<{ status: string }> => {
-  const response = await api.get('/health');
+  const response = await api.get("/health");
   return response.data;
 };
 
