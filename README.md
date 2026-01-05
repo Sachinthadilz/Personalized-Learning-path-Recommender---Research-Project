@@ -1,94 +1,60 @@
-![Personalized Learning Path Recommender](images/project-overview.png)
+# Personalized Learning Path Recommender - Research Project
 
-# Personalized Learning Path Recommender for University Undergraduates 🎓
+<p align="center">
+  <img src="images/A_clean_professional_2k_202601050032.jpeg" alt="Learning Path Recommender Banner" width="100%" />
+</p>
 
-A research project leveraging Neo4j knowledge graphs and AI-driven recommendations to create personalized learning paths for university students, optimizing their course selection and academic progression.
+The Personalized Learning Path Recommender is an applied research and system-development project that leverages Neo4j knowledge graphs and AI-driven recommendations to create personalized learning paths for university students, optimizing their course selection and academic progression.
 
-## 👥 Research Team
+At its core, this system addresses a critical need in higher education: university undergraduates often struggle with course selection, understanding skill dependencies, and planning optimal learning progressions. The system provides a digital ecosystem that connects course discovery, skill mapping, personalized recommendations, and intelligent path planning into one cohesive platform.
 
-- **[Team Member 1 Name]** - [Role/ID]
-- **[Team Member 2 Name]** - [Role/ID]
-- **[Team Member 3 Name]** - [Role/ID]
-- **[Team Member 4 Name]** - [Role/ID]
+The project aims to become a pioneering AI-powered academic planning tool. By integrating knowledge graphs, machine learning algorithms, and cross-domain course analysis, it enhances student learning experiences and improves educational outcomes for university undergraduates.
 
-## 📋 Project Overview
+## 📃 Overall System Architecture
 
-This research project develops an intelligent system that generates personalized learning paths for university undergraduates by analyzing course relationships, skills, prerequisites, and student profiles. Using graph database technology and machine learning, the system provides:
+<p align="center">
+  <img src="images/Overall System Diagram.drawio.png" alt="Overall architecture diagram" />
+</p>
 
-- **AI-Driven Course Recommendations**: Intelligent suggestions based on student progress and learning objectives
-- **Personalized Learning Paths**: Customized course sequences from introductory to advanced topics
-- **Knowledge Graph Integration**: Graph-based representation of course relationships and skill dependencies
-- **Progress Tracking & Visualization**: Real-time monitoring of student advancement
-- **Adaptive Learning Support**: Dynamic adjustments based on student performance and preferences
+## 🧩 Core System Components
 
-![Project Overview](images/project-overview.png)
+| Component                                                  | Description                                                                                                                                                                                                      |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Course Knowledge Graph Generator**                       | • Extracts concepts and relationships from course data.<br>• Builds graph structure representing course dependencies and skill mappings.<br>• Integrates with massive open online course (MOOC) data sources.    |
+| **Course Prioritization & Timetable Generator (ML-based)** | • Understands selected courses and matches with university curriculum.<br>• Collects assigned credits and prioritizes by weight.<br>• Generates optimized timetables using machine learning algorithms.          |
+| **Learner Profile Classifier**                             | • Data preprocessing and embedding generation for student categorization.<br>• Classification model for personalized learner profiles.<br>• Tracks learning patterns and skill acquisition.                      |
+| **Progress Tracking & Adaptive Visualizer**                | • Identifies students requiring additional support.<br>• Generates personalized learning recommendations.<br>• Assessment module with interactive visualizations.<br>• Adaptive retraining based on performance. |
 
-### Research Objectives
+## Research Purpose
 
-- Develop an intelligent recommendation system for course selection
-- Create a knowledge graph representing course relationships and skill mappings
-- Generate optimized learning paths tailored to individual student needs
-- Implement progress tracking and adaptive learning mechanisms
-- Provide data-driven insights for academic planning
+This research aims to develop and evaluate an AI-driven knowledge graph ecosystem that supports university undergraduates by:
 
-## 🏗️ System Architecture
+- Enhancing course discovery through intelligent search and filtering
+- Reducing decision-making complexity using data-driven recommendations
+- Providing structured and adaptive learning path planning
+- Delivering personalized skill-based course suggestions to improve learning outcomes
 
-![System Architecture](images/Overall System Diagram.drawio.png)
+## Methodology
 
-The system comprises four main components:
+The project follows a rigorous, data-driven, and user-centered approach that includes:
 
-### 1. **Course Knowledge Graph Generator**
+- **Graph-based data modeling** combining course relationships, skills, and university metadata
+- **Machine learning algorithms** for course similarity, recommendation generation, and path optimization
+- **Neo4j knowledge graph** for efficient relationship traversal and pattern discovery
+- **RESTful API architecture** for scalable, secure, and modular service integration
 
-- Extracts concepts and relationships from course data
-- Builds graph structure representing course dependencies
-- Integrates with massive open online course (MOOC) data sources
+## 🔗 System Dependencies
 
-### 2. **Course Prioritization & Timetable Generator (ML-based)**
-
-- Understands selected courses and matches with university curriculum
-- Collects assigned credits and prioritizes by weight
-- Generates optimized timetables using machine learning algorithms
-
-### 3. **Learner Profile Classifier**
-
-- Data preprocessing and embedding generation
-- Classification model for student categorization
-- Outputs personalized learner profiles
-
-### 4. **Progress Tracking & Adaptive Visualizer**
-
-- Identifies weak students requiring additional support
-- Generates personalized support recommendations
-- Assessment module with quiz engine
-- Adaptive retraining based on performance
-
-### Technology Stack
-
-```
-├── Neo4j Database (Knowledge Graph)
-│   ├── Nodes: Courses, Skills, Universities, Difficulty Levels
-│   └── Relationships: TEACHES, OFFERED_BY, SIMILAR_TO, RELATED_TO
-├── FastAPI Backend (Python REST API)
-│   ├── Course Search & Management
-│   ├── AI-Driven Recommendation Engine
-│   └── Learning Path Generator
-├── Machine Learning Models
-│   ├── Learner Profile Classification
-│   ├── Course Prioritization
-│   └── Adaptive Learning Algorithms
-└── React Frontend (TypeScript + Vite)
-    ├── Interactive Visualizations
-    ├── Learning Path Graph (D3.js)
-    └── Student Dashboard
-```
-
-## 🛠️ Tech Stack
-
-- **Database**: Neo4j 5.x
-- **Backend**: FastAPI + Uvicorn
-- **Data Processing**: Pandas, NumPy
-- **NLP**: Sentence-Transformers (for advanced recommendations)
-- **Visualization**: Matplotlib, Seaborn (in Jupyter notebooks)
+| Category                        | Technologies / Tools                                               | Purpose                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| **Frontend (Web Application)**  | React, TypeScript, Vite, D3.js, TailwindCSS, Axios                 | Builds the student-facing web application with interactive visualizations and responsive UI |
+| **Backend & API Services**      | Python, FastAPI, Uvicorn, Pydantic, JWT, dotenv                    | Manages authentication, business logic, secure RESTful APIs, and data validation            |
+| **Graph Database**              | Neo4j 5.x, Cypher Query Language, Neo4j Driver for Python          | Stores and queries course relationships, skills, and learning path connections efficiently  |
+| **AI / Machine Learning**       | Sentence-Transformers, Scikit-learn, Pandas, NumPy                 | Enables semantic search, course similarity analysis, and personalized recommendations       |
+| **Data Processing**             | Python, Pandas, NumPy, Matplotlib, Seaborn                         | Handles data cleaning, preprocessing, analysis, and visualization in Jupyter notebooks      |
+| **Cloud & Storage**             | Neo4j Aura (optional), CSV data storage, REST APIs                 | Provides scalable database hosting, data persistence, and service communication             |
+| **Security**                    | Environment Variables (.env), Password Hashing, CORS Configuration | Ensures secure API access, credential management, and cross-origin resource sharing         |
+| **Development & Collaboration** | Git, GitHub, VS Code, Postman, Jupyter Notebooks                   | Supports version control, API testing, data exploration, and development workflows          |
 
 ## 📊 Knowledge Graph Structure
 
@@ -136,17 +102,39 @@ pip install -r requirements.txt
    - Update with your Neo4j credentials:
 
    ```env
-   NEO4J_URI=bolt://localhost:7687
-   NEO4J_USER=neo4j
-   NEO4J_PASSWORD=your_password
+   🏷️ Expected Outcomes
    ```
+
+- Improved course selection efficiency and academic planning
+- Reduced decision-making complexity for students
+- AI-powered personalized learning path recommendations
+- Enhanced skill mapping and prerequisite understanding
+- A scalable knowledge graph solution for educational institutions
+
+## 👥 Research Team
+
+| Name                   | Role                             | GitHub                                             |
+| ---------------------- | -------------------------------- | -------------------------------------------------- |
+| **Disanayaka H.M.S.D** | Principal Researcher / Team Lead | [@Sachinthadilz](https://github.com/Sachinthadilz) |
+| **Thennakoon H.M.U.N** | Researcher                       | [@username](https://github.com/username)           |
+| **[Team Member 3]**    | Researcher                       | [@username](https://github.com/username)           |
+| **[Team Member 4]**    | Researcher                       | [@username](https://github.com/username)           |
+
+---
+
+## NEO4J_URI=bolt://localhost:7687
+
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+
+````
 
 4. **Import data into Neo4j**
 
 ```bash
 cd backend
 python data_loader.py
-```
+````
 
 This will:
 
@@ -241,47 +229,62 @@ Explore the data and test queries in `notebook.ipynb`:
 
 ```
 up-knowledge-graph/
-├── backend/               # Backend application
-│   ├── main.py           # FastAPI application entry point
-│   ├── config.py         # Configuration settings
-│   ├── database.py       # Neo4j connection manager
-│   ├── data_loader.py    # CSV to Neo4j import script
-│   ├── models.py         # Pydantic data models
-│   ├── embedding_service.py  # AI embeddings
-│   ├── vector_setup.py   # Vector database setup
-│   ├── services/         # Business logic layer
+├── backend/                  # Backend application
+│   ├── main.py              # FastAPI application entry point
+│   ├── config.py            # Configuration settings
+│   ├── database.py          # Neo4j connection manager
+│   ├── data_loader.py       # CSV to Neo4j import script
+│   ├── models.py            # Pydantic data models
+│   ├── embedding_service.py # AI embeddings service
+│   ├── vector_setup.py      # Vector database setup
+│   ├── services/            # Business logic layer
+│   │   ├── __init__.py
 │   │   ├── course_service.py
 │   │   ├── recommendation_service.py
 │   │   ├── learning_path_service.py
 │   │   ├── ai_search_service.py
 │   │   ├── cross_domain_service.py
 │   │   └── stats_service.py
-│   ├── data/             # Course datasets
+│   ├── data/                # Course datasets
 │   │   ├── Coursera.csv
 │   │   └── processed/
 │   │       └── coursera_cleaned.csv
-│   └── notebooks/        # Data analysis notebooks
-│       ├── 01_data_exploration.ipynb
-│       ├── 02_data_cleaning.ipynb
-│       ├── 03_skill_domain_validation.ipynb
-│       └── 04_cross_domain_examples.ipynb
-├── frontend/             # React frontend application
+│   └── __pycache__/         # Python cache files
+├── frontend/                # React frontend application
 │   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── api.ts        # API client
-│   │   └── App.tsx       # Main app component
-│   ├── package.json
-│   └── vite.config.ts
-├── images/               # Documentation images
-│   ├── project-overview.png
-│   └── system-architecture.png
-├── run_backend.py        # Backend launcher script
-├── run_data_loader.py    # Data import script
-├── requirements.txt      # Python dependencies
-├── pyproject.toml        # Python project config
-├── .env.example          # Environment variables template
-├── README.md             # This file
-└── SETUP.md              # Setup guide
+│   │   ├── components/      # React components
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── CoursesTab.tsx
+│   │   │   ├── SkillsTab.tsx
+│   │   │   ├── LearningPathTab.tsx
+│   │   │   ├── LearningPathGraph.tsx
+│   │   │   ├── RecommendationsTab.tsx
+│   │   │   └── UniversitiesTab.tsx
+│   │   ├── api.ts           # API client
+│   │   ├── App.tsx          # Main app component
+│   │   └── main.tsx         # Entry point
+│   ├── public/              # Static assets
+│   ├── package.json         # Node dependencies
+│   ├── vite.config.ts       # Vite configuration
+│   └── tailwind.config.js   # TailwindCSS config
+├── notebooks/               # Data analysis notebooks (root level)
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_data_cleaning.ipynb
+│   ├── 03_skill_domain_validation.ipynb
+│   └── 04_cross_domain_examples.ipynb
+├── images/                  # Documentation images
+│   └── images/
+│       ├── A_clean_professional_2k_202601050032.jpeg
+│       └── Overall System Diagram.drawio.png
+├── .venv/                   # Python virtual environment
+├── requirements.txt         # Python dependencies
+├── pyproject.toml           # Python project config (uv)
+├── uv.lock                  # Dependency lock file
+├── .env                     # Environment variables (not in git)
+├── .env.example             # Environment template
+├── .gitignore               # Git ignore rules
+├── README.md                # This file
+└── SETUP.md                 # Setup guide
 ```
 
 ## 🔍 Example Queries
@@ -342,31 +345,23 @@ This is a research project for academic purposes.
 This research project is conducted as part of the university undergraduate research program
 MATCH path = (c1:Course)-[:TEACHES]->(:Skill)<-[:TEACHES]-(c2:Course)
 WHERE c1.difficulty = 'Beginner'
-  AND c2.difficulty = 'Advanced'
-RETURN path
-LIMIT 5
+  AND c2.diffResearch Directions
 
--- University rankings
-MATCH (u:University)<-[:OFFERED_BY]-(c:Course)
-RETURN u.name, COUNT(c) as courses, AVG(c.rating) as avg_rating
-ORDER BY courses DESC
-```
+- [ ] Integration with university learning management systems (LMS)
+- [ ] Enhanced course prerequisite detection using NLP
+- [ ] Real-time collaborative learning path planning
+- [ ] Multi-university course credit transfer analysis
+- [ ] Career path alignment with industry requirements
+- [ ] Advanced semantic search using transformer models
+- [ ] Mobile application for on-the-go access
 
-## 🎯 Use Cases
+## 📝 License
 
-1. **Course Discovery**: Search 3,500+ courses by skills, difficulty, rating
-2. **Personalized Recommendations**: Find similar courses based on content
-3. **Skill Mapping**: Understand relationships between different skills
-4. **Learning Path Planning**: Generate progression from beginner to expert
-5. **University Comparison**: Analyze course offerings and quality
+This is a research project for academic purposes.
 
-## 🔮 Future Enhancements
+---
 
-- [ ] User accounts and personalization
-- [ ] Course prerequisite detection
-- [ ] Semantic search using embeddings
-- [ ] Course completion tracking
-- [ ] Advanced skill gap analysis
+**Built with ❤️ using Neo4j, FastAPI, React
 - [ ] Integration with more course platforms (edX, Udemy, etc.)
 - [ ] Web frontend (React/Vue)
 
@@ -385,3 +380,4 @@ For questions or suggestions, please open an issue on GitHub.
 ---
 
 **Built with ❤️ using Neo4j, FastAPI, and Python**
+```
