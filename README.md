@@ -1,4 +1,4 @@
-![Personalized Learning Path Recommender](images/project-overview.png)
+![Personalized Learning Path Recommender](images/images/A_clean_professional_2k_202601050032.jpeg)
 
 # Personalized Learning Path Recommender for University Undergraduates 🎓
 
@@ -6,10 +6,12 @@ A research project leveraging Neo4j knowledge graphs and AI-driven recommendatio
 
 ## 👥 Research Team
 
-- **[Team Member 1 Name]** - [Role/ID]
-- **[Team Member 2 Name]** - [Role/ID]
-- **[Team Member 3 Name]** - [Role/ID]
-- **[Team Member 4 Name]** - [Role/ID]
+| Name               | Role                   | GitHub                                               |
+| ------------------ | ---------------------- | ---------------------------------------------------- |
+| Disanayaka H.M.S.D | Researcher/Team Leader | [@github-username](https://github.com/Sachinthadilz) |
+| Thennakoon H.M.U.N | Researcher             | [@github-username](https://github.com/username)      |
+| [Team Member 3]    | [Role]                 | [@github-username](https://github.com/username)      |
+| [Team Member 4]    | [Role]                 | [@github-username](https://github.com/username)      |
 
 ## 📋 Project Overview
 
@@ -21,7 +23,7 @@ This research project develops an intelligent system that generates personalized
 - **Progress Tracking & Visualization**: Real-time monitoring of student advancement
 - **Adaptive Learning Support**: Dynamic adjustments based on student performance and preferences
 
-![Project Overview](images/project-overview.png)
+![Project Overview](images/images/Overall System Diagram.drawio.png)
 
 ### Research Objectives
 
