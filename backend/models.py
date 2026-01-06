@@ -4,6 +4,13 @@ Pydantic models for API request/response schemas
 from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 from typing import List, Optional, Dict, Any
 from enum import Enum
+from learner_models import (
+    StudentDataInput, ProfileClassification, OutcomePrediction,
+    StudentAnalysis, BatchAnalysisRequest, BatchAnalysisResponse,
+    SimilarStudent, CourseRecommendationForProfile,
+    ProfileBasedRecommendationRequest, ProfileBasedRecommendationResponse,
+    LearnerProfileStats, Recommendation
+)
 
 
 class DifficultyLevel(str, Enum):

@@ -17,10 +17,10 @@ class EmbeddingService:
     def __init__(self):
         self.api_key = os.getenv("GROQ_API_KEY")
         if not self.api_key:
-            raise ValueError("GROQ_API_KEY not found in environment variables")
-        
-        self.client = Groq(api_key=self.api_key)
-        # Groq uses different models - we'll use their text generation for embeddings
+            logger.warning("GROQ_API_KEY not found - Groq features disabled")
+            self.client = None
+        else:
+            self.client = Groq(api_key=self.api_key)
         # Note: Groq primarily offers LLM inference, not dedicated embedding models
         # For production, consider using sentence-transformers locally or OpenAI embeddings
         self.embedding_dimension = 384  # Standard for sentence-transformers

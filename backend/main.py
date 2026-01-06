@@ -5,17 +5,34 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 import uvicorn
+import logging
 
 from config import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
 from models import (
     Course, CourseDetail, SearchQuery, RecommendationRequest,
     LearningPathRequest, Skill, University, StatsResponse,
-    AISearchQuery, AISearchResult, LearningPathResponse
+    AISearchQuery, AISearchResult, LearningPathResponse,
+    StudentDataInput, StudentAnalysis, BatchAnalysisRequest,
+    BatchAnalysisResponse, ProfileBasedRecommendationRequest,
+    ProfileBasedRecommendationResponse, LearnerProfileStats
 )
 from services import CourseService, RecommendationService, StatsService
-from services.ai_search_service import AISearchService
-from services.learning_path_service import LearningPathService
-from services.cross_domain_service import CrossDomainService
+
+# Try to import AI search and vector services (optional if Neo4j not available)
+try:
+    from services.ai_search_service import AISearchService
+    from services.learning_path_service import LearningPathService
+    from services.cross_domain_service import CrossDomainService
+    AI_SEARCH_AVAILABLE = True
+except Exception as e:
+    logger.warning(f"⚠️  AI Search services not available: {e}")
+    AI_SEARCH_AVAILABLE = False
+
+from learner_profile_service import learner_profile_service
 
 # Create FastAPI app
 app = FastAPI(
@@ -217,6 +234,12 @@ def ai_semantic_search(search_query: AISearchQuery):
     Returns courses organized by difficulty (Beginner → Intermediate → Advanced)
     plus cross-domain recommendations for broader learning opportunities.
     """
+    if not AI_SEARCH_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="AI Search service not available. Requires Neo4j with vector embeddings."
+        )
+    
     try:
         # Step 1: Get semantic search results
         results = AISearchService.semantic_search(
@@ -265,6 +288,178 @@ def get_statistics():
         return StatsResponse(**stats)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= LEARNER PROFILE ENDPOINTS =============
+
+@app.post("/learner/analyze", response_model=StudentAnalysis)
+def analyze_student(student_data: StudentDataInput):
+    """
+    Analyze a student and predict their learner profile and outcome
+    
+    Returns classification, prediction, embeddings, and personalized recommendations
+    """
+    try:
+        analysis = learner_profile_service.analyze_student(student_data.model_dump())
+        return StudentAnalysis(**analysis)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/learner/classify-profile")
+def classify_learner_profile(student_data: StudentDataInput):
+    """
+    Classify student into a learner profile
+    
+    Returns profile type (Fast Learner, Balanced, Struggling, Disengaged)
+    """
+    try:
+        result = learner_profile_service.classify_profile(student_data.model_dump())
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/learner/predict-outcome")
+def predict_student_outcome(student_data: StudentDataInput):
+    """
+    Predict student outcome
+    
+    Returns predicted outcome (Pass/Fail/Distinction/Withdrawn) and risk level
+    """
+    try:
+        result = learner_profile_service.predict_outcome(student_data.model_dump())
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/learner/batch-analyze", response_model=BatchAnalysisResponse)
+def batch_analyze_students(request: BatchAnalysisRequest):
+    """
+    Analyze multiple students in batch
+    
+    Efficiently processes multiple students and returns all analyses
+    """
+    try:
+        import time
+        start_time = time.time()
+        
+        results = []
+        for student_data in request.students:
+            analysis = learner_profile_service.analyze_student(student_data.model_dump())
+            results.append(StudentAnalysis(**analysis))
+        
+        processing_time = time.time() - start_time
+        
+        return BatchAnalysisResponse(
+            results=results,
+            total_processed=len(results),
+            processing_time=processing_time
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/learner/recommend-courses", response_model=ProfileBasedRecommendationResponse)
+def recommend_courses_for_profile(request: ProfileBasedRecommendationRequest):
+    """
+    Get course recommendations tailored to student's learner profile
+    
+    Combines profile analysis with course recommendations for personalized suggestions
+    """
+    try:
+        # Analyze student profile
+        analysis = learner_profile_service.analyze_student(request.student_data.model_dump())
+        
+        profile = analysis['profile']['profile']
+        outcome = analysis['outcome']
+        
+        # Determine appropriate difficulty based on profile
+        difficulty_map = {
+            'Fast Learner': 'Advanced',
+            'Balanced': 'Intermediate',
+            'Struggling': 'Beginner',
+            'Disengaged': 'Beginner'
+        }
+        
+        recommended_difficulty = request.preferred_difficulty or difficulty_map.get(profile, 'Intermediate')
+        
+        # Get courses matching the profile
+        courses = CourseService.search_courses(
+            query="",
+            difficulty=recommended_difficulty,
+            min_rating=4.0 if profile == 'Fast Learner' else 3.5,
+            limit=request.max_recommendations
+        )
+        
+        # Score and rank courses based on profile
+        recommended_courses = []
+        for course in courses:
+            match_score = 0.8  # Base score
+            reasoning_parts = []
+            
+            # Adjust based on profile
+            if profile == 'Fast Learner':
+                if course.difficulty == 'Advanced':
+                    match_score += 0.2
+                    reasoning_parts.append("Advanced level suits fast learners")
+            elif profile == 'Struggling':
+                if course.difficulty == 'Beginner':
+                    match_score += 0.2
+                    reasoning_parts.append("Beginner level provides solid foundation")
+                if course.rating >= 4.5:
+                    match_score += 0.1
+                    reasoning_parts.append("High ratings indicate quality instruction")
+            
+            # Adjust based on risk level
+            if outcome['is_at_risk']:
+                if 'Practice' in course.name or 'Hands-on' in course.name:
+                    match_score += 0.15
+                    reasoning_parts.append("Practical approach helps engagement")
+            
+            reasoning = "; ".join(reasoning_parts) if reasoning_parts else f"Matches {profile} profile"
+            
+            recommended_courses.append({
+                'course_id': course.id,
+                'course_name': course.name,
+                'university': course.university or 'Unknown',
+                'difficulty': course.difficulty or 'Unknown',
+                'rating': course.rating,
+                'match_score': min(match_score, 1.0),
+                'reasoning': reasoning
+            })
+        
+        # Sort by match score
+        recommended_courses.sort(key=lambda x: x['match_score'], reverse=True)
+        
+        return ProfileBasedRecommendationResponse(
+            student_profile=profile,
+            risk_level=outcome['risk_level'],
+            recommended_courses=recommended_courses[:request.max_recommendations],
+            general_recommendations=analysis['recommendations']
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/learner/model-status")
+def get_learner_model_status():
+    """
+    Get status of loaded learner profile models
+    
+    Returns information about which models are loaded and ready
+    """
+    return {
+        'profile_classifier_loaded': learner_profile_service.profile_classifier is not None,
+        'outcome_predictor_loaded': learner_profile_service.outcome_predictor is not None,
+        'embedding_pipeline_loaded': learner_profile_service.embedding_pipeline is not None,
+        'clustering_model_loaded': learner_profile_service.clustering_model is not None,
+        'model_path': str(learner_profile_service.model_path),
+        'available_profiles': list(learner_profile_service.PROFILE_TYPES.values()),
+        'available_outcomes': list(learner_profile_service.OUTCOME_TYPES.values())
+    }
 
 
 def main():

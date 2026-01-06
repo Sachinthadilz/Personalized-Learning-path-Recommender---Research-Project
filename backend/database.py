@@ -25,10 +25,12 @@ class Neo4jConnection:
                 auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD)
             )
             self.driver.verify_connectivity()
-            logger.info("Successfully connected to Neo4j")
+            logger.info("✓ Successfully connected to Neo4j")
         except Exception as e:
-            logger.error(f"Failed to connect to Neo4j: {e}")
-            raise
+            logger.warning(f"⚠️  Neo4j connection failed: {e}")
+            logger.info("ℹ️  Course recommendation features will be disabled")
+            logger.info("ℹ️  Learner profile classifier will still work")
+            self.driver = None
     
     def close(self):
         """Close the database connection"""
@@ -47,6 +49,10 @@ class Neo4jConnection:
         Returns:
             List of result dictionaries
         """
+        if self.driver is None:
+            logger.warning("Neo4j driver not available - returning empty results")
+            return []
+        
         with self.driver.session() as session:
             result = session.run(query, parameters or {})
             return [dict(record) for record in result]
@@ -59,6 +65,10 @@ class Neo4jConnection:
             query: Cypher query string
             parameters: Query parameters
         """
+        if self.driver is None:
+            logger.warning("Neo4j driver not available - skipping write operation")
+            return
+        
         with self.driver.session() as session:
             session.execute_write(lambda tx: tx.run(query, parameters or {}))
     
