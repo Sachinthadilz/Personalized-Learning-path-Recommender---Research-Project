@@ -116,7 +116,7 @@ pip install -r requirements.txt
 | Name                   | Role                             | GitHub                                             |
 | ---------------------- | -------------------------------- | -------------------------------------------------- |
 | **Disanayaka H.M.S.D** | Principal Researcher / Team Lead | [@Sachinthadilz](https://github.com/Sachinthadilz) |
-| **Thennakoon H.M.U.N** | Researcher                       | [@username](https://github.com/username)           |
+| **Thennakoon H.M.U.N** | Researcher                       | [@UdithaNeth](https://github.com/UdithaNeth)           |
 | **[Team Member 3]**    | Researcher                       | [@username](https://github.com/username)           |
 | **[Team Member 4]**    | Researcher                       | [@username](https://github.com/username)           |
 
