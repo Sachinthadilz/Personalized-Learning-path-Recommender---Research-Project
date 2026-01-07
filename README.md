@@ -23,7 +23,7 @@ The project aims to become a pioneering AI-powered academic planning tool. By in
 | **Course Knowledge Graph Generator**                       | • Extracts concepts and relationships from course data.<br>• Builds graph structure representing course dependencies and skill mappings.<br>• Integrates with massive open online course (MOOC) data sources.    |
 | **Course Prioritization & Timetable Generator (ML-based)** | • Understands selected courses and matches with credit values.<br>• Collects assigned credits and prioritizes by weight.<br>• Generates optimized timetables using machine learning algorithms.          |
 | **Learner Profile Classifier**                             | • Data preprocessing and embedding generation for student categorization.<br>• Classification model for personalized learner profiles.<br>• Tracks learning patterns and skill acquisition.                      |
-| **Progress Tracking & Adaptive Visualizer**                | • Identifies students requiring additional support.<br>• Generates personalized learning recommendations.<br>• Assessment module with interactive visualizations.<br>• Adaptive retraining based on performance. |
+| **Progress Tracking & Adaptive Visualizer**                | Identifies weak subjects using learner self-input, mentor/team feedback, and performance data.<br>• Generates personalized supports (mind maps, timetables, short notes) for targeted improvement.<br>• Runs quizzes to validate mastery and provides progress visualizations with feedback comments.<br>• Triggers adaptive retraining (interactive activities/games) and repeats assessment until improvement. |
 
 ## Research Purpose
 
@@ -116,9 +116,7 @@ pip install -r requirements.txt
 | Name                   | Role                             | GitHub                                             |
 | ---------------------- | -------------------------------- | -------------------------------------------------- |
 | **Disanayaka H.M.S.D** | Principal Researcher / Team Lead | [@Sachinthadilz](https://github.com/Sachinthadilz) |
-| **Thennakoon H.M.U.N** | Researcher                       | [@username](https://github.com/username)           |
 | **Rajapaksha.H**       | Researcher                       | [@himashirajapaksha](https://github.com/himashirajapaksha)  |
-| **[Team Member 4]**    | Researcher                       | [@username](https://github.com/username)           |
 
 ---
 
