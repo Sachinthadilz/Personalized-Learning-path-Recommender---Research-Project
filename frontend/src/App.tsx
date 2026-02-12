@@ -4,8 +4,15 @@ import CoursesTab from "./components/CoursesTab";
 import SkillsTab from "./components/SkillsTab";
 import UniversitiesTab from "./components/UniversitiesTab";
 import AISearchTab from "./components/AISearchTab";
+import LearningPathTab from "./components/LearningPathTab";
 
-type Tab = "dashboard" | "ai-search" | "courses" | "skills" | "universities";
+type Tab =
+  | "dashboard"
+  | "ai-search"
+  | "courses"
+  | "learning-path"
+  | "skills"
+  | "universities";
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
@@ -25,6 +32,8 @@ function App() {
           return <AISearchTab />;
         case "courses":
           return <CoursesTab />;
+        case "learning-path":
+          return <LearningPathTab />;
         case "skills":
           return <SkillsTab />;
         case "universities":
@@ -55,6 +64,7 @@ function App() {
     { id: "dashboard" as Tab, label: "📊 Dashboard", icon: "📊" },
     { id: "ai-search" as Tab, label: "🤖 AI Search", icon: "🤖" },
     { id: "courses" as Tab, label: "📚 Courses", icon: "📚" },
+    { id: "learning-path" as Tab, label: "🛤️ Learning Path", icon: "🛤️" },
     { id: "skills" as Tab, label: "🎯 Skills", icon: "🎯" },
     { id: "universities" as Tab, label: "🎓 Universities", icon: "🎓" },
   ];

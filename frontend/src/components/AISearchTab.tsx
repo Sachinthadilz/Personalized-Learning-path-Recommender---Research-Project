@@ -7,6 +7,29 @@ import {
 } from "../api";
 import LearningPathGraphD3 from "./LearningPathGraphD3";
 
+// Helper function to format description as bullet points
+const formatDescriptionAsPoints = (
+  description: string | undefined,
+): string[] => {
+  if (!description) return [];
+
+  // Split by sentence boundaries (period + space + capital letter or newline)
+  let points = description
+    .split(/\.(?=\s+[A-Z])|\.\s*\n+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 15);
+
+  // Add periods back to sentences that don't end with punctuation
+  points = points.map((point) => {
+    if (!/[.!?]$/.test(point)) {
+      return point + ".";
+    }
+    return point;
+  });
+
+  return points.length > 0 ? points : [description];
+};
+
 // Course Card Component
 function CourseCard({
   course,
@@ -42,9 +65,18 @@ function CourseCard({
             </div>
           </div>
 
-          <p className="text-gray-700 mb-4 leading-relaxed line-clamp-3">
-            {course.description}
-          </p>
+          {/* Description as bullet points */}
+          {course.description && (
+            <ul className="list-disc pl-5 text-gray-700 mb-4 leading-relaxed space-y-1.5">
+              {formatDescriptionAsPoints(course.description)
+                .slice(0, 4)
+                .map((point, idx) => (
+                  <li key={idx} className="text-sm">
+                    {point}
+                  </li>
+                ))}
+            </ul>
+          )}
 
           <div className="flex flex-wrap gap-2 mb-4">
             <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
@@ -97,8 +129,8 @@ function CourseCard({
             levelColor === "green"
               ? "bg-gradient-to-r from-green-400 to-emerald-500"
               : levelColor === "yellow"
-              ? "bg-gradient-to-r from-yellow-400 to-orange-500"
-              : "bg-gradient-to-r from-red-400 to-rose-500"
+                ? "bg-gradient-to-r from-yellow-400 to-orange-500"
+                : "bg-gradient-to-r from-red-400 to-rose-500"
           }`}
           style={{ width: `${course.similarity_score * 100}%` }}
         ></div>
@@ -122,8 +154,8 @@ function CrossDomainCard({ item }: { item: CrossDomainCourse }) {
                 item.difficulty === "Beginner"
                   ? "bg-green-100 text-green-700"
                   : item.difficulty === "Intermediate"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-red-100 text-red-700"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
               }`}
             >
               {item.difficulty}

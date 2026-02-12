@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 import uvicorn
+import logging
 
 from config import settings
 from models import (
@@ -16,6 +17,9 @@ from services import CourseService, RecommendationService, StatsService
 from services.ai_search_service import AISearchService
 from services.learning_path_service import LearningPathService
 from services.cross_domain_service import CrossDomainService
+from services.ai_learning_path_service import ai_learning_path_service
+
+logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
@@ -158,14 +162,31 @@ def get_popular_courses(
 
 @app.post("/learning-path", response_model=List[Course])
 def get_learning_path(request: LearningPathRequest):
-    """Generate a learning path to acquire a target skill"""
+    """
+    Generate an AI-powered learning path to acquire a target skill
+    
+    Uses Groq AI to intelligently curate the optimal course sequence
+    based on difficulty progression, ratings, and skill prerequisites.
+    """
     try:
-        return RecommendationService.get_learning_path(
+        # Use AI service to generate intelligent learning path
+        courses = ai_learning_path_service.generate_ai_learning_path(
             target_skill=request.target_skill,
             start_course_id=request.start_course_id,
             max_courses=request.max_courses
         )
+        
+        if not courses:
+            # Fallback to traditional method if AI fails or no courses found
+            courses = RecommendationService.get_learning_path(
+                target_skill=request.target_skill,
+                start_course_id=request.start_course_id,
+                max_courses=request.max_courses
+            )
+        
+        return courses
     except Exception as e:
+        logger.error(f"Error generating learning path: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
