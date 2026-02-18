@@ -95,13 +95,13 @@ class LearningPathRequest(BaseModel):
     start_course_id: Optional[str] = None
     target_skill: str
     difficulty_progression: bool = Field(True, description="Progress from easy to hard")
-    max_courses: int = Field(5, ge=1, le=10, description="Maximum courses in path")
+    max_courses: int = Field(5, ge=1, le=100, description="Maximum courses in path")
 
 
 class AISearchQuery(BaseModel):
     """AI semantic search query"""
     query: str = Field(..., min_length=1, description="Natural language search query")
-    limit: int = Field(10, ge=1, le=50, description="Maximum results")
+    limit: int = Field(10, ge=1, le=200, description="Maximum results")
 
 
 class AISearchResult(Course):
