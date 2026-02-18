@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL = "http://127.0.0.1:5000";
+const AUTH_API_BASE_URL = "http://localhost:5001";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -8,6 +9,42 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
+// Separate axios instance for auth API
+const authApi = axios.create({
+  baseURL: AUTH_API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add request interceptor to include auth token for auth API
+authApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
 
 export interface Course {
   id: string;
@@ -76,6 +113,21 @@ export interface LearningPathResponse {
   };
 }
 
+export interface SavedLearningPath {
+  pathId: string;
+  pathName: string;
+  pathType: "ai_search" | "ai_generator";
+  targetSkill: string;
+  courses: (Course | AISearchResult)[];
+  metadata?: {
+    difficulty?: string;
+    totalCourses?: number;
+    avgRating?: number;
+    estimatedDuration?: string;
+  };
+  createdAt: string;
+}
+
 // Course endpoints
 export const getCourses = async (skip = 0, limit = 20): Promise<Course[]> => {
   const response = await api.get("/courses", { params: { skip, limit } });
@@ -83,7 +135,7 @@ export const getCourses = async (skip = 0, limit = 20): Promise<Course[]> => {
 };
 
 export const getCourseById = async (
-  courseId: string
+  courseId: string,
 ): Promise<CourseDetail> => {
   const response = await api.get(`/courses/${courseId}`);
   return response.data;
@@ -94,7 +146,7 @@ export const searchCourses = async (
   skills?: string[],
   difficulty?: string,
   minRating?: number,
-  limit = 20
+  limit = 20,
 ): Promise<Course[]> => {
   const response = await api.post("/courses/search", {
     query,
@@ -108,13 +160,13 @@ export const searchCourses = async (
 
 export const getCoursesBySkill = async (
   skill: string,
-  limit = 10
+  limit = 10,
 ): Promise<Course[]> => {
   const response = await api.get(
     `/courses/by-skill/${encodeURIComponent(skill)}`,
     {
       params: { limit },
-    }
+    },
   );
   return response.data;
 };
@@ -122,7 +174,7 @@ export const getCoursesBySkill = async (
 // Recommendation endpoints
 export const getSimilarCourses = async (
   courseId: string,
-  limit = 10
+  limit = 10,
 ): Promise<Course[]> => {
   const response = await api.get(`/recommendations/similar/${courseId}`, {
     params: { limit },
@@ -134,7 +186,7 @@ export const getRecommendations = async (
   courseId?: string,
   skills?: string[],
   difficulty?: string,
-  limit = 10
+  limit = 10,
 ): Promise<Course[]> => {
   const response = await api.post("/recommendations", {
     course_id: courseId,
@@ -155,7 +207,7 @@ export const getPopularCourses = async (limit = 10): Promise<Course[]> => {
 export const getLearningPath = async (
   targetSkill: string,
   startCourseId?: string,
-  maxCourses = 5
+  maxCourses = 5,
 ): Promise<Course[]> => {
   const response = await api.post("/learning-path", {
     target_skill: targetSkill,
@@ -173,20 +225,20 @@ export const getAllSkills = async (limit = 100): Promise<Skill[]> => {
 
 export const getRelatedSkills = async (
   skill: string,
-  limit = 10
+  limit = 10,
 ): Promise<string[]> => {
   const response = await api.get(
     `/skills/${encodeURIComponent(skill)}/related`,
     {
       params: { limit },
-    }
+    },
   );
   return response.data;
 };
 
 // University endpoints
 export const getAllUniversities = async (
-  limit = 100
+  limit = 100,
 ): Promise<University[]> => {
   const response = await api.get("/universities", { params: { limit } });
   return response.data;
@@ -201,7 +253,7 @@ export const getStats = async (): Promise<Stats> => {
 // AI Search endpoints
 export const aiSemanticSearch = async (
   query: string,
-  limit = 10
+  limit = 10,
 ): Promise<LearningPathResponse> => {
   const response = await api.post("/ai-search", { query, limit });
   return response.data;
@@ -210,6 +262,58 @@ export const aiSemanticSearch = async (
 // Health check
 export const healthCheck = async (): Promise<{ status: string }> => {
   const response = await api.get("/health");
+  return response.data;
+};
+
+// Learning Path Management endpoints (Auth API)
+export const saveLearningPath = async (learningPath: {
+  pathName: string;
+  pathType: "ai_search" | "ai_generator";
+  targetSkill: string;
+  courses: (Course | AISearchResult)[];
+  metadata?: {
+    difficulty?: string;
+    totalCourses?: number;
+    avgRating?: number;
+    estimatedDuration?: string;
+  };
+}): Promise<{
+  success: boolean;
+  data: { pathId: string; savedPath: SavedLearningPath };
+}> => {
+  const response = await authApi.post("/api/learning-paths", learningPath);
+  return response.data;
+};
+
+export const getSavedLearningPaths = async (): Promise<{
+  success: boolean;
+  data: { learningPaths: SavedLearningPath[]; count: number };
+}> => {
+  const response = await authApi.get("/api/learning-paths");
+  return response.data;
+};
+
+export const getSavedLearningPath = async (
+  pathId: string,
+): Promise<{ success: boolean; data: SavedLearningPath }> => {
+  const response = await authApi.get(`/api/learning-paths/${pathId}`);
+  return response.data;
+};
+
+export const updateLearningPathName = async (
+  pathId: string,
+  pathName: string,
+): Promise<{ success: boolean; data: SavedLearningPath }> => {
+  const response = await authApi.patch(`/api/learning-paths/${pathId}`, {
+    pathName,
+  });
+  return response.data;
+};
+
+export const deleteLearningPath = async (
+  pathId: string,
+): Promise<{ success: boolean; message: string }> => {
+  const response = await authApi.delete(`/api/learning-paths/${pathId}`);
   return response.data;
 };
 
