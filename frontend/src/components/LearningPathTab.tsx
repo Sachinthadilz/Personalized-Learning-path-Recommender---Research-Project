@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { getLearningPath, type Course } from "../api";
+import { getLearningPath, saveLearningPath, type Course } from "../api";
+import { useAuth } from "../contexts/AuthContext";
 
 // Helper function to format description as bullet points
 const formatDescriptionAsPoints = (
@@ -31,6 +32,9 @@ export default function LearningPathTab() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 5;
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const { user } = useAuth();
 
   const [targetSkill, setTargetSkill] = useState("");
 
@@ -42,6 +46,7 @@ export default function LearningPathTab() {
 
     setLoading(true);
     setError(null);
+    setSaveSuccess(false);
     setCurrentPage(1);
     try {
       // Request a large number to get all available courses
@@ -56,6 +61,61 @@ export default function LearningPathTab() {
       setError("Failed to generate learning path");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveLearningPath = async () => {
+    if (!allCourses.length || !user) {
+      setError("Please login to save learning paths");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      // Calculate metadata
+      const avgRating =
+        allCourses.reduce((sum, c) => sum + (c.rating || 0), 0) /
+        allCourses.length;
+
+      const difficulties = allCourses.map((c) => c.difficulty).filter(Boolean);
+      const hasBeginner = difficulties.includes("Beginner");
+      const hasAdvanced = difficulties.includes("Advanced");
+      const difficulty =
+        hasBeginner && hasAdvanced
+          ? "Progressive"
+          : hasBeginner
+            ? "Beginner"
+            : "Advanced";
+
+      await saveLearningPath({
+        pathName: `AI Generated: ${targetSkill}`,
+        pathType: "ai_generator",
+        targetSkill: targetSkill,
+        courses: allCourses,
+        metadata: {
+          totalCourses: allCourses.length,
+          avgRating: parseFloat(avgRating.toFixed(2)),
+          difficulty: difficulty,
+        },
+      });
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "Failed to save learning path";
+      if (
+        errorMessage.includes("User not found") ||
+        err.response?.status === 401
+      ) {
+        setError("Session expired. Please login again to save learning paths.");
+      } else {
+        setError(errorMessage);
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -151,9 +211,11 @@ export default function LearningPathTab() {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
           ❌ {error}
-          <p className="text-sm mt-2">
-            Make sure your GROQ_API_KEY is configured in the backend .env file
-          </p>
+          {error.includes("Failed to generate") && (
+            <p className="text-sm mt-2">
+              Make sure your GROQ_API_KEY is configured in the backend .env file
+            </p>
+          )}
         </div>
       )}
 
@@ -186,7 +248,7 @@ export default function LearningPathTab() {
       {!loading && courses.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start mb-4">
-            <div>
+            <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 🎯 Your Learning Path to "{targetSkill}"
               </h3>
@@ -195,6 +257,24 @@ export default function LearningPathTab() {
                 this path to master {targetSkill}
               </p>
             </div>
+            {user && (
+              <button
+                onClick={handleSaveLearningPath}
+                disabled={saving}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md text-sm flex items-center gap-2 whitespace-nowrap"
+              >
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Saving...
+                  </>
+                ) : saveSuccess ? (
+                  <>✓ Saved!</>
+                ) : (
+                  <>💾 Save Learning Path</>
+                )}
+              </button>
+            )}
           </div>
 
           <div className="space-y-4">
