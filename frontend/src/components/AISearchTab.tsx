@@ -1,11 +1,13 @@
 import { useState } from "react";
 import {
   aiSemanticSearch,
+  saveLearningPath,
   type LearningPathResponse,
   type AISearchResult,
   type CrossDomainCourse,
 } from "../api";
 import LearningPathGraphD3 from "./LearningPathGraphD3";
+import { useAuth } from "../contexts/AuthContext";
 
 // Helper function to format description as bullet points
 const formatDescriptionAsPoints = (
@@ -213,6 +215,35 @@ export default function AISearchTab() {
   const [error, setError] = useState<string | null>(null);
   const [searchTime, setSearchTime] = useState<number>(0);
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const { user } = useAuth();
+
+  // Pagination state for each difficulty level
+  const [beginnerPage, setBeginnerPage] = useState(1);
+  const [intermediatePage, setIntermediatePage] = useState(1);
+  const [advancedPage, setAdvancedPage] = useState(1);
+  const coursesPerPage = 5;
+
+  // Helper functions for pagination
+  const getVisibleCourses = (courses: AISearchResult[], page: number) => {
+    return courses.slice(0, page * coursesPerPage);
+  };
+
+  const hasMoreCourses = (coursesLength: number, page: number) => {
+    return coursesLength > page * coursesPerPage;
+  };
+
+  const getRemainingCount = (coursesLength: number, page: number) => {
+    return Math.min(coursesPerPage, coursesLength - page * coursesPerPage);
+  };
+
+  const showAllCourses = (
+    coursesLength: number,
+    setPage: (page: number) => void,
+  ) => {
+    setPage(Math.ceil(coursesLength / coursesPerPage));
+  };
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -222,10 +253,14 @@ export default function AISearchTab() {
 
     setLoading(true);
     setError(null);
+    setSaveSuccess(false);
+    setBeginnerPage(1);
+    setIntermediatePage(1);
+    setAdvancedPage(1);
     const startTime = performance.now();
 
     try {
-      const data = await aiSemanticSearch(query, 30);
+      const data = await aiSemanticSearch(query, 100);
       setResults(data);
       const endTime = performance.now();
       setSearchTime((endTime - startTime) / 1000);
@@ -233,6 +268,58 @@ export default function AISearchTab() {
       setError("AI search failed. Make sure embeddings are generated first.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveLearningPath = async () => {
+    if (!results || !user) {
+      setError("Please login to save learning paths");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      // Combine all courses from learning path
+      const allCourses = [
+        ...results.learning_path.beginner,
+        ...results.learning_path.intermediate,
+        ...results.learning_path.advanced,
+      ];
+
+      // Calculate metadata
+      const avgRating =
+        allCourses.reduce((sum, c) => sum + (c.rating || 0), 0) /
+        allCourses.length;
+
+      await saveLearningPath({
+        pathName: `AI Search: ${query}`,
+        pathType: "ai_search",
+        targetSkill: query,
+        courses: allCourses,
+        metadata: {
+          totalCourses: results.summary.total_courses,
+          avgRating: parseFloat(avgRating.toFixed(2)),
+          difficulty: "Mixed",
+        },
+      });
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "Failed to save learning path";
+      if (
+        errorMessage.includes("User not found") ||
+        err.response?.status === 401
+      ) {
+        setError("Session expired. Please login again to save learning paths.");
+      } else {
+        setError(errorMessage);
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -323,23 +410,45 @@ export default function AISearchTab() {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">❌ {error}</p>
-          <p className="text-sm text-red-500 mt-2">
-            Run{" "}
-            <code className="bg-red-100 px-2 py-1 rounded">
-              python vector_setup.py
-            </code>{" "}
-            to generate embeddings first.
-          </p>
+          {error.includes("AI search failed") && (
+            <p className="text-sm text-red-500 mt-2">
+              Run{" "}
+              <code className="bg-red-100 px-2 py-1 rounded">
+                python vector_setup.py
+              </code>{" "}
+              to generate embeddings first.
+            </p>
+          )}
         </div>
       )}
 
       {/* Results Header */}
       {!loading && results && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-green-700 font-medium">
-            ✨ Found {results.summary.total_courses} relevant courses in{" "}
-            {searchTime.toFixed(2)}s
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-green-700 font-medium">
+              ✨ Found {results.summary.total_courses} relevant courses in{" "}
+              {searchTime.toFixed(2)}s
+            </p>
+            {user && (
+              <button
+                onClick={handleSaveLearningPath}
+                disabled={saving}
+                className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all font-medium disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md text-sm flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Saving...
+                  </>
+                ) : saveSuccess ? (
+                  <>✓ Saved!</>
+                ) : (
+                  <>💾 Save Learning Path</>
+                )}
+              </button>
+            )}
+          </div>
           <div className="mt-2 flex gap-4 text-sm items-center">
             <span className="text-green-600">
               🟢 Beginner: {results.summary.beginner_count}
@@ -398,15 +507,46 @@ export default function AISearchTab() {
           {results.learning_path.beginner.length > 0 && (
             <div>
               <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg p-4 mb-4">
-                <h3 className="text-2xl font-bold flex items-center gap-2">
-                  🟢 Beginner Level ({results.learning_path.beginner.length})
-                </h3>
-                <p className="text-green-100 mt-1">
-                  Start your learning journey here
-                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold flex items-center gap-2">
+                      🟢 Beginner Level ({results.learning_path.beginner.length}
+                      )
+                    </h3>
+                    <p className="text-green-100 mt-1">
+                      Start your learning journey here • Showing{" "}
+                      {
+                        getVisibleCourses(
+                          results.learning_path.beginner,
+                          beginnerPage,
+                        ).length
+                      }{" "}
+                      of {results.learning_path.beginner.length}
+                    </p>
+                  </div>
+                  {hasMoreCourses(
+                    results.learning_path.beginner.length,
+                    beginnerPage,
+                  ) && (
+                    <button
+                      onClick={() =>
+                        showAllCourses(
+                          results.learning_path.beginner.length,
+                          setBeginnerPage,
+                        )
+                      }
+                      className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all text-sm font-medium"
+                    >
+                      Show All
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                {results.learning_path.beginner.map((course) => (
+                {getVisibleCourses(
+                  results.learning_path.beginner,
+                  beginnerPage,
+                ).map((course) => (
                   <CourseCard
                     key={course.id}
                     course={course}
@@ -414,6 +554,24 @@ export default function AISearchTab() {
                   />
                 ))}
               </div>
+              {hasMoreCourses(
+                results.learning_path.beginner.length,
+                beginnerPage,
+              ) && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setBeginnerPage(beginnerPage + 1)}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium shadow-md"
+                  >
+                    Load More Beginner Courses (
+                    {getRemainingCount(
+                      results.learning_path.beginner.length,
+                      beginnerPage,
+                    )}{" "}
+                    more)
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -421,14 +579,46 @@ export default function AISearchTab() {
           {results.learning_path.intermediate.length > 0 && (
             <div>
               <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg p-4 mb-4">
-                <h3 className="text-2xl font-bold flex items-center gap-2">
-                  🟡 Intermediate Level (
-                  {results.learning_path.intermediate.length})
-                </h3>
-                <p className="text-yellow-100 mt-1">Build on your foundation</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold flex items-center gap-2">
+                      🟡 Intermediate Level (
+                      {results.learning_path.intermediate.length})
+                    </h3>
+                    <p className="text-yellow-100 mt-1">
+                      Build on your foundation • Showing{" "}
+                      {
+                        getVisibleCourses(
+                          results.learning_path.intermediate,
+                          intermediatePage,
+                        ).length
+                      }{" "}
+                      of {results.learning_path.intermediate.length}
+                    </p>
+                  </div>
+                  {hasMoreCourses(
+                    results.learning_path.intermediate.length,
+                    intermediatePage,
+                  ) && (
+                    <button
+                      onClick={() =>
+                        showAllCourses(
+                          results.learning_path.intermediate.length,
+                          setIntermediatePage,
+                        )
+                      }
+                      className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all text-sm font-medium"
+                    >
+                      Show All
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                {results.learning_path.intermediate.map((course) => (
+                {getVisibleCourses(
+                  results.learning_path.intermediate,
+                  intermediatePage,
+                ).map((course) => (
                   <CourseCard
                     key={course.id}
                     course={course}
@@ -436,6 +626,24 @@ export default function AISearchTab() {
                   />
                 ))}
               </div>
+              {hasMoreCourses(
+                results.learning_path.intermediate.length,
+                intermediatePage,
+              ) && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setIntermediatePage(intermediatePage + 1)}
+                    className="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all font-medium shadow-md"
+                  >
+                    Load More Intermediate Courses (
+                    {getRemainingCount(
+                      results.learning_path.intermediate.length,
+                      intermediatePage,
+                    )}{" "}
+                    more)
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -443,13 +651,46 @@ export default function AISearchTab() {
           {results.learning_path.advanced.length > 0 && (
             <div>
               <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg p-4 mb-4">
-                <h3 className="text-2xl font-bold flex items-center gap-2">
-                  🔴 Advanced Level ({results.learning_path.advanced.length})
-                </h3>
-                <p className="text-red-100 mt-1">Master advanced concepts</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold flex items-center gap-2">
+                      🔴 Advanced Level ({results.learning_path.advanced.length}
+                      )
+                    </h3>
+                    <p className="text-red-100 mt-1">
+                      Master advanced concepts • Showing{" "}
+                      {
+                        getVisibleCourses(
+                          results.learning_path.advanced,
+                          advancedPage,
+                        ).length
+                      }{" "}
+                      of {results.learning_path.advanced.length}
+                    </p>
+                  </div>
+                  {hasMoreCourses(
+                    results.learning_path.advanced.length,
+                    advancedPage,
+                  ) && (
+                    <button
+                      onClick={() =>
+                        showAllCourses(
+                          results.learning_path.advanced.length,
+                          setAdvancedPage,
+                        )
+                      }
+                      className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all text-sm font-medium"
+                    >
+                      Show All
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                {results.learning_path.advanced.map((course) => (
+                {getVisibleCourses(
+                  results.learning_path.advanced,
+                  advancedPage,
+                ).map((course) => (
                   <CourseCard
                     key={course.id}
                     course={course}
@@ -457,6 +698,24 @@ export default function AISearchTab() {
                   />
                 ))}
               </div>
+              {hasMoreCourses(
+                results.learning_path.advanced.length,
+                advancedPage,
+              ) && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setAdvancedPage(advancedPage + 1)}
+                    className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium shadow-md"
+                  >
+                    Load More Advanced Courses (
+                    {getRemainingCount(
+                      results.learning_path.advanced.length,
+                      advancedPage,
+                    )}{" "}
+                    more)
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -474,7 +733,7 @@ export default function AISearchTab() {
               </div>
               <div className="grid grid-cols-1 gap-4">
                 {results.cross_domain_courses.map((item) => (
-                  <CrossDomainCard key={item.course.id} item={item} />
+                  <CrossDomainCard key={item.id} item={item} />
                 ))}
               </div>
             </div>
