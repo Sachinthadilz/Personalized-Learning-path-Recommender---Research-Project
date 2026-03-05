@@ -116,7 +116,7 @@ export interface LearningPathResponse {
 export interface SavedLearningPath {
   pathId: string;
   pathName: string;
-  pathType: "ai_search" | "ai_generator";
+  pathType: "ai_search" | "ai_generator" | "manual";
   targetSkill: string;
   courses: (Course | AISearchResult)[];
   metadata?: {
@@ -268,7 +268,7 @@ export const healthCheck = async (): Promise<{ status: string }> => {
 // Learning Path Management endpoints (Auth API)
 export const saveLearningPath = async (learningPath: {
   pathName: string;
-  pathType: "ai_search" | "ai_generator";
+  pathType: "ai_search" | "ai_generator" | "manual";
   targetSkill: string;
   courses: (Course | AISearchResult)[];
   metadata?: {

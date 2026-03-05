@@ -24,10 +24,10 @@ exports.saveLearningPath = async (req, res, next) => {
       });
     }
 
-    if (!["ai_search", "ai_generator"].includes(pathType)) {
+    if (!["ai_search", "ai_generator", "manual"].includes(pathType)) {
       return res.status(400).json({
         success: false,
-        message: "pathType must be 'ai_search' or 'ai_generator'",
+        message: "pathType must be 'ai_search', 'ai_generator', or 'manual'",
       });
     }
 
