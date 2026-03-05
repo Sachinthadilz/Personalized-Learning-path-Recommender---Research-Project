@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getAllUniversities, type University } from "../api";
+import { Building2, BookOpen, BarChart2 } from "lucide-react";
 
 export default function UniversitiesTab() {
   const [universities, setUniversities] = useState<University[]>([]);
@@ -33,7 +34,7 @@ export default function UniversitiesTab() {
       {/* Header */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          🎓 Universities
+          Universities
         </h2>
         <p className="text-gray-600 mb-4">
           Browse all universities offering courses on Coursera
@@ -51,8 +52,7 @@ export default function UniversitiesTab() {
             onClick={loadUniversities}
             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            🔄 Refresh
-            <div className="text-xs mt-1 opacity-90">GET /universities</div>
+            Refresh
           </button>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function UniversitiesTab() {
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
-          ❌ {error}
+          {error}
         </div>
       )}
 
@@ -74,29 +74,41 @@ export default function UniversitiesTab() {
       {/* Statistics */}
       {!loading && universities.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-lg shadow p-6">
-            <div className="text-3xl mb-2">🎓</div>
-            <div className="text-3xl font-bold">{universities.length}</div>
-            <div className="text-indigo-100 mt-1">Total Universities</div>
+          <div className="bg-white rounded-xl border border-indigo-100 shadow-sm p-5 flex items-center gap-4">
+            <div className="w-11 h-11 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Universities</div>
+              <div className="text-2xl font-bold text-gray-900 mt-0.5">{universities.length}</div>
+            </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow p-6">
-            <div className="text-3xl mb-2">📚</div>
-            <div className="text-3xl font-bold">
-              {universities.reduce((sum, uni) => sum + uni.course_count, 0)}
+          <div className="bg-white rounded-xl border border-green-100 shadow-sm p-5 flex items-center gap-4">
+            <div className="w-11 h-11 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+              <BookOpen className="w-5 h-5 text-green-600" />
             </div>
-            <div className="text-green-100 mt-1">Total Courses</div>
+            <div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Courses</div>
+              <div className="text-2xl font-bold text-gray-900 mt-0.5">
+                {universities.reduce((sum, uni) => sum + uni.course_count, 0)}
+              </div>
+            </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow p-6">
-            <div className="text-3xl mb-2">📊</div>
-            <div className="text-3xl font-bold">
-              {(
-                universities.reduce((sum, uni) => sum + uni.course_count, 0) /
-                universities.length
-              ).toFixed(1)}
+          <div className="bg-white rounded-xl border border-purple-100 shadow-sm p-5 flex items-center gap-4">
+            <div className="w-11 h-11 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
+              <BarChart2 className="w-5 h-5 text-purple-600" />
             </div>
-            <div className="text-purple-100 mt-1">Avg Courses per Uni</div>
+            <div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Courses / Uni</div>
+              <div className="text-2xl font-bold text-gray-900 mt-0.5">
+                {(
+                  universities.reduce((sum, uni) => sum + uni.course_count, 0) /
+                  universities.length
+                ).toFixed(1)}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -105,7 +117,7 @@ export default function UniversitiesTab() {
       {!loading && filteredUniversities.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-xl font-bold text-gray-800 mb-4">
-            📋 Universities List ({filteredUniversities.length})
+            Universities List ({filteredUniversities.length})
           </h3>
 
           <div className="space-y-2">
