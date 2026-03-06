@@ -2,61 +2,55 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import Header from "./Header";
 import UserProfile from "./UserProfile";
+import { Network, Code2, Layers, PenTool, X, ArrowRight } from "lucide-react";
 
 interface TeamComponentSelectionProps {
   onSelectComponent: () => void;
+  onLogoClick?: () => void;
 }
 
 const TeamComponentSelection = ({
   onSelectComponent,
+  onLogoClick,
 }: TeamComponentSelectionProps) => {
-  const { user } = useAuth();
+  useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const components = [
     {
       id: 1,
-      name: "Course Knowledge Graph Generator",
-      description:
-        "Explore courses, skills, and universities with AI-powered search and learning paths",
+      name: "Explore Courses",
       color: "from-blue-500 to-indigo-600",
-      icon: "🎓",
+      Icon: Network,
       available: true,
-      createdBy: user?.fullName || user?.email || "You",
     },
     {
       id: 2,
-      name: "Component 2",
-      description: "Coming soon - Teammate's component",
+      name: "Timetable Planner",
       color: "from-purple-500 to-pink-600",
-      icon: "🚀",
+      Icon: Code2,
       available: false,
-      createdBy: "Teammate 1",
     },
     {
       id: 3,
-      name: "Component 3",
-      description: "Coming soon - Teammate's component",
+      name: "Learner Status",
       color: "from-green-500 to-teal-600",
-      icon: "💡",
+      Icon: Layers,
       available: false,
-      createdBy: "Teammate 2",
     },
     {
       id: 4,
-      name: "Component 4",
-      description: "Coming soon - Teammate's component",
+      name: "Progress Tracker",
       color: "from-orange-500 to-red-600",
-      icon: "⚡",
+      Icon: PenTool,
       available: false,
-      createdBy: "Teammate 3",
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <Header onOpenProfile={() => setIsProfileOpen(true)} />
+      <Header onOpenProfile={() => setIsProfileOpen(true)} onLogoClick={onLogoClick} />
 
       {/* Profile Modal */}
       {isProfileOpen && (
@@ -68,19 +62,7 @@ const TeamComponentSelection = ({
                 onClick={() => setIsProfileOpen(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-6 h-6" />
               </button>
             </div>
             <div className="p-6">
@@ -94,11 +76,10 @@ const TeamComponentSelection = ({
       <main className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to Our Team Project! 👋
+            What would you like to explore today?
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Our team has built multiple components. Choose the one you'd like to
-            explore.
+            Pick a module below to get started. More features are on the way.
           </p>
         </div>
 
@@ -118,38 +99,21 @@ const TeamComponentSelection = ({
               <div
                 className={`h-32 bg-gradient-to-r ${component.color} flex items-center justify-center`}
               >
-                <span className="text-6xl">{component.icon}</span>
+                <component.Icon className="w-14 h-14 text-white opacity-90" />
               </div>
 
               {/* Content */}
               <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-gray-900">
                   {component.name}
                 </h3>
-                <p className="text-sm text-gray-600 mb-4 min-h-[48px]">
-                  {component.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    By {component.createdBy}
-                  </span>
-                  {component.available ? (
-                    <span className="px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
-                      Available
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 text-xs font-semibold text-gray-500 bg-gray-100 rounded-full">
-                      Coming Soon
-                    </span>
-                  )}
-                </div>
               </div>
 
               {/* Hover Effect Overlay */}
               {component.available && (
                 <div className="absolute inset-0 bg-indigo-600 bg-opacity-0 hover:bg-opacity-5 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
-                  <span className="text-white font-semibold text-lg bg-indigo-600 px-6 py-3 rounded-lg">
-                    Explore Now →
+                  <span className="flex items-center gap-2 text-white font-semibold text-base bg-indigo-600 px-5 py-2.5 rounded-lg shadow">
+                    Explore Now <ArrowRight className="w-4 h-4" />
                   </span>
                 </div>
               )}

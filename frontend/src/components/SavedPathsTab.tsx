@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getSavedLearningPaths,
   deleteLearningPath,
@@ -7,6 +7,7 @@ import {
   type AISearchResult,
 } from "../api";
 import { useAuth } from "../contexts/AuthContext";
+import { Lock, Trash2, AlertTriangle, X, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 
 // Helper function to format description as bullet points
 const formatDescriptionAsPoints = (
@@ -31,21 +32,17 @@ const formatDescriptionAsPoints = (
 
 export default function SavedPathsTab() {
   const [savedPaths, setSavedPaths] = useState<SavedLearningPath[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedPathId, setExpandedPathId] = useState<string | null>(null);
   const [editingPathId, setEditingPathId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletePathName, setDeletePathName] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      loadSavedPaths();
-    }
-  }, [user]);
-
-  const loadSavedPaths = async () => {
-    setLoading(true);
+  const loadSavedPaths = useCallback(async () => {
     setError(null);
     try {
       const response = await getSavedLearningPaths();
@@ -53,21 +50,41 @@ export default function SavedPathsTab() {
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load saved paths");
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadSavedPaths();
+    } else {
+      setInitialLoading(false);
+    }
+  }, [user, loadSavedPaths]);
+
+  const handleDeleteRequest = (path: SavedLearningPath) => {
+    setDeleteConfirmId(path.pathId);
+    setDeletePathName(path.pathName);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmId) return;
+    setDeleting(true);
+    try {
+      await deleteLearningPath(deleteConfirmId);
+      setSavedPaths((prev) => prev.filter((p) => p.pathId !== deleteConfirmId));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to delete path");
+    } finally {
+      setDeleting(false);
+      setDeleteConfirmId(null);
+      setDeletePathName("");
     }
   };
 
-  const handleDelete = async (pathId: string) => {
-    if (!confirm("Are you sure you want to delete this learning path?")) {
-      return;
-    }
-
-    try {
-      await deleteLearningPath(pathId);
-      setSavedPaths(savedPaths.filter((p) => p.pathId !== pathId));
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete path");
-    }
+  const handleDeleteCancel = () => {
+    setDeleteConfirmId(null);
+    setDeletePathName("");
   };
 
   const handleStartEdit = (path: SavedLearningPath) => {
@@ -105,7 +122,9 @@ export default function SavedPathsTab() {
   if (!user) {
     return (
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
-        <div className="text-6xl mb-4">🔒</div>
+        <div className="flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mx-auto mb-4">
+          <Lock className="w-8 h-8 text-yellow-600" />
+        </div>
         <h3 className="text-2xl font-bold text-gray-800 mb-2">
           Login Required
         </h3>
@@ -116,27 +135,52 @@ export default function SavedPathsTab() {
     );
   }
 
-  if (loading) {
+  if (initialLoading) {
     return (
-      <div className="bg-white rounded-lg shadow p-8">
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600"></div>
-          <p className="text-gray-600">Loading saved learning paths...</p>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-8">
+          <div className="h-8 w-64 bg-white/20 rounded-lg animate-pulse mb-3" />
+          <div className="h-4 w-48 bg-white/15 rounded animate-pulse" />
         </div>
+        {/* Card skeletons */}
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white border-2 border-gray-100 rounded-lg shadow p-6 animate-pulse">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-3">
+                <div className="h-5 bg-gray-200 rounded w-3/5" />
+                <div className="flex gap-2">
+                  <div className="h-6 w-20 bg-gray-200 rounded-full" />
+                  <div className="h-6 w-24 bg-gray-200 rounded-full" />
+                  <div className="h-6 w-16 bg-gray-200 rounded-full" />
+                </div>
+                <div className="h-4 bg-gray-100 rounded w-2/5" />
+              </div>
+              <div className="flex gap-2">
+                <div className="h-9 w-20 bg-gray-200 rounded-lg" />
+                <div className="h-9 w-20 bg-gray-200 rounded-lg" />
+                <div className="h-9 w-24 bg-gray-200 rounded-lg" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-600">❌ {error}</p>
-        <button
-          onClick={loadSavedPaths}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-        >
-          Try Again
-        </button>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-red-700 font-medium">{error}</p>
+          <button
+            onClick={loadSavedPaths}
+            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -146,7 +190,7 @@ export default function SavedPathsTab() {
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-8">
-          <h2 className="text-3xl font-bold mb-3">📚 Saved Learning Paths</h2>
+          <h2 className="text-3xl font-bold mb-3">Saved Learning Paths</h2>
           <p className="text-indigo-100">
             View and manage your saved learning paths from AI Search and
             Learning Path Generator.
@@ -154,7 +198,7 @@ export default function SavedPathsTab() {
         </div>
 
         <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-          <div className="text-6xl mb-4">📖</div>
+          <div className="text-gray-400 text-6xl font-bold mb-4">○</div>
           <h3 className="text-2xl font-bold text-gray-800 mb-3">
             No Saved Learning Paths Yet
           </h3>
@@ -164,7 +208,7 @@ export default function SavedPathsTab() {
           </p>
           <div className="flex gap-4 justify-center">
             <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg">
-              💾 Use "Save Learning Path" buttons in other tabs
+              Use "Save Learning Path" buttons in other tabs
             </span>
           </div>
         </div>
@@ -174,16 +218,73 @@ export default function SavedPathsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleDeleteCancel}
+          />
+          {/* Dialog */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-fade-in">
+            <button
+              onClick={handleDeleteCancel}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center justify-center w-14 h-14 bg-red-100 rounded-full mx-auto mb-4">
+              <Trash2 className="w-7 h-7 text-red-600" />
+            </div>
+
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-1">
+              Delete Learning Path?
+            </h3>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              <span className="font-medium text-gray-700">&ldquo;{deletePathName}&rdquo;</span> will be permanently removed. This action cannot be undone.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-8">
-        <h2 className="text-3xl font-bold mb-3">📚 Saved Learning Paths</h2>
+        <h2 className="text-3xl font-bold mb-3">Saved Learning Paths</h2>
         <p className="text-indigo-100 mb-4">
           You have {savedPaths.length} saved learning path
           {savedPaths.length !== 1 ? "s" : ""}.
         </p>
         <div className="bg-white/10 backdrop-blur rounded-lg p-4">
           <p className="text-sm">
-            💡 <strong>Tip:</strong> Click on any path to expand and view all
+            <strong>Tip:</strong> Click on any path to expand and view all
             courses. You can rename or delete paths anytime.
           </p>
         </div>
@@ -213,13 +314,13 @@ export default function SavedPathsTab() {
                         onClick={() => handleSaveEdit(path.pathId)}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                       >
-                        ✓
+                        Save
                       </button>
                       <button
                         onClick={handleCancelEdit}
                         className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
                       >
-                        ✕
+                        Cancel
                       </button>
                     </div>
                   ) : (
@@ -233,22 +334,26 @@ export default function SavedPathsTab() {
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
                         path.pathType === "ai_search"
                           ? "bg-purple-100 text-purple-700"
-                          : "bg-indigo-100 text-indigo-700"
+                          : path.pathType === "ai_generator"
+                          ? "bg-indigo-100 text-indigo-700"
+                          : "bg-green-100 text-green-700"
                       }`}
                     >
                       {path.pathType === "ai_search"
-                        ? "🔍 AI Search"
-                        : "🤖 AI Generator"}
+                        ? "AI Search"
+                        : path.pathType === "ai_generator"
+                        ? "AI Generator"
+                        : "Manual Selection"}
                     </span>
                     <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                      🎯 {path.targetSkill}
+                      {path.targetSkill}
                     </span>
                     <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                      📚 {path.courses.length} courses
+                      {path.courses.length} courses
                     </span>
                     {path.metadata?.avgRating && (
-                      <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm">
-                        ⭐ {path.metadata.avgRating.toFixed(1)}
+                      <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-semibold">
+                        {path.metadata.avgRating.toFixed(1)}
                       </span>
                     )}
                     {path.metadata?.difficulty && (
@@ -275,21 +380,27 @@ export default function SavedPathsTab() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleStartEdit(path)}
-                    className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
                   >
-                    ✏️ Rename
+                    <Pencil className="w-3.5 h-3.5" />
+                    Rename
                   </button>
                   <button
-                    onClick={() => handleDelete(path.pathId)}
-                    className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all text-sm font-medium"
+                    onClick={() => handleDeleteRequest(path)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
                   >
-                    🗑️ Delete
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
                   </button>
                   <button
                     onClick={() => toggleExpanded(path.pathId)}
-                    className="px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
                   >
-                    {expandedPathId === path.pathId ? "▲ Collapse" : "▼ Expand"}
+                    {expandedPathId === path.pathId ? (
+                      <><ChevronUp className="w-4 h-4" /> Collapse</>
+                    ) : (
+                      <><ChevronDown className="w-4 h-4" /> Expand</>
+                    )}
                   </button>
                 </div>
               </div>
@@ -299,7 +410,7 @@ export default function SavedPathsTab() {
             {expandedPathId === path.pathId && (
               <div className="border-t border-gray-200 p-6 bg-gray-50">
                 <h4 className="font-semibold text-gray-800 mb-4">
-                  📖 Courses in This Path:
+                  Courses in This Path:
                 </h4>
                 <div className="space-y-3">
                   {path.courses.map((course, idx) => (
@@ -329,12 +440,12 @@ export default function SavedPathsTab() {
                           <div className="flex flex-wrap gap-2 mb-2">
                             {course.university && (
                               <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                                🏫 {course.university}
+                                {course.university}
                               </span>
                             )}
                             {course.rating && (
-                              <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded">
-                                ⭐ {course.rating.toFixed(1)}
+                              <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded font-semibold">
+                                {course.rating.toFixed(1)}
                               </span>
                             )}
                             {course.difficulty && (
