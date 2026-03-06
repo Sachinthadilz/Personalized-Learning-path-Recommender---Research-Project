@@ -2,10 +2,16 @@
 Configuration settings for the Course Knowledge Graph application
 """
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load .env from backend dir first, then fall back to project root
+_backend_env = Path(__file__).parent / ".env"
+_root_env = Path(__file__).parent.parent / ".env"
+if _backend_env.exists():
+    load_dotenv(_backend_env)
+else:
+    load_dotenv(_root_env)
 
 class Settings:
     """Application settings"""
