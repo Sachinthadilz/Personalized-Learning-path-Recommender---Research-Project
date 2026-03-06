@@ -83,7 +83,7 @@ export default function LearningPathTab() {
   };
 
   const handleSelectAllVisible = () => {
-    if (selectedCourses.size === courses.length) {
+    if (selectedCourses.size > 0) {
       setSelectedCourses(new Set());
     } else {
       setSelectedCourses(new Set(courses.map(c => c.id)));
@@ -328,7 +328,7 @@ export default function LearningPathTab() {
                   onClick={handleSelectAllVisible}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap"
                 >
-                  {selectedCourses.size === courses.length ? "Deselect All" : "Select All"}
+                  {selectedCourses.size > 0 ? "Deselect All" : "Select All"}
                 </button>
                 {selectedCourses.size > 0 && (
                   <button

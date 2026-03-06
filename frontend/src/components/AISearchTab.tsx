@@ -343,7 +343,7 @@ export default function AISearchTab() {
       ...results.cross_domain_courses,
     ];
     
-    if (selectedCourses.size === allCourses.length) {
+    if (selectedCourses.size > 0) {
       setSelectedCourses(new Set());
     } else {
       setSelectedCourses(new Set(allCourses.map(c => c.id)));
@@ -560,9 +560,7 @@ export default function AISearchTab() {
                   onClick={handleSelectAll}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
                 >
-                  {selectedCourses.size === (results.learning_path.beginner.length + results.learning_path.intermediate.length + results.learning_path.advanced.length + results.cross_domain_courses.length) 
-                    ? "Deselect All" 
-                    : "Select All"}
+                  {selectedCourses.size > 0 ? "Deselect All" : "Select All"}
                 </button>
                 {selectedCourses.size > 0 && (
                   <button
