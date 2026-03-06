@@ -45,7 +45,7 @@ export default function SkillsTab() {
       {/* Header */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          🎯 Skills Catalog
+          Skills Catalog
         </h2>
         <p className="text-gray-600">
           Explore all skills taught across courses and discover related skills
@@ -55,8 +55,7 @@ export default function SkillsTab() {
             onClick={loadSkills}
             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            🔄 Refresh Skills
-            <div className="text-xs mt-1 opacity-90">GET /skills</div>
+            Refresh Skills
           </button>
         </div>
       </div>
@@ -64,7 +63,7 @@ export default function SkillsTab() {
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
-          ❌ {error}
+          {error}
         </div>
       )}
 
@@ -79,7 +78,7 @@ export default function SkillsTab() {
       {!loading && skills.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-xl font-bold text-gray-800 mb-4">
-            📚 All Skills ({skills.length})
+            All Skills ({skills.length})
           </h3>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -113,14 +112,9 @@ export default function SkillsTab() {
       {selectedSkill && relatedSkills.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-xl font-bold text-gray-800 mb-2">
-            🔗 Skills Related to "{selectedSkill}"
+            Skills Related to "{selectedSkill}"
           </h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Endpoint:{" "}
-            <code className="bg-gray-100 px-2 py-1 rounded">
-              GET /skills/{selectedSkill}/related
-            </code>
-          </p>
+
 
           <div className="flex flex-wrap gap-2">
             {relatedSkills.map((skill, idx) => (

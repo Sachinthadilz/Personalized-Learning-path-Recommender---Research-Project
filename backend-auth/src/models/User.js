@@ -76,7 +76,7 @@ const userSchema = new mongoose.Schema(
         },
         pathType: {
           type: String,
-          enum: ["ai_search", "ai_generator"],
+          enum: ["ai_search", "ai_generator", "manual"],
           required: true,
         },
         targetSkill: {

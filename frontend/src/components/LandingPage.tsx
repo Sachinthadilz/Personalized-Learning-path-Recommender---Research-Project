@@ -1,331 +1,190 @@
+﻿import {
+  Sparkles,
+  GitBranch,
+  BarChart2,
+  Building2,
+  ClipboardCheck,
+  Search,
+  GraduationCap,
+  ArrowRight,
+  CheckCircle2,
+  BookOpen,
+  Zap,
+  Users,
+  ChevronRight,
+} from "lucide-react";
+import Footer from "./Footer";
+
 interface LandingPageProps {
   onGetStarted: () => void;
   onLogin: () => void;
+  onBackToDashboard?: () => void;
 }
 
 export default function LandingPage({
   onGetStarted,
   onLogin,
+  onBackToDashboard,
 }: LandingPageProps) {
+  const scrollTo = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative">
-      {/* Background Image Overlay */}
-      <div
-        className="fixed inset-0 z-0 opacity-30"
-        style={{
-          backgroundImage: "url(/images/ai-brain-background.jpeg)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundAttachment: "fixed",
-        }}
-      />
-      <div className="fixed inset-0 z-[1] bg-gradient-to-br from-indigo-50/50 via-purple-50/50 to-pink-50/60" />
+    <div className="min-h-screen bg-white text-gray-900 font-sans">
 
-      {/* Content Wrapper */}
-      <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                  LP
-                </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  LearnPath AI
-                </span>
-              </div>
-              <button
-                onClick={onLogin}
-                className="px-6 py-2 text-indigo-600 font-medium hover:bg-indigo-50 rounded-lg transition-colors"
-              >
-                Sign In
-              </button>
+      {/* â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center text-white shadow">
+              <GraduationCap className="w-5 h-5" />
             </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
+              LearnPath AI
+            </span>
           </div>
-        </nav>
-
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 py-20 relative">
-          <div className="text-center max-w-4xl mx-auto relative z-10">
-            <div className="inline-flex items-center space-x-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm mb-8">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-sm font-medium text-gray-700">
-                AI-Powered Learning Platform
-              </span>
-            </div>
-
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Learn Smarter,
-              </span>
-              <br />
-              <span className="text-gray-800">Not Harder</span>
-            </h1>
-
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-              Discover personalized learning paths powered by AI. Access
-              thousands of courses, build in-demand skills, and achieve your
-              educational goals faster.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <button
-                onClick={onGetStarted}
-                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
-              >
-                Get Started Free
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+            <button onClick={() => scrollTo("features")} className="hover:text-indigo-600 transition-colors">Features</button>
+            <button onClick={() => scrollTo("how-it-works")} className="hover:text-indigo-600 transition-colors">How It Works</button>
+            <button onClick={() => scrollTo("stats")} className="hover:text-indigo-600 transition-colors">About</button>
+          </nav>
+          <div className="flex items-center gap-3">
+            {onBackToDashboard ? (
+              <button onClick={onBackToDashboard} className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold rounded-lg hover:shadow-md hover:-translate-y-px transition-all">
+                Explore Now <ArrowRight className="w-4 h-4" />
               </button>
-              <button
-                onClick={() =>
-                  document
-                    .getElementById("features")
-                    ?.scrollIntoView({ behavior: "smooth" })
-                }
-                className="px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
-              >
-                Explore Features
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
-              <div className="text-center">
-                <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  10K+
-                </div>
-                <div className="text-sm text-gray-600 mt-2">
-                  Courses Available
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  50K+
-                </div>
-                <div className="text-sm text-gray-600 mt-2">
-                  Active Learners
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-red-600 bg-clip-text text-transparent">
-                  95%
-                </div>
-                <div className="text-sm text-gray-600 mt-2">Success Rate</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="py-20 bg-white/60 backdrop-blur-sm">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-800 mb-4">
-                Everything You Need to Succeed
-              </h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Powerful features designed to accelerate your learning journey
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Feature 1 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white text-2xl mb-4">
-                  🤖
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  AI-Powered Recommendations
-                </h3>
-                <p className="text-gray-600">
-                  Get personalized course suggestions based on your goals,
-                  interests, and learning style.
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl mb-4">
-                  🛤️
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  Custom Learning Paths
-                </h3>
-                <p className="text-gray-600">
-                  Follow structured paths tailored to your career objectives and
-                  skill development needs.
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-red-500 rounded-xl flex items-center justify-center text-white text-2xl mb-4">
-                  📊
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  Progress Tracking
-                </h3>
-                <p className="text-gray-600">
-                  Monitor your learning journey with detailed analytics and
-                  achievement milestones.
-                </p>
-              </div>
-
-              {/* Feature 4 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white text-2xl mb-4">
-                  🎓
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  Top Universities
-                </h3>
-                <p className="text-gray-600">
-                  Access courses from world-renowned universities and
-                  industry-leading institutions.
-                </p>
-              </div>
-
-              {/* Feature 5 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-500 rounded-xl flex items-center justify-center text-white text-2xl mb-4">
-                  🎯
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  Skill Assessment
-                </h3>
-                <p className="text-gray-600">
-                  Evaluate your current skills and identify areas for
-                  improvement with smart assessments.
-                </p>
-              </div>
-
-              {/* Feature 6 */}
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center text-white text-2xl mb-4">
-                  🔍
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  Smart Search
-                </h3>
-                <p className="text-gray-600">
-                  Find exactly what you need with AI-enhanced search across
-                  thousands of courses.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-12 text-center shadow-2xl relative overflow-hidden">
-              {/* Decorative overlay */}
-              <div className="absolute inset-0 bg-black/5"></div>
-              <div className="relative z-10">
-                <h2 className="text-4xl font-bold text-white mb-4">
-                  Ready to Start Learning?
-                </h2>
-                <p className="text-xl text-indigo-100 mb-8">
-                  Join thousands of learners who are already transforming their
-                  careers
-                </p>
-                <button
-                  onClick={onGetStarted}
-                  className="px-10 py-4 bg-white text-indigo-600 font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
-                >
-                  Create Free Account
+            ) : (
+              <>
+                <button onClick={onLogin} className="px-5 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">Sign In</button>
+                <button onClick={onGetStarted} className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold rounded-lg hover:shadow-md hover:-translate-y-px transition-all">
+                  Get Started <ArrowRight className="w-4 h-4" />
                 </button>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50 pt-24 pb-32">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-gradient-to-br from-indigo-100/60 to-purple-100/60 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-72 h-72 bg-pink-100/40 rounded-full blur-2xl pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-4 py-1.5 rounded-full mb-8 shadow-sm">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            AI-Powered Learning Platform
+          </div>
+          <h1 className="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6 max-w-4xl mx-auto">
+            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">Learn Smarter.</span>
+            <br />
+            <span className="text-gray-900">Grow Faster.</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Discover AI-curated learning paths, thousands of courses from top universities, and personalised skill recommendations â€” all in one platform.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button onClick={onBackToDashboard ?? onGetStarted} className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-base">
+              {onBackToDashboard ? "Explore Now" : "Get Started Free"} <ArrowRight className="w-4 h-4" />
+            </button>
+            <button onClick={() => scrollTo("features")} className="inline-flex items-center gap-2 px-8 py-4 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-base">
+              See Features <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <p className="mt-8 text-sm text-gray-400 flex items-center justify-center gap-2 flex-wrap">
+            <CheckCircle2 className="w-4 h-4 text-green-500" /> No credit card required
+            &nbsp;Â·&nbsp;
+            <CheckCircle2 className="w-4 h-4 text-green-500" /> Free to explore
+          </p>
+        </div>
+      </section>
+
+      {/* â”€â”€ STATS BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <section id="stats" className="bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          {([
+            { value: "10K+", label: "Courses Available", Icon: BookOpen, color: "text-indigo-600" },
+            { value: "500+", label: "Universities", Icon: Building2, color: "text-purple-600" },
+            { value: "50K+", label: "Active Learners", Icon: Users, color: "text-pink-600" },
+            { value: "95%",  label: "Learner Satisfaction", Icon: Zap, color: "text-amber-500" },
+          ] as const).map(({ value, label, Icon, color }) => (
+            <div key={label} className="flex flex-col items-center gap-2">
+              <Icon className={`w-6 h-6 ${color}`} />
+              <span className={`text-4xl font-extrabold ${color}`}>{value}</span>
+              <span className="text-sm text-gray-500">{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* â”€â”€ FEATURES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <section id="features" className="py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-600 mb-3">Features</span>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Everything you need to succeed</h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-base">Powerful tools designed to personalise and accelerate your learning journey from day one.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { Icon: Sparkles, gradient: "from-indigo-500 to-purple-500", title: "AI-Powered Recommendations", desc: "Get personalised course suggestions based on your goals, interests, and current skill level." },
+              { Icon: GitBranch, gradient: "from-purple-500 to-pink-500", title: "Custom Learning Paths", desc: "Follow structured, goal-oriented paths tailored to your career objectives and timeline." },
+              { Icon: BarChart2, gradient: "from-pink-500 to-rose-500", title: "Progress Analytics", desc: "Track your learning journey with clear dashboards, milestones, and achievement insights." },
+              { Icon: Building2, gradient: "from-blue-500 to-indigo-500", title: "Top Universities", desc: "Access courses from world-class universities and industry-leading institutions globally." },
+              { Icon: ClipboardCheck, gradient: "from-green-500 to-teal-500", title: "Skill Assessment", desc: "Identify strengths and growth areas with smart assessments that guide your next step." },
+              { Icon: Search, gradient: "from-amber-500 to-orange-500", title: "Smart Search", desc: "Find exactly what you need instantly with AI-enhanced search across thousands of courses." },
+            ].map(({ Icon, gradient, title, desc }) => (
+              <div key={title} className="bg-white rounded-2xl p-7 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all group">
+                <div className={`w-11 h-11 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center text-white mb-5 shadow-sm group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-gray-900 mb-2">{title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* â”€â”€ HOW IT WORKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <section id="how-it-works" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-indigo-600 mb-3">How It Works</span>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Start learning in 3 simple steps</h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-base">Getting started is quick and completely free.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              { step: "01", title: "Create your profile", desc: "Sign up in seconds and tell us about your learning goals and current skills.", color: "bg-indigo-600" },
+              { step: "02", title: "Get your path", desc: "Our AI analyses your profile and generates a personalised learning roadmap just for you.", color: "bg-purple-600" },
+              { step: "03", title: "Learn & grow", desc: "Follow your path, complete courses, track progress, and unlock new skills every day.", color: "bg-pink-600" },
+            ].map(({ step, title, desc, color }) => (
+              <div key={step} className="flex flex-col items-center text-center gap-4">
+                <div className={`w-14 h-14 ${color} rounded-2xl flex items-center justify-center text-white text-xl font-extrabold shadow-lg`}>{step}</div>
+                <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* â”€â”€ CTA BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {!onBackToDashboard && (
+        <section className="py-24 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-12 shadow-2xl">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to transform your learning?</h2>
+              <p className="text-indigo-100 text-base mb-8 max-w-xl mx-auto">Join over 50,000 learners already building in-demand skills with LearnPath AI.</p>
+              <button onClick={onGetStarted} className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                Create Free Account <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </section>
+      )}
 
-        {/* Footer */}
-        <footer className="bg-gray-900/95 backdrop-blur-sm text-gray-400 py-12">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-4 gap-8 mb-8">
-              <div>
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
-                    LP
-                  </div>
-                  <span className="text-xl font-bold text-white">
-                    LearnPath AI
-                  </span>
-                </div>
-                <p className="text-sm">
-                  Empowering learners worldwide with AI-driven educational
-                  experiences.
-                </p>
-              </div>
-              <div>
-                <h4 className="text-white font-semibold mb-4">Product</h4>
-                <ul className="space-y-2 text-sm">
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Features
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Pricing
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Courses
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white font-semibold mb-4">Company</h4>
-                <ul className="space-y-2 text-sm">
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      About
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Blog
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Careers
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white font-semibold mb-4">Support</h4>
-                <ul className="space-y-2 text-sm">
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Help Center
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Contact
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white transition-colors">
-                      Privacy
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-gray-800 pt-8 text-center text-sm">
-              <p>&copy; 2026 LearnPath AI. All rights reserved.</p>
-            </div>
-          </div>
-        </footer>
-      </div>
+      <Footer onScrollTo={scrollTo} />
     </div>
   );
 }
