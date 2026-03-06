@@ -13,6 +13,19 @@ import AISearchTab from "./components/AISearchTab";
 import LearningPathTab from "./components/LearningPathTab";
 import SavedPathsTab from "./components/SavedPathsTab";
 import TeamComponentSelection from "./components/TeamComponentSelection";
+import {
+  LayoutDashboard,
+  Sparkles,
+  BookOpen,
+  GitBranch,
+  Bookmark,
+  Zap,
+  GraduationCap,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
+  X,
+} from "lucide-react";
 
 type Tab =
   | "dashboard"
@@ -26,13 +39,14 @@ type Tab =
 type AuthView = "landing" | "login" | "signup";
 
 function App() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [authView, setAuthView] = useState<AuthView>("landing");
-  const [hasError, setHasError] = useState(false);
+  const [_hasError, setHasError] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [hasSelectedComponent, setHasSelectedComponent] = useState(false);
+  const [showLanding, setShowLanding] = useState(false);
 
   useEffect(() => {
     // Reset error state when tab changes
@@ -77,11 +91,26 @@ function App() {
     );
   }
 
+  // Show landing page when logo is clicked (checked before component selection)
+  if (showLanding) {
+    return (
+      <LandingPage
+        onGetStarted={() => setShowLanding(false)}
+        onLogin={() => setShowLanding(false)}
+        onBackToDashboard={() => {
+          setShowLanding(false);
+          setHasSelectedComponent(false);
+        }}
+      />
+    );
+  }
+
   // Show component selection page after login
   if (!hasSelectedComponent) {
     return (
       <TeamComponentSelection
         onSelectComponent={() => setHasSelectedComponent(true)}
+        onLogoClick={() => setShowLanding(true)}
       />
     );
   }
@@ -125,20 +154,20 @@ function App() {
     }
   };
 
-  const tabs = [
-    { id: "dashboard" as Tab, label: "Dashboard", icon: "📊" },
-    { id: "ai-search" as Tab, label: "AI Search", icon: "🤖" },
-    { id: "courses" as Tab, label: "Courses", icon: "📚" },
-    { id: "learning-path" as Tab, label: "Learning Path", icon: "🛤️" },
-    { id: "saved-paths" as Tab, label: "Saved Paths", icon: "💾" },
-    { id: "skills" as Tab, label: "Skills", icon: "🎯" },
-    { id: "universities" as Tab, label: "Universities", icon: "🎓" },
+  const tabs: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+    { id: "ai-search", label: "AI Search", Icon: Sparkles },
+    { id: "courses", label: "Courses", Icon: BookOpen },
+    { id: "learning-path", label: "Learning Path", Icon: GitBranch },
+    { id: "saved-paths", label: "Saved Paths", Icon: Bookmark },
+    { id: "skills", label: "Skills", Icon: Zap },
+    { id: "universities", label: "Universities", Icon: GraduationCap },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
       {/* Header */}
-      <Header onOpenProfile={() => setIsProfileOpen(true)} />
+      <Header onOpenProfile={() => setIsProfileOpen(true)} onLogoClick={() => setShowLanding(true)} />
 
       {/* Profile Modal */}
       {isProfileOpen && (
@@ -148,21 +177,9 @@ function App() {
               <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
               <button
                 onClick={() => setIsProfileOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
@@ -176,60 +193,55 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Navigation */}
         <aside
-          className={`${isSidebarCollapsed ? "w-16" : "w-64"} bg-white border-r border-gray-200 flex flex-col transition-all duration-300`}
+          className={`${isSidebarCollapsed ? "w-16" : "w-56"} bg-white border-r border-gray-200 flex flex-col transition-all duration-300 flex-shrink-0`}
         >
           {/* Toggle Button */}
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-3 border-b border-gray-200">
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="w-full flex items-center justify-center p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 hover:text-indigo-600 rounded-lg transition-colors"
               title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <svg
-                className={`w-5 h-5 transition-transform duration-300 ${isSidebarCollapsed ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                />
-              </svg>
+              {isSidebarCollapsed ? (
+                <ChevronRight className="w-5 h-5" />
+              ) : (
+                <ChevronLeft className="w-5 h-5" />
+              )}
             </button>
           </div>
 
           <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-4 py-3 text-left rounded-lg transition-all ${
-                  activeTab === tab.id
-                    ? "bg-indigo-600 text-white shadow-md"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-                title={isSidebarCollapsed ? tab.label : ""}
-              >
-                <span className="text-xl">{tab.icon}</span>
-                {!isSidebarCollapsed && (
-                  <span className="font-medium">{tab.label}</span>
-                )}
-              </button>
-            ))}
+            {tabs.map((tab) => {
+              const { Icon } = tab;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-3 py-2.5 text-left rounded-lg transition-all ${
+                    activeTab === tab.id
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+                  title={isSidebarCollapsed ? tab.label : ""}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  {!isSidebarCollapsed && (
+                    <span className="text-sm font-medium">{tab.label}</span>
+                  )}
+                </button>
+              );
+            })}
 
             {/* Back to Components Button */}
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
                 onClick={() => setHasSelectedComponent(false)}
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-4 py-3 text-left rounded-lg transition-all text-gray-700 hover:bg-orange-50 hover:text-orange-600`}
+                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-3 py-2.5 text-left rounded-lg transition-all text-gray-500 hover:bg-orange-50 hover:text-orange-600`}
                 title={isSidebarCollapsed ? "Back to Components" : ""}
               >
-                <span className="text-xl">🏠</span>
+                <ArrowLeft className="w-5 h-5 flex-shrink-0" />
                 {!isSidebarCollapsed && (
-                  <span className="font-medium">Back to Components</span>
+                  <span className="text-sm font-medium">Back to Components</span>
                 )}
               </button>
             </div>
@@ -244,7 +256,6 @@ function App() {
           <footer className="bg-white border-t border-gray-200 mt-12">
             <div className="container mx-auto px-4 py-6 text-center text-gray-600">
               <p>Course Knowledge Graph API - Built with FastAPI & Neo4j</p>
-              <p className="text-sm mt-2">Backend: http://127.0.0.1:5000</p>
             </div>
           </footer>
         </main>

@@ -5,6 +5,7 @@ import {
   getPopularCourses,
   type Course,
 } from '../api';
+import { Star } from 'lucide-react';
 
 export default function RecommendationsTab() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -72,7 +73,7 @@ export default function RecommendationsTab() {
       {/* Input Section */}
       <div className='bg-white rounded-lg shadow p-6'>
         <h2 className='text-2xl font-bold text-gray-800 mb-4'>
-          ⭐ Get Recommendations
+          Get Recommendations
         </h2>
 
         <div className='space-y-4'>
@@ -125,28 +126,21 @@ export default function RecommendationsTab() {
             disabled={!courseId}
             className='px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed'
           >
-            🔗 Similar Courses
-            <div className='text-xs mt-1 opacity-90'>
-              GET /recommendations/similar/{'{id}'}
-            </div>
+            Similar Courses
           </button>
 
           <button
             onClick={handleGetRecommendations}
             className='px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
           >
-            🎯 Personalized
-            <div className='text-xs mt-1 opacity-90'>POST /recommendations</div>
+            Personalized
           </button>
 
           <button
             onClick={handleGetPopular}
             className='px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors'
           >
-            🔥 Popular Courses
-            <div className='text-xs mt-1 opacity-90'>
-              GET /recommendations/popular
-            </div>
+            Popular Courses
           </button>
         </div>
       </div>
@@ -154,7 +148,7 @@ export default function RecommendationsTab() {
       {/* Error Display */}
       {error && (
         <div className='bg-red-50 border border-red-200 rounded-lg p-4 text-red-600'>
-          ❌ {error}
+          {error}
         </div>
       )}
 
@@ -169,7 +163,7 @@ export default function RecommendationsTab() {
       {!loading && courses.length > 0 && (
         <div className='bg-white rounded-lg shadow p-6'>
           <h3 className='text-xl font-bold text-gray-800 mb-4'>
-            📚 Recommended Courses ({courses.length})
+            Recommended Courses ({courses.length})
           </h3>
 
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
@@ -191,8 +185,9 @@ export default function RecommendationsTab() {
                   <span className='text-xs px-2 py-1 bg-indigo-100 text-indigo-600 rounded'>
                     {course.difficulty}
                   </span>
-                  <span className='text-yellow-500 text-sm'>
-                    ⭐ {course.rating.toFixed(1)}
+                  <span className='inline-flex items-center gap-1 text-amber-500 text-sm'>
+                    <Star className='w-3.5 h-3.5 fill-amber-400 text-amber-400' />
+                    {course.rating.toFixed(1)}
                   </span>
                 </div>
                 {course.skills && course.skills.length > 0 && (

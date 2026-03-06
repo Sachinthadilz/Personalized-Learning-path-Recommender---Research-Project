@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getLearningPath, saveLearningPath, type Course } from "../api";
 import { useAuth } from "../contexts/AuthContext";
+import { CheckCircle2 } from "lucide-react";
 
 // Helper function to format description as bullet points
 const formatDescriptionAsPoints = (
@@ -38,6 +39,12 @@ export default function LearningPathTab() {
 
   const [targetSkill, setTargetSkill] = useState("");
 
+  // Manual selection state
+  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(new Set());
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [customPathName, setCustomPathName] = useState("");
+  const [saveMode, setSaveMode] = useState<"all" | "selected">("all");
+
   const handleGeneratePath = async () => {
     if (!targetSkill) {
       setError("Please enter a target skill");
@@ -48,6 +55,7 @@ export default function LearningPathTab() {
     setError(null);
     setSaveSuccess(false);
     setCurrentPage(1);
+    setSelectedCourses(new Set());
     try {
       // Request a large number to get all available courses
       const data = await getLearningPath(
@@ -64,7 +72,46 @@ export default function LearningPathTab() {
     }
   };
 
-  const handleSaveLearningPath = async () => {
+  const handleToggleSelection = (courseId: string) => {
+    const newSelection = new Set(selectedCourses);
+    if (newSelection.has(courseId)) {
+      newSelection.delete(courseId);
+    } else {
+      newSelection.add(courseId);
+    }
+    setSelectedCourses(newSelection);
+  };
+
+  const handleSelectAllVisible = () => {
+    if (selectedCourses.size > 0) {
+      setSelectedCourses(new Set());
+    } else {
+      setSelectedCourses(new Set(courses.map(c => c.id)));
+    }
+  };
+
+  const handleOpenSaveModal = (mode: "all" | "selected") => {
+    if (mode === "selected" && selectedCourses.size === 0) {
+      alert("Please select at least one course to save");
+      return;
+    }
+    setSaveMode(mode);
+    setCustomPathName(mode === "all" ? `AI Generated: ${targetSkill}` : "");
+    setShowSaveModal(true);
+    setSaveSuccess(false);
+  };
+
+  const handleCloseSaveModal = () => {
+    setShowSaveModal(false);
+    setCustomPathName("");
+    setSaveSuccess(false);
+  };
+
+  const handleSaveFromModal = async () => {
+    if (!customPathName.trim()) {
+      alert("Please enter a name for this learning path");
+      return;
+    }
     if (!allCourses.length || !user) {
       setError("Please login to save learning paths");
       return;
@@ -74,12 +121,22 @@ export default function LearningPathTab() {
     setError(null);
 
     try {
-      // Calculate metadata
-      const avgRating =
-        allCourses.reduce((sum, c) => sum + (c.rating || 0), 0) /
-        allCourses.length;
+      let coursesToSave: Course[];
+      let pathType: "ai_generator" | "manual";
 
-      const difficulties = allCourses.map((c) => c.difficulty).filter(Boolean);
+      if (saveMode === "all") {
+        coursesToSave = allCourses;
+        pathType = "ai_generator";
+      } else {
+        coursesToSave = allCourses.filter(c => selectedCourses.has(c.id));
+        pathType = "manual";
+      }
+
+      const avgRating =
+        coursesToSave.reduce((sum, c) => sum + (c.rating || 0), 0) /
+        coursesToSave.length;
+
+      const difficulties = coursesToSave.map((c) => c.difficulty).filter(Boolean);
       const hasBeginner = difficulties.includes("Beginner");
       const hasAdvanced = difficulties.includes("Advanced");
       const difficulty =
@@ -90,19 +147,24 @@ export default function LearningPathTab() {
             : "Advanced";
 
       await saveLearningPath({
-        pathName: `AI Generated: ${targetSkill}`,
-        pathType: "ai_generator",
+        pathName: customPathName.trim(),
+        pathType: pathType,
         targetSkill: targetSkill,
-        courses: allCourses,
+        courses: coursesToSave,
         metadata: {
-          totalCourses: allCourses.length,
+          totalCourses: coursesToSave.length,
           avgRating: parseFloat(avgRating.toFixed(2)),
           difficulty: difficulty,
         },
       });
 
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      setTimeout(() => {
+        handleCloseSaveModal();
+        if (saveMode === "selected") {
+          setSelectedCourses(new Set());
+        }
+      }, 1500);
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || "Failed to save learning path";
@@ -134,7 +196,7 @@ export default function LearningPathTab() {
       {/* AI Feature Banner */}
       <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-lg p-6">
         <h2 className="text-2xl font-bold mb-2">
-          🤖 AI-Powered Learning Path Generator
+          AI-Powered Learning Path Generator
         </h2>
         <p className="text-purple-100">
           Using Groq AI to create intelligent, personalized learning paths
@@ -145,7 +207,7 @@ export default function LearningPathTab() {
       {/* Input Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-xl font-bold text-gray-800 mb-4">
-          🎯 What do you want to learn?
+          What do you want to learn?
         </h3>
         <p className="text-gray-600 mb-6">
           Our AI will analyze available courses and create an optimal learning
@@ -169,7 +231,13 @@ export default function LearningPathTab() {
           {/* Information Box */}
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
             <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 text-2xl">💡</div>
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-purple-900 mb-1">
                   AI-Powered Smart Start
@@ -191,17 +259,14 @@ export default function LearningPathTab() {
         >
           {loading ? (
             <>
-              🤖 AI is analyzing courses...
+              AI is analyzing courses...
               <div className="text-xs mt-1 opacity-90">
                 This may take 5-10 seconds
               </div>
             </>
           ) : (
             <>
-              🚀 Generate AI-Powered Learning Path
-              <div className="text-xs mt-1 opacity-90">
-                Powered by Groq AI • POST /learning-path
-              </div>
+              Generate AI-Powered Learning Path
             </>
           )}
         </button>
@@ -210,7 +275,7 @@ export default function LearningPathTab() {
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
-          ❌ {error}
+          <p className="font-medium">{error}</p>
           {error.includes("Failed to generate") && (
             <p className="text-sm mt-2">
               Make sure your GROQ_API_KEY is configured in the backend .env file
@@ -226,7 +291,7 @@ export default function LearningPathTab() {
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600"></div>
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                🤖 AI is curating your learning path...
+                AI is curating your learning path...
               </h3>
               <p className="text-gray-600">
                 Analyzing {targetSkill} courses across all difficulty levels
@@ -250,7 +315,7 @@ export default function LearningPathTab() {
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                🎯 Your Learning Path to "{targetSkill}"
+                Your Learning Path to "{targetSkill}"
               </h3>
               <p className="text-gray-600">
                 Showing {courses.length} of {allCourses.length} courses • Follow
@@ -258,22 +323,38 @@ export default function LearningPathTab() {
               </p>
             </div>
             {user && (
-              <button
-                onClick={handleSaveLearningPath}
-                disabled={saving}
-                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md text-sm flex items-center gap-2 whitespace-nowrap"
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Saving...
-                  </>
-                ) : saveSuccess ? (
-                  <>✓ Saved!</>
-                ) : (
-                  <>💾 Save Learning Path</>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSelectAllVisible}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  {selectedCourses.size > 0 ? "Deselect All" : "Select All"}
+                </button>
+                {selectedCourses.size > 0 && (
+                  <button
+                    onClick={() => handleOpenSaveModal("selected")}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-md text-sm whitespace-nowrap"
+                  >
+                    Save Selected ({selectedCourses.size})
+                  </button>
                 )}
-              </button>
+                <button
+                  onClick={() => handleOpenSaveModal("all")}
+                  disabled={saving}
+                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all font-medium disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md text-sm flex items-center gap-2 whitespace-nowrap"
+                >
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Saving...
+                    </>
+                  ) : saveSuccess ? (
+                    <>Saved!</>
+                  ) : (
+                    <>Save All ({allCourses.length})</>
+                  )}
+                </button>
+              </div>
             )}
           </div>
 
@@ -292,7 +373,24 @@ export default function LearningPathTab() {
                   </div>
 
                   {/* Course Card */}
-                  <div className="flex-1 border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow bg-white">
+                  <div className={`flex-1 border-2 rounded-lg p-4 hover:shadow-lg transition-all ${
+                    selectedCourses.has(course.id) 
+                      ? "border-purple-500 bg-purple-50" 
+                      : "border-gray-200 bg-white"
+                  }`}>
+                    {user && (
+                      <div className="flex items-center gap-2 mb-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedCourses.has(course.id)}
+                          onChange={() => handleToggleSelection(course.id)}
+                          className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          {selectedCourses.has(course.id) ? "Selected" : "Select"}
+                        </span>
+                      </div>
+                    )}
                     <h4 className="font-semibold text-gray-800 text-lg mb-2">
                       {course.name}
                     </h4>
@@ -306,8 +404,8 @@ export default function LearningPathTab() {
                       </div>
                       <div className="text-sm">
                         <span className="text-gray-600">Rating:</span>
-                        <span className="ml-2 text-yellow-500">
-                          ⭐ {course.rating.toFixed(1)}
+                        <span className="ml-2 text-yellow-500 font-semibold">
+                          {course.rating.toFixed(1)}
                         </span>
                       </div>
                     </div>
@@ -362,7 +460,7 @@ export default function LearningPathTab() {
                       rel="noopener noreferrer"
                       className="inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors text-sm"
                     >
-                      🔗 Enroll Now
+                      Enroll Now
                     </a>
                   </div>
                 </div>
@@ -377,7 +475,7 @@ export default function LearningPathTab() {
                 onClick={loadMoreCourses}
                 className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
               >
-                📚 Load More Courses ({allCourses.length - courses.length}{" "}
+                Load More Courses ({allCourses.length - courses.length}{" "}
                 remaining)
               </button>
             </div>
@@ -385,7 +483,7 @@ export default function LearningPathTab() {
 
           <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <h4 className="font-semibold text-green-800 mb-2">
-              ✅ Learning Path Summary
+              Learning Path Summary
             </h4>
             <ul className="text-sm text-green-700 space-y-1">
               <li>• Total Courses Available: {allCourses.length}</li>
@@ -399,8 +497,7 @@ export default function LearningPathTab() {
                 • Average Rating:{" "}
                 {(
                   courses.reduce((sum, c) => sum + c.rating, 0) / courses.length
-                ).toFixed(1)}{" "}
-                ⭐
+                ).toFixed(1)}
               </li>
             </ul>
           </div>
@@ -410,6 +507,78 @@ export default function LearningPathTab() {
       {!loading && courses.length === 0 && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-600">
           Enter a target skill above to generate your personalized learning path
+        </div>
+      )}
+
+      {/* Save Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+              Save Learning Path
+            </h3>
+
+            {saveSuccess ? (
+              <div className="text-center py-8">
+                <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mx-auto mb-4">
+                  <CheckCircle2 className="w-9 h-9 text-green-600" />
+                </div>
+                <p className="text-lg font-semibold text-green-600">
+                  Learning Path Saved Successfully!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Path Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={customPathName}
+                    onChange={(e) => setCustomPathName(e.target.value)}
+                    placeholder="e.g., My AI Learning Path"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <p className="text-sm text-purple-800">
+                    {saveMode === "all" 
+                      ? `Saving all ${allCourses.length} courses from AI generator`
+                      : `Saving ${selectedCourses.size} selected courses`}
+                  </p>
+                  <p className="text-xs text-purple-700 mt-1">
+                    Target Skill: {targetSkill}
+                  </p>
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={handleSaveFromModal}
+                    disabled={saving}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? "Saving..." : "Save Learning Path"}
+                  </button>
+                  <button
+                    onClick={handleCloseSaveModal}
+                    disabled={saving}
+                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

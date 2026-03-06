@@ -3,12 +3,22 @@ AI-Powered Learning Path Service using Groq API
 Generates intelligent, personalized learning paths based on user goals
 """
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from typing import List, Optional, Dict, Any
 from groq import Groq
 import json
 import logging
 from database import neo4j_conn
 from models import Course
+
+# Ensure .env is loaded (supports running from backend/ or project root)
+_backend_env = Path(__file__).parent.parent / ".env"
+_root_env = Path(__file__).parent.parent.parent / ".env"
+if _backend_env.exists():
+    load_dotenv(_backend_env)
+else:
+    load_dotenv(_root_env)
 
 logger = logging.getLogger(__name__)
 

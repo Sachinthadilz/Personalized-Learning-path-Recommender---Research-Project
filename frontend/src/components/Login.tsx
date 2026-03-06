@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { GraduationCap, ArrowLeft } from "lucide-react";
 
 interface LoginProps {
   onSwitchToSignup: () => void;
@@ -50,29 +51,17 @@ export default function Login({
         {onBackToLanding && (
           <button
             onClick={onBackToLanding}
-            className="flex items-center text-gray-600 hover:text-indigo-600 mb-6 transition-colors"
+            className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 mb-6 transition-colors text-sm font-medium"
           >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
+            <ArrowLeft className="w-4 h-4" />
             Back to Home
           </button>
         )}
 
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-              LP
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <GraduationCap className="w-6 h-6" />
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
