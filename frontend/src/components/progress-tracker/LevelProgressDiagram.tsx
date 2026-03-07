@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import type { QuizResult } from "../types.ts";
+import type { QuizResult } from "../../types.ts";
 
 type Props = {
   quizHistory: QuizResult[];       // ✅ previous attempts list

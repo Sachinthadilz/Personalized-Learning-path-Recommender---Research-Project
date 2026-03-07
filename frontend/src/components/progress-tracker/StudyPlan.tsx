@@ -1,6 +1,6 @@
 // src/components/StudyPlan.tsx
 import React, { useState } from "react";
-import type { SubjectPerformance, StudyResource } from "../types.ts";
+import type { SubjectPerformance, StudyResource } from "../../types.ts";
 
 interface Props {
   subject: SubjectPerformance | null;

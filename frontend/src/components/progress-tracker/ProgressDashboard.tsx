@@ -1,7 +1,7 @@
 // frontend/src/components/ProgressDashboard.tsx
 
 import { Component, type ReactNode, useMemo } from "react";
-import type { SubjectPerformance, QuizResult } from "../types";
+import type { SubjectPerformance, QuizResult } from "../../types";
 import {
   ResponsiveContainer,
   LineChart,

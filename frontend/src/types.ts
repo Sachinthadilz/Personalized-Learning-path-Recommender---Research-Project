@@ -10,13 +10,14 @@ export type View =
   | "feedback"
   | "dashboard";
 
-export interface SubjectPerformance {
+export type SubjectPerformance = {
   id: string;
   name: string;
-  difficulty: number;
-  confidence: number;
+  grade?: string;
+  difficulty?: number;
+  confidence?: number;
   isWeak?: boolean;
-}
+};
 
 export interface QuizResult {
   subjectId: string;

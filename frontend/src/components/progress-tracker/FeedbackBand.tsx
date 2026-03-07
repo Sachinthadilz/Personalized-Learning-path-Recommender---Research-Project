@@ -1,6 +1,6 @@
 // src/components/FeedbackBand.tsx
 import React from "react";
-import type { QuizResult } from "../types.ts";
+import type { QuizResult } from "../../types.ts";
 
 // ✅ Local band type to avoid relying on types that came from CSV era
 type QuizBand = "A" | "B" | "C" | "D";

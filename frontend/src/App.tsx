@@ -13,6 +13,7 @@ import AISearchTab from "./components/AISearchTab";
 import LearningPathTab from "./components/LearningPathTab";
 import SavedPathsTab from "./components/SavedPathsTab";
 import TeamComponentSelection from "./components/TeamComponentSelection";
+import ProgressTrackerModule from "./components/progress-tracker/ProgressTrackerModule";
 import {
   LayoutDashboard,
   Sparkles,
@@ -21,6 +22,7 @@ import {
   Bookmark,
   Zap,
   GraduationCap,
+  Activity,
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
@@ -34,7 +36,8 @@ type Tab =
   | "learning-path"
   | "saved-paths"
   | "skills"
-  | "universities";
+  | "universities"
+  | "progress-tracker";
 
 type AuthView = "landing" | "login" | "signup";
 
@@ -49,11 +52,9 @@ function App() {
   const [showLanding, setShowLanding] = useState(false);
 
   useEffect(() => {
-    // Reset error state when tab changes
     setHasError(false);
   }, [activeTab]);
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -65,7 +66,6 @@ function App() {
     );
   }
 
-  // Show auth screens if not authenticated
   if (!isAuthenticated) {
     if (authView === "landing") {
       return (
@@ -75,6 +75,7 @@ function App() {
         />
       );
     }
+
     if (authView === "signup") {
       return (
         <Signup
@@ -83,6 +84,7 @@ function App() {
         />
       );
     }
+
     return (
       <Login
         onSwitchToSignup={() => setAuthView("signup")}
@@ -91,7 +93,6 @@ function App() {
     );
   }
 
-  // Show landing page when logo is clicked (checked before component selection)
   if (showLanding) {
     return (
       <LandingPage
@@ -105,11 +106,30 @@ function App() {
     );
   }
 
-  // Show component selection page after login
   if (!hasSelectedComponent) {
     return (
       <TeamComponentSelection
-        onSelectComponent={() => setHasSelectedComponent(true)}
+        onSelectComponent={(component) => {
+          setHasSelectedComponent(true);
+
+          if (component === "progress-tracker") {
+            setActiveTab("progress-tracker");
+          } else if (component === "courses") {
+            setActiveTab("courses");
+          } else if (component === "ai-search") {
+            setActiveTab("ai-search");
+          } else if (component === "learning-path") {
+            setActiveTab("learning-path");
+          } else if (component === "saved-paths") {
+            setActiveTab("saved-paths");
+          } else if (component === "skills") {
+            setActiveTab("skills");
+          } else if (component === "universities") {
+            setActiveTab("universities");
+          } else {
+            setActiveTab("dashboard");
+          }
+        }}
         onLogoClick={() => setShowLanding(true)}
       />
     );
@@ -120,18 +140,28 @@ function App() {
       switch (activeTab) {
         case "dashboard":
           return <Dashboard />;
+
         case "ai-search":
           return <AISearchTab />;
+
         case "courses":
           return <CoursesTab />;
+
         case "learning-path":
           return <LearningPathTab />;
+
         case "saved-paths":
           return <SavedPathsTab />;
+
         case "skills":
           return <SkillsTab />;
+
         case "universities":
           return <UniversitiesTab />;
+
+        case "progress-tracker":
+          return <ProgressTrackerModule />;
+
         default:
           return <Dashboard />;
       }
@@ -154,7 +184,11 @@ function App() {
     }
   };
 
-  const tabs: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  const tabs: {
+    id: Tab;
+    label: string;
+    Icon: React.ComponentType<{ className?: string }>;
+  }[] = [
     { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
     { id: "ai-search", label: "AI Search", Icon: Sparkles },
     { id: "courses", label: "Courses", Icon: BookOpen },
@@ -162,14 +196,16 @@ function App() {
     { id: "saved-paths", label: "Saved Paths", Icon: Bookmark },
     { id: "skills", label: "Skills", Icon: Zap },
     { id: "universities", label: "Universities", Icon: GraduationCap },
+    { id: "progress-tracker", label: "Progress Tracker", Icon: Activity },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
-      {/* Header */}
-      <Header onOpenProfile={() => setIsProfileOpen(true)} onLogoClick={() => setShowLanding(true)} />
+      <Header
+        onOpenProfile={() => setIsProfileOpen(true)}
+        onLogoClick={() => setShowLanding(true)}
+      />
 
-      {/* Profile Modal */}
       {isProfileOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -189,13 +225,12 @@ function App() {
         </div>
       )}
 
-      {/* Main Layout with Sidebar */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Navigation */}
         <aside
-          className={`${isSidebarCollapsed ? "w-16" : "w-56"} bg-white border-r border-gray-200 flex flex-col transition-all duration-300 flex-shrink-0`}
+          className={`${
+            isSidebarCollapsed ? "w-16" : "w-56"
+          } bg-white border-r border-gray-200 flex flex-col transition-all duration-300 flex-shrink-0`}
         >
-          {/* Toggle Button */}
           <div className="p-3 border-b border-gray-200">
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -217,7 +252,9 @@ function App() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-3 py-2.5 text-left rounded-lg transition-all ${
+                  className={`w-full flex items-center ${
+                    isSidebarCollapsed ? "justify-center" : "gap-3"
+                  } px-3 py-2.5 text-left rounded-lg transition-all ${
                     activeTab === tab.id
                       ? "bg-indigo-600 text-white shadow-sm"
                       : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -232,11 +269,12 @@ function App() {
               );
             })}
 
-            {/* Back to Components Button */}
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
                 onClick={() => setHasSelectedComponent(false)}
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-3 py-2.5 text-left rounded-lg transition-all text-gray-500 hover:bg-orange-50 hover:text-orange-600`}
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? "justify-center" : "gap-3"
+                } px-3 py-2.5 text-left rounded-lg transition-all text-gray-500 hover:bg-orange-50 hover:text-orange-600`}
                 title={isSidebarCollapsed ? "Back to Components" : ""}
               >
                 <ArrowLeft className="w-5 h-5 flex-shrink-0" />
@@ -248,11 +286,9 @@ function App() {
           </nav>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="container mx-auto px-4 py-8">{renderTab()}</div>
 
-          {/* Footer */}
           <footer className="bg-white border-t border-gray-200 mt-12">
             <div className="container mx-auto px-4 py-6 text-center text-gray-600">
               <p>Course Knowledge Graph API - Built with FastAPI & Neo4j</p>

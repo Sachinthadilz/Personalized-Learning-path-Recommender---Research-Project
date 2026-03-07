@@ -1,6 +1,6 @@
 // src/components/WeakSubjectDiagnosis.tsx
 import React from "react";
-import type { SubjectPerformance } from "../types.ts";
+import type { SubjectPerformance } from "../../types.ts";
 
 interface Props {
   subjects: SubjectPerformance[];

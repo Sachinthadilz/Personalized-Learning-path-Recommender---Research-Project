@@ -5,7 +5,7 @@ import UserProfile from "./UserProfile";
 import { Network, Code2, Layers, PenTool, X, ArrowRight } from "lucide-react";
 
 interface TeamComponentSelectionProps {
-  onSelectComponent: () => void;
+  onSelectComponent: (component: string) => void;
   onLogoClick?: () => void;
 }
 
@@ -19,6 +19,7 @@ const TeamComponentSelection = ({
   const components = [
     {
       id: 1,
+      key: "courses",
       name: "Explore Courses",
       color: "from-blue-500 to-indigo-600",
       Icon: Network,
@@ -26,6 +27,7 @@ const TeamComponentSelection = ({
     },
     {
       id: 2,
+      key: "dashboard",
       name: "Timetable Planner",
       color: "from-purple-500 to-pink-600",
       Icon: Code2,
@@ -33,6 +35,7 @@ const TeamComponentSelection = ({
     },
     {
       id: 3,
+      key: "dashboard",
       name: "Learner Status",
       color: "from-green-500 to-teal-600",
       Icon: Layers,
@@ -40,19 +43,21 @@ const TeamComponentSelection = ({
     },
     {
       id: 4,
+      key: "progress-tracker",
       name: "Progress Tracker",
       color: "from-orange-500 to-red-600",
       Icon: PenTool,
-      available: false,
+      available: true,
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <Header onOpenProfile={() => setIsProfileOpen(true)} onLogoClick={onLogoClick} />
+      <Header
+        onOpenProfile={() => setIsProfileOpen(true)}
+        onLogoClick={onLogoClick}
+      />
 
-      {/* Profile Modal */}
       {isProfileOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -72,7 +77,6 @@ const TeamComponentSelection = ({
         </div>
       )}
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -83,7 +87,6 @@ const TeamComponentSelection = ({
           </p>
         </div>
 
-        {/* Component Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {components.map((component) => (
             <div
@@ -93,23 +96,24 @@ const TeamComponentSelection = ({
                   ? "hover:scale-105 hover:shadow-2xl cursor-pointer"
                   : "opacity-75 cursor-not-allowed"
               }`}
-              onClick={component.available ? onSelectComponent : undefined}
+              onClick={
+                component.available
+                  ? () => onSelectComponent(component.key)
+                  : undefined
+              }
             >
-              {/* Gradient Header */}
               <div
                 className={`h-32 bg-gradient-to-r ${component.color} flex items-center justify-center`}
               >
                 <component.Icon className="w-14 h-14 text-white opacity-90" />
               </div>
 
-              {/* Content */}
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900">
                   {component.name}
                 </h3>
               </div>
 
-              {/* Hover Effect Overlay */}
               {component.available && (
                 <div className="absolute inset-0 bg-indigo-600 bg-opacity-0 hover:bg-opacity-5 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
                   <span className="flex items-center gap-2 text-white font-semibold text-base bg-indigo-600 px-5 py-2.5 rounded-lg shadow">

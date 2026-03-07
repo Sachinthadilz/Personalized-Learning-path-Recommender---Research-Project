@@ -1,6 +1,6 @@
 // src/components/AdaptiveQuiz.tsx
 import React, { useState } from "react";
-import type { SubjectPerformance, QuizResult } from "../types.ts";
+import type { SubjectPerformance, QuizResult } from "../../types";
 
 // ✅ Must match QuizResult.band type ("A" | "B" | "C" | "D")
 type QuizBand = "A" | "B" | "C" | "D";
