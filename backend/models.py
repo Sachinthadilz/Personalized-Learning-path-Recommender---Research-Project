@@ -147,3 +147,134 @@ class StatsResponse(BaseModel):
     avg_rating: float
     top_skills: Optional[List[dict]] = []
     top_universities: Optional[List[dict]] = []
+
+
+# ---------------------------------------------------------------------------
+# Learner Profile Prediction schemas
+# ---------------------------------------------------------------------------
+
+
+class LearnerProfileRequest(BaseModel):
+    """
+    19-feature OULAD student input for the learner profile prediction pipeline.
+
+    Categorical features
+    --------------------
+    gender              : Student gender, e.g. "M" or "F"
+    region              : UK region, e.g. "London Region"
+    highest_education   : Highest prior qualification, e.g. "HE Qualification"
+    imd_band            : Index of Multiple Deprivation band, e.g. "90-100%"
+    age_band            : Age group, e.g. "0-35", "35-55", "55<="
+    disability          : Declared disability status, "Y" or "N"
+    code_module         : OU module code, e.g. "AAA"
+    code_presentation   : Module presentation, e.g. "2013J"
+
+    Engagement / numerical features
+    --------------------------------
+    total_clicks            : Total VLE clicks across the module
+    days_active             : Number of distinct days the student was active
+    max_daily_clicks        : Peak single-day click count
+    mean_daily_clicks       : Mean daily click count across active days
+    early_clicks            : Clicks recorded in the first two weeks
+    mean_score              : Mean assessment score (0–100)
+    num_assessments         : Number of assessments submitted
+    first_reg_before_start  : Days between registration and module start
+    ever_unregistered       : 1 if the student ever un-registered, else 0
+    num_of_prev_attempts    : Number of previous module attempts
+    studied_credits         : Total credits studied concurrently
+    """
+
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "gender": "M",
+            "region": "London Region",
+            "highest_education": "HE Qualification",
+            "imd_band": "90-100%",
+            "age_band": "0-35",
+            "disability": "N",
+            "code_module": "BBB",
+            "code_presentation": "2014J",
+            "total_clicks": 1200,
+            "days_active": 45,
+            "max_daily_clicks": 150,
+            "mean_daily_clicks": 26.7,
+            "early_clicks": 320,
+            "mean_score": 68.5,
+            "num_assessments": 5,
+            "first_reg_before_start": 30,
+            "ever_unregistered": 0,
+            "num_of_prev_attempts": 0,
+            "studied_credits": 60,
+        }
+    })
+
+    # --- Categorical ---
+    gender: str = Field(..., description="Student gender (e.g. 'M' or 'F')")
+    region: str = Field(..., description="UK region (e.g. 'London Region')")
+    highest_education: str = Field(..., description="Highest prior qualification")
+    imd_band: str = Field(..., description="IMD deprivation band (e.g. '90-100%')")
+    age_band: str = Field(..., description="Age group ('0-35', '35-55', '55<=')")
+    disability: str = Field(..., description="Disability status ('Y' or 'N')")
+    code_module: str = Field(..., description="OU module code (e.g. 'AAA')")
+    code_presentation: str = Field(..., description="Module presentation code (e.g. '2013J')")
+
+    # --- Numerical ---
+    total_clicks: int = Field(..., ge=0, description="Total VLE clicks across the module")
+    days_active: int = Field(..., ge=0, description="Distinct days the student was active")
+    max_daily_clicks: int = Field(..., ge=0, description="Peak single-day click count")
+    mean_daily_clicks: float = Field(..., ge=0.0, description="Mean daily clicks on active days")
+    early_clicks: int = Field(..., ge=0, description="VLE clicks in the first two weeks")
+    mean_score: float = Field(..., ge=0.0, le=100.0, description="Mean assessment score (0–100)")
+    num_assessments: int = Field(..., ge=0, description="Number of assessments submitted")
+    first_reg_before_start: int = Field(..., description="Days between registration and module start")
+    ever_unregistered: int = Field(..., ge=0, le=1, description="1 if ever un-registered, else 0")
+    num_of_prev_attempts: int = Field(..., ge=0, description="Previous module attempts")
+    studied_credits: int = Field(..., ge=0, description="Credits studied concurrently")
+
+
+class LearnerProfileResponse(BaseModel):
+    """
+    Structured prediction result from the three-stage learner profile pipeline.
+    """
+
+    learner_profile: str = Field(
+        ...,
+        description=(
+            "Predicted learner profile cluster: "
+            "'Balanced learners', 'Disengaged learners', "
+            "'Fast learners', or 'Struggling learners'"
+        ),
+    )
+    profile_confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score for the profile prediction (0–1)",
+    )
+    predicted_outcome: str = Field(
+        ...,
+        description=(
+            "Predicted academic outcome: "
+            "'Distinction', 'Pass', 'Fail', or 'Withdrawn'"
+        ),
+    )
+    outcome_confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score for the outcome prediction (0–1)",
+    )
+    risk_prediction: str = Field(
+        ...,
+        description="Early warning assessment: 'At-Risk' or 'Not At-Risk'",
+    )
+    risk_score: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Risk score (0–1); higher values indicate greater risk",
+    )
+    learning_path_recommendation: Dict[str, Any] = Field(
+        default={},
+        description="Recommended learning track and actions based on predicted outcome",
+    )

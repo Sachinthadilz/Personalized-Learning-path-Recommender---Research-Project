@@ -317,4 +317,53 @@ export const deleteLearningPath = async (
   return response.data;
 };
 
+// Learner Profile Prediction
+export interface LearnerProfileInput {
+  // Categorical
+  gender: string;
+  region: string;
+  highest_education: string;
+  imd_band: string;
+  age_band: string;
+  disability: string;
+  code_module: string;
+  code_presentation: string;
+  // Numerical
+  total_clicks: number;
+  days_active: number;
+  max_daily_clicks: number;
+  mean_daily_clicks: number;
+  early_clicks: number;
+  mean_score: number;
+  num_assessments: number;
+  first_reg_before_start: number;
+  ever_unregistered: number;
+  num_of_prev_attempts: number;
+  studied_credits: number;
+}
+
+export interface LearnerProfileResult {
+  learner_profile: string;
+  profile_confidence: number;
+  predicted_outcome: string;
+  outcome_confidence: number;
+  risk_prediction: string;
+  risk_score: number;
+  learning_path_recommendation: {
+    profile?: string;
+    description?: string;
+    learning_path?: string;
+    actions?: string[];
+    alert_level?: string;
+    intervention?: string;
+  };
+}
+
+export const predictLearnerProfile = async (
+  input: LearnerProfileInput,
+): Promise<LearnerProfileResult> => {
+  const response = await api.post("/predict-learner-profile", input);
+  return response.data;
+};
+
 export default api;

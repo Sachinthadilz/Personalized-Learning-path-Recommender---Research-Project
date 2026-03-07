@@ -3,6 +3,7 @@ FastAPI application for Course Knowledge Graph
 """
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from typing import List, Optional
 import uvicorn
 import logging
@@ -11,21 +12,34 @@ from config import settings
 from models import (
     Course, CourseDetail, SearchQuery, RecommendationRequest,
     LearningPathRequest, Skill, University, StatsResponse,
-    AISearchQuery, AISearchResult, LearningPathResponse
+    AISearchQuery, AISearchResult, LearningPathResponse,
+    LearnerProfileRequest, LearnerProfileResponse
 )
 from services import CourseService, RecommendationService, StatsService
 from services.ai_search_service import AISearchService
 from services.learning_path_service import LearningPathService
 from services.cross_domain_service import CrossDomainService
 from services.ai_learning_path_service import ai_learning_path_service
+from services.learner_profile_service import LearnerProfileService
+from activity_log_routes import activity_log_router
+from mongo_activity import ensure_indexes, close_client
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup / shutdown lifecycle handler."""
+    await ensure_indexes()   # create MongoDB indexes once at startup
+    yield
+    close_client()           # clean up Motor connection on shutdown
 
 # Create FastAPI app
 app = FastAPI(
     title=settings.API_TITLE,
     version=settings.API_VERSION,
-    description=settings.API_DESCRIPTION
+    description=settings.API_DESCRIPTION,
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
@@ -36,6 +50,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routers
+app.include_router(activity_log_router)
 
 
 @app.get("/")
@@ -273,6 +290,35 @@ def ai_semantic_search(search_query: AISearchQuery):
         )
         
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= LEARNER PROFILE PREDICTION ENDPOINT =============
+
+@app.post("/predict-learner-profile", response_model=LearnerProfileResponse)
+def predict_learner_profile(request: LearnerProfileRequest):
+    """
+    Predict learner profile, academic outcome, and early-warning risk.
+
+    Runs a three-stage ML pipeline on 19 OULAD student features:
+
+    1. **Learner profile classification** – clusters the student into one of:
+       *Balanced learners*, *Disengaged learners*, *Fast learners*,
+       *Struggling learners*.
+    2. **Academic outcome prediction** – forecasts the final result:
+       *Distinction*, *Pass*, *Fail*, or *Withdrawn*.
+    3. **Early warning detection** – flags the student as *At-Risk* or
+       *Not At-Risk* and provides a risk score (0–1).
+
+    The response also includes a recommended learning track and
+    action plan mapped to the predicted outcome.
+    """
+    try:
+        features = request.model_dump()
+        result = LearnerProfileService.predict(features)
+        return LearnerProfileResponse(**result.to_dict())
+    except Exception as e:
+        logger.error("Error in learner profile prediction: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 

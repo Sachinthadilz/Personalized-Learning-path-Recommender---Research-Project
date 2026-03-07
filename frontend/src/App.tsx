@@ -13,6 +13,8 @@ import AISearchTab from "./components/AISearchTab";
 import LearningPathTab from "./components/LearningPathTab";
 import SavedPathsTab from "./components/SavedPathsTab";
 import TeamComponentSelection from "./components/TeamComponentSelection";
+import LearnerStatusTab from "./components/LearnerStatusTab";
+import AdminDashboard from "./components/AdminDashboard";
 import {
   LayoutDashboard,
   Sparkles,
@@ -25,6 +27,7 @@ import {
   ChevronRight,
   ArrowLeft,
   X,
+  Brain,
 } from "lucide-react";
 
 type Tab =
@@ -34,18 +37,21 @@ type Tab =
   | "learning-path"
   | "saved-paths"
   | "skills"
-  | "universities";
+  | "universities"
+  | "learner-status"
+  | "admin";
 
 type AuthView = "landing" | "login" | "signup";
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [authView, setAuthView] = useState<AuthView>("landing");
   const [_hasError, setHasError] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [hasSelectedComponent, setHasSelectedComponent] = useState(false);
+  const [selectedComponent, setSelectedComponent] = useState<string>("explore-courses");
   const [showLanding, setShowLanding] = useState(false);
 
   useEffect(() => {
@@ -109,7 +115,12 @@ function App() {
   if (!hasSelectedComponent) {
     return (
       <TeamComponentSelection
-        onSelectComponent={() => setHasSelectedComponent(true)}
+        onSelectComponent={(tab?: string) => {
+          const component = tab === "learner-status" ? "learner-status" : "explore-courses";
+          setSelectedComponent(component);
+          if (tab) setActiveTab(tab as Tab);
+          setHasSelectedComponent(true);
+        }}
         onLogoClick={() => setShowLanding(true)}
       />
     );
@@ -132,6 +143,10 @@ function App() {
           return <SkillsTab />;
         case "universities":
           return <UniversitiesTab />;
+        case "learner-status":
+          return <LearnerStatusTab />;
+        case "admin":
+          return <AdminDashboard />;
         default:
           return <Dashboard />;
       }
@@ -154,7 +169,7 @@ function App() {
     }
   };
 
-  const tabs: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  const allTabs: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
     { id: "ai-search", label: "AI Search", Icon: Sparkles },
     { id: "courses", label: "Courses", Icon: BookOpen },
@@ -162,12 +177,29 @@ function App() {
     { id: "saved-paths", label: "Saved Paths", Icon: Bookmark },
     { id: "skills", label: "Skills", Icon: Zap },
     { id: "universities", label: "Universities", Icon: GraduationCap },
+    { id: "learner-status", label: "Learner Status", Icon: Brain },
   ];
+
+  const exploreCoursesTabs: Tab[] = [
+    "dashboard", "ai-search", "courses", "learning-path", "saved-paths", "skills", "universities",
+  ];
+
+  const tabs = selectedComponent === "learner-status"
+    ? allTabs.filter((t) => t.id === "learner-status")
+    : allTabs.filter((t) => exploreCoursesTabs.includes(t.id));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
       {/* Header */}
-      <Header onOpenProfile={() => setIsProfileOpen(true)} onLogoClick={() => setShowLanding(true)} />
+      <Header
+        onOpenProfile={() => setIsProfileOpen(true)}
+        onLogoClick={() => setShowLanding(true)}
+        onOpenAdmin={() => {
+          setSelectedComponent("explore-courses");
+          setHasSelectedComponent(true);
+          setActiveTab("admin");
+        }}
+      />
 
       {/* Profile Modal */}
       {isProfileOpen && (

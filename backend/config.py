@@ -20,6 +20,11 @@ class Settings:
     NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://localhost:7687")
     NEO4J_USER: str = os.getenv("NEO4J_USER", "neo4j")
     NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "password")
+
+    # MongoDB — Activity Log database (separate from the auth DB)
+    MONGODB_ACTIVITY_URI: str = os.getenv("MONGODB_ACTIVITY_URI", "mongodb://localhost:27017")
+    MONGODB_ACTIVITY_DB: str  = os.getenv("MONGODB_ACTIVITY_DB",  "learner_activity")
+    MONGODB_ACTIVITY_COL: str = os.getenv("MONGODB_ACTIVITY_COL", "activity_logs")
     
     # API Configuration
     API_TITLE: str = "Course Knowledge Graph API"

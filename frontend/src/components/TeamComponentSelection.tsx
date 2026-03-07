@@ -5,7 +5,7 @@ import UserProfile from "./UserProfile";
 import { Network, Code2, Layers, PenTool, X, ArrowRight } from "lucide-react";
 
 interface TeamComponentSelectionProps {
-  onSelectComponent: () => void;
+  onSelectComponent: (tab?: string) => void;
   onLogoClick?: () => void;
 }
 
@@ -23,6 +23,7 @@ const TeamComponentSelection = ({
       color: "from-blue-500 to-indigo-600",
       Icon: Network,
       available: true,
+      tab: "dashboard",
     },
     {
       id: 2,
@@ -30,13 +31,15 @@ const TeamComponentSelection = ({
       color: "from-purple-500 to-pink-600",
       Icon: Code2,
       available: false,
+      tab: undefined,
     },
     {
       id: 3,
       name: "Learner Status",
       color: "from-green-500 to-teal-600",
       Icon: Layers,
-      available: false,
+      available: true,
+      tab: "learner-status",
     },
     {
       id: 4,
@@ -44,6 +47,7 @@ const TeamComponentSelection = ({
       color: "from-orange-500 to-red-600",
       Icon: PenTool,
       available: false,
+      tab: undefined,
     },
   ];
 
@@ -93,7 +97,7 @@ const TeamComponentSelection = ({
                   ? "hover:scale-105 hover:shadow-2xl cursor-pointer"
                   : "opacity-75 cursor-not-allowed"
               }`}
-              onClick={component.available ? onSelectComponent : undefined}
+              onClick={component.available ? () => onSelectComponent(component.tab) : undefined}
             >
               {/* Gradient Header */}
               <div
