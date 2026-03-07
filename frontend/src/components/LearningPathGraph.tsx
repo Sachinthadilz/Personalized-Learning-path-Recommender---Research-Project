@@ -86,7 +86,7 @@ export default function LearningPathGraph({
                   : course.name}
               </div>
               <div style={{ fontSize: "11px", color: "#666" }}>
-                ⭐ {course.rating?.toFixed(1) || "N/A"} |
+                ★ {course.rating?.toFixed(1) || "N/A"} |
                 {(course.similarity_score * 100).toFixed(0)}% Match
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function LearningPathGraph({
                   marginBottom: "3px",
                 }}
               >
-                🌐 {item.domain}
+                {item.domain}
               </div>
               <div
                 style={{
@@ -182,7 +182,7 @@ export default function LearningPathGraph({
                   : item.course}
               </div>
               <div style={{ fontSize: "11px", color: "#666" }}>
-                ⭐ {item.rating?.toFixed(1) || "N/A"} |
+                ★ {item.rating?.toFixed(1) || "N/A"} |
                 {(item.similarity_score * 100).toFixed(0)}% Match
               </div>
             </div>
@@ -302,7 +302,7 @@ export default function LearningPathGraph({
             <span>Cross-Domain</span>
           </div>
           <div className="ml-auto text-gray-600">
-            💡 Click any course node to open its link
+            Tip: Click any course node to open its link
           </div>
         </div>
       </div>
