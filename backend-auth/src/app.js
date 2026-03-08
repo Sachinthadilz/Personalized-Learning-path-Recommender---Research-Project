@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const authRoutes = require("./routes/authRoutes");
 const learningPathRoutes = require("./routes/learningPathRoutes");
+const enrollmentRoutes = require("./routes/enrollmentRoutes");
 const { errorHandler, notFound } = require("./middleware/errorHandler");
 
 /**
@@ -69,6 +70,7 @@ app.get("/health", (req, res) => {
  */
 app.use("/api/auth", authRoutes);
 app.use("/api/learning-paths", learningPathRoutes);
+app.use("/api/learning-paths", enrollmentRoutes);
 
 /**
  * Root Route
@@ -97,6 +99,11 @@ app.get("/", (req, res) => {
       getLearningPath: "GET /api/learning-paths/:pathId",
       updateLearningPath: "PATCH /api/learning-paths/:pathId",
       deleteLearningPath: "DELETE /api/learning-paths/:pathId",
+      enrollInPath: "POST /api/learning-paths/:pathId/enroll",
+      getEnrollment: "GET /api/learning-paths/:pathId/enrollment",
+      generateQuiz: "POST /api/learning-paths/:pathId/courses/:courseId/quiz",
+      submitQuiz: "POST /api/learning-paths/:pathId/courses/:courseId/submit-quiz",
+      unenrollFromPath: "POST /api/learning-paths/:pathId/unenroll",
     },
   });
 });

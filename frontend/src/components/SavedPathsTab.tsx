@@ -3,11 +3,17 @@ import {
   getSavedLearningPaths,
   deleteLearningPath,
   updateLearningPathName,
+  enrollInPath,
+  generateQuiz,
+  submitQuiz,
+  unenrollFromPath,
   type SavedLearningPath,
   type AISearchResult,
+  type QuizData,
+  type QuizResult,
 } from "../api";
 import { useAuth } from "../contexts/AuthContext";
-import { Lock, Trash2, AlertTriangle, X, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { Lock, Trash2, AlertTriangle, X, ChevronDown, ChevronUp, Pencil, BookOpen, CheckCircle, Trophy, Loader2, Play, RotateCcw } from "lucide-react";
 
 // Helper function to format description as bullet points
 const formatDescriptionAsPoints = (
@@ -40,6 +46,18 @@ export default function SavedPathsTab() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletePathName, setDeletePathName] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [enrollingPathId, setEnrollingPathId] = useState<string | null>(null);
+  const [quizModal, setQuizModal] = useState<{
+    pathId: string;
+    courseId: string;
+    courseName: string;
+    quizData: QuizData | null;
+    answers: number[];
+    loading: boolean;
+    submitting: boolean;
+    result: QuizResult | null;
+  } | null>(null);
+  const [unenrollingPathId, setUnenrollingPathId] = useState<string | null>(null);
   const { user } = useAuth();
 
   const loadSavedPaths = useCallback(async () => {
@@ -113,6 +131,124 @@ export default function SavedPathsTab() {
   const handleCancelEdit = () => {
     setEditingPathId(null);
     setEditName("");
+  };
+
+  const handleEnroll = async (pathId: string) => {
+    setEnrollingPathId(pathId);
+    try {
+      const response = await enrollInPath(pathId);
+      setSavedPaths((prev) =>
+        prev.map((p) =>
+          p.pathId === pathId
+            ? { ...p, enrollment: response.data.enrollment }
+            : p,
+        ),
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to enroll");
+    } finally {
+      setEnrollingPathId(null);
+    }
+  };
+
+  const handleUnenroll = async (pathId: string) => {
+    setUnenrollingPathId(pathId);
+    try {
+      await unenrollFromPath(pathId);
+      setSavedPaths((prev) =>
+        prev.map((p) =>
+          p.pathId === pathId
+            ? { ...p, enrollment: { isEnrolled: false, currentCourseIndex: 0, courseProgress: [] } }
+            : p,
+        ),
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to unenroll");
+    } finally {
+      setUnenrollingPathId(null);
+    }
+  };
+
+  const handleMarkComplete = async (pathId: string, courseId: string, courseName: string) => {
+    setQuizModal({
+      pathId,
+      courseId,
+      courseName,
+      quizData: null,
+      answers: [-1, -1, -1, -1, -1],
+      loading: true,
+      submitting: false,
+      result: null,
+    });
+
+    try {
+      const response = await generateQuiz(pathId, courseId);
+      setQuizModal((prev) =>
+        prev ? { ...prev, quizData: response.data, loading: false } : null,
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to generate quiz");
+      setQuizModal(null);
+    }
+  };
+
+  const handleQuizAnswer = (questionIdx: number, answerIdx: number) => {
+    setQuizModal((prev) => {
+      if (!prev) return null;
+      const newAnswers = [...prev.answers];
+      newAnswers[questionIdx] = answerIdx;
+      return { ...prev, answers: newAnswers };
+    });
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (!quizModal || !quizModal.quizData) return;
+
+    if (quizModal.answers.some((a) => a === -1)) {
+      setError("Please answer all questions before submitting");
+      return;
+    }
+
+    setQuizModal((prev) => (prev ? { ...prev, submitting: true } : null));
+
+    try {
+      const response = await submitQuiz(
+        quizModal.pathId,
+        quizModal.courseId,
+        quizModal.answers,
+        quizModal.quizData,
+      );
+
+      setQuizModal((prev) =>
+        prev ? { ...prev, submitting: false, result: response.data.result } : null,
+      );
+
+      // Update the path's enrollment data locally
+      setSavedPaths((prev) =>
+        prev.map((p) =>
+          p.pathId === quizModal.pathId
+            ? { ...p, enrollment: response.data.enrollment }
+            : p,
+        ),
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to submit quiz");
+      setQuizModal((prev) => (prev ? { ...prev, submitting: false } : null));
+    }
+  };
+
+  const closeQuizModal = () => {
+    setQuizModal(null);
+  };
+
+  const getCourseStatus = (path: SavedLearningPath, courseId: string) => {
+    if (!path.enrollment?.isEnrolled) return null;
+    return path.enrollment.courseProgress.find((cp) => cp.courseId === courseId);
+  };
+
+  const getCompletedCount = (path: SavedLearningPath) => {
+    if (!path.enrollment?.isEnrolled) return 0;
+    return path.enrollment.courseProgress.filter((cp) => cp.status === "completed").length;
   };
 
   const toggleExpanded = (pathId: string) => {
@@ -409,25 +545,125 @@ export default function SavedPathsTab() {
             {/* Expanded Course List */}
             {expandedPathId === path.pathId && (
               <div className="border-t border-gray-200 p-6 bg-gray-50">
-                <h4 className="font-semibold text-gray-800 mb-4">
-                  Courses in This Path:
-                </h4>
+                {/* Enrollment Controls */}
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-gray-800">
+                    Courses in This Path:
+                  </h4>
+                  {path.enrollment?.isEnrolled ? (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-green-700 bg-green-100 px-3 py-1 rounded-full font-medium">
+                        <CheckCircle className="w-3.5 h-3.5 inline mr-1" />
+                        Enrolled &middot; {getCompletedCount(path)}/{path.courses.length} completed
+                      </span>
+                      <button
+                        onClick={() => handleUnenroll(path.pathId)}
+                        disabled={unenrollingPathId === path.pathId}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors text-xs font-medium disabled:opacity-50"
+                      >
+                        {unenrollingPathId === path.pathId ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-3 h-3" />
+                        )}
+                        Reset Progress
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleEnroll(path.pathId)}
+                      disabled={enrollingPathId === path.pathId}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all text-sm font-medium shadow disabled:opacity-50"
+                    >
+                      {enrollingPathId === path.pathId ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Enrolling...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4" />
+                          Enroll in Path
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Progress Bar */}
+                {path.enrollment?.isEnrolled && (
+                  <div className="mb-4">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-gradient-to-r from-green-400 to-emerald-500 h-2.5 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${(getCompletedCount(path) / path.courses.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3">
-                  {path.courses.map((course, idx) => (
+                  {path.courses.map((course, idx) => {
+                    const progress = getCourseStatus(path, course.id);
+                    const isLocked = progress?.status === "locked";
+                    const isCompleted = progress?.status === "completed";
+                    const isUnlocked = progress?.status === "unlocked";
+                    const isEnrolled = path.enrollment?.isEnrolled;
+
+                    return (
                     <div
                       key={course.id}
-                      className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className={`border rounded-lg p-4 transition-shadow ${
+                        isLocked
+                          ? "bg-gray-100 border-gray-300 opacity-60"
+                          : isCompleted
+                            ? "bg-green-50 border-green-300"
+                            : "bg-white border-gray-200 hover:shadow-md"
+                      }`}
                     >
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                          {idx + 1}
+                        <div
+                          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                            isCompleted
+                              ? "bg-green-600 text-white"
+                              : isLocked
+                                ? "bg-gray-400 text-white"
+                                : "bg-indigo-600 text-white"
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle className="w-5 h-5" />
+                          ) : isLocked ? (
+                            <Lock className="w-4 h-4" />
+                          ) : (
+                            idx + 1
+                          )}
                         </div>
                         <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-2">
-                            {course.name}
-                          </h5>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h5 className={`font-semibold ${isLocked ? "text-gray-500" : "text-gray-800"}`}>
+                              {course.name}
+                            </h5>
+                            {isLocked && (
+                              <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full">
+                                Locked
+                              </span>
+                            )}
+                            {isCompleted && (
+                              <span className="text-xs px-2 py-0.5 bg-green-200 text-green-700 rounded-full">
+                                Completed
+                              </span>
+                            )}
+                            {isUnlocked && isEnrolled && (
+                              <span className="text-xs px-2 py-0.5 bg-blue-200 text-blue-700 rounded-full animate-pulse">
+                                Current
+                              </span>
+                            )}
+                          </div>
 
-                          {course.description && (
+                          {!isLocked && course.description && (
                             <ul className="list-disc pl-5 text-gray-600 mb-3 text-sm space-y-1">
                               {formatDescriptionAsPoints(course.description)
                                 .slice(0, 3)
@@ -437,42 +673,44 @@ export default function SavedPathsTab() {
                             </ul>
                           )}
 
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {course.university && (
-                              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                                {course.university}
-                              </span>
-                            )}
-                            {course.rating && (
-                              <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded font-semibold">
-                                {course.rating.toFixed(1)}
-                              </span>
-                            )}
-                            {course.difficulty && (
-                              <span
-                                className={`text-xs px-2 py-1 rounded ${
-                                  course.difficulty === "Beginner"
-                                    ? "bg-green-100 text-green-700"
-                                    : course.difficulty === "Intermediate"
-                                      ? "bg-yellow-100 text-yellow-700"
-                                      : "bg-red-100 text-red-700"
-                                }`}
-                              >
-                                {course.difficulty}
-                              </span>
-                            )}
-                            {(course as AISearchResult).similarity_score && (
-                              <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                                {(
-                                  (course as AISearchResult).similarity_score *
-                                  100
-                                ).toFixed(0)}
-                                % Match
-                              </span>
-                            )}
-                          </div>
+                          {!isLocked && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {course.university && (
+                                <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                                  {course.university}
+                                </span>
+                              )}
+                              {course.rating && (
+                                <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded font-semibold">
+                                  {course.rating.toFixed(1)}
+                                </span>
+                              )}
+                              {course.difficulty && (
+                                <span
+                                  className={`text-xs px-2 py-1 rounded ${
+                                    course.difficulty === "Beginner"
+                                      ? "bg-green-100 text-green-700"
+                                      : course.difficulty === "Intermediate"
+                                        ? "bg-yellow-100 text-yellow-700"
+                                        : "bg-red-100 text-red-700"
+                                  }`}
+                                >
+                                  {course.difficulty}
+                                </span>
+                              )}
+                              {(course as AISearchResult).similarity_score && (
+                                <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                                  {(
+                                    (course as AISearchResult).similarity_score *
+                                    100
+                                  ).toFixed(0)}
+                                  % Match
+                                </span>
+                              )}
+                            </div>
+                          )}
 
-                          {course.skills && course.skills.length > 0 && (
+                          {!isLocked && course.skills && course.skills.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-2">
                               {course.skills.slice(0, 5).map((skill, sidx) => (
                                 <span
@@ -490,24 +728,217 @@ export default function SavedPathsTab() {
                             </div>
                           )}
 
-                          <a
-                            href={course.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block mt-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all text-sm font-medium"
-                          >
-                            View Course →
-                          </a>
+                          {/* Quiz Results for completed courses */}
+                          {isCompleted && progress?.quizResult && (
+                            <div className="mt-2 p-3 bg-green-100 border border-green-200 rounded-lg">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Trophy className="w-4 h-4 text-green-700" />
+                                <span className="font-semibold text-green-800">
+                                  Quiz Score: {progress.quizResult.score}/{progress.quizResult.totalQuestions} ({progress.quizResult.percentage}%)
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2 mt-2">
+                            {!isLocked && (
+                              <a
+                                href={course.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all text-sm font-medium"
+                              >
+                                Enroll
+                              </a>
+                            )}
+                            {isUnlocked && isEnrolled && (
+                              <button
+                                onClick={() => handleMarkComplete(path.pathId, course.id, course.name)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all text-sm font-medium shadow"
+                              >
+                                <BookOpen className="w-4 h-4" />
+                                Mark as Completed
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             )}
           </div>
         ))}
       </div>
+
+      {/* Quiz Modal */}
+      {quizModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={quizModal.result ? closeQuizModal : undefined} />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <button
+              onClick={closeQuizModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Loading state */}
+            {quizModal.loading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="w-12 h-12 text-purple-600 animate-spin mb-4" />
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Generating Quiz...</h3>
+                <p className="text-gray-500 text-sm text-center">
+                  AI is creating 5 questions for <strong>{quizModal.courseName}</strong>
+                </p>
+              </div>
+            )}
+
+            {/* Quiz Questions */}
+            {!quizModal.loading && quizModal.quizData && !quizModal.result && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">Course Quiz</h3>
+                    <p className="text-sm text-gray-500">{quizModal.courseName}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {quizModal.quizData.questions.map((q, qIdx) => (
+                    <div key={qIdx} className="border border-gray-200 rounded-lg p-4">
+                      <p className="font-medium text-gray-800 mb-3">
+                        <span className="text-purple-600 font-bold mr-2">Q{qIdx + 1}.</span>
+                        {q.question}
+                      </p>
+                      <div className="space-y-2">
+                        {q.options.map((option, oIdx) => (
+                          <label
+                            key={oIdx}
+                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                              quizModal.answers[qIdx] === oIdx
+                                ? "border-purple-500 bg-purple-50"
+                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`question-${qIdx}`}
+                              checked={quizModal.answers[qIdx] === oIdx}
+                              onChange={() => handleQuizAnswer(qIdx, oIdx)}
+                              className="w-4 h-4 text-purple-600"
+                            />
+                            <span className="text-sm text-gray-700">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={handleSubmitQuiz}
+                    disabled={quizModal.submitting || quizModal.answers.some((a) => a === -1)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {quizModal.submitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Submit Quiz
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Quiz Results */}
+            {quizModal.result && (
+              <div className="text-center">
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                  quizModal.result.percentage >= 80
+                    ? "bg-green-100"
+                    : quizModal.result.percentage >= 50
+                      ? "bg-yellow-100"
+                      : "bg-red-100"
+                }`}>
+                  <Trophy className={`w-10 h-10 ${
+                    quizModal.result.percentage >= 80
+                      ? "text-green-600"
+                      : quizModal.result.percentage >= 50
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                  }`} />
+                </div>
+
+                <h3 className="text-2xl font-bold text-gray-800 mb-1">Quiz Completed!</h3>
+                <p className="text-gray-600 mb-4">{quizModal.courseName}</p>
+
+                <div className="text-5xl font-bold mb-2">
+                  <span className={
+                    quizModal.result.percentage >= 80
+                      ? "text-green-600"
+                      : quizModal.result.percentage >= 50
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                  }>
+                    {quizModal.result.score}/{quizModal.result.totalQuestions}
+                  </span>
+                </div>
+                <p className="text-lg text-gray-500 mb-6">{quizModal.result.percentage}% correct</p>
+
+                {/* Show each question result */}
+                <div className="text-left space-y-3 mb-6">
+                  {quizModal.result.questions.map((q, qIdx) => (
+                    <div
+                      key={qIdx}
+                      className={`p-3 rounded-lg border ${
+                        q.isCorrect ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        {q.isCorrect ? (
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <X className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{q.question}</p>
+                          {!q.isCorrect && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Your answer: <span className="text-red-600">{q.options[q.userAnswer!]}</span>
+                              {" · "}
+                              Correct: <span className="text-green-600">{q.options[q.correctAnswer!]}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={closeQuizModal}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow"
+                >
+                  Continue Learning
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

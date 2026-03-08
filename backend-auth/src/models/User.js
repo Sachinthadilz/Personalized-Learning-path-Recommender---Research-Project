@@ -102,6 +102,46 @@ const userSchema = new mongoose.Schema(
           avgRating: Number,
           estimatedDuration: String,
         },
+        enrollment: {
+          isEnrolled: {
+            type: Boolean,
+            default: false,
+          },
+          enrolledAt: Date,
+          currentCourseIndex: {
+            type: Number,
+            default: 0,
+          },
+          courseProgress: [
+            {
+              courseId: String,
+              status: {
+                type: String,
+                enum: ["locked", "unlocked", "completed"],
+                default: "locked",
+              },
+              completedAt: Date,
+              quizResult: {
+                score: Number,
+                totalQuestions: {
+                  type: Number,
+                  default: 5,
+                },
+                percentage: Number,
+                questions: [
+                  {
+                    question: String,
+                    options: [String],
+                    correctAnswer: Number,
+                    userAnswer: Number,
+                    isCorrect: Boolean,
+                  },
+                ],
+                completedAt: Date,
+              },
+            },
+          ],
+        },
         createdAt: {
           type: Date,
           default: Date.now,
