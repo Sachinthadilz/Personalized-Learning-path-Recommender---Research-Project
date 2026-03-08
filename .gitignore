@@ -93,12 +93,6 @@ Desktop.ini
 
 # Heavy data files - OULAD dataset
 backend/data/oulad/
-backend/data/processed/
 
-# Artifacts - Ignore unnecessary pipeline files
-backend/artifacts/*.joblib
-backend/artifacts/*.json
-# Keep only essential pipelines (uncomment lines below to keep specific files)
-!backend/artifacts/best_model_pipeline.joblib
-!backend/artifacts/profile_classifier.joblib
-!backend/artifacts/learning_path_recommendations.json
+# Artifacts - Ignore profile classifier pipeline only
+backend/artifacts/profile_classifier.joblib
