@@ -125,7 +125,45 @@ export interface SavedLearningPath {
     avgRating?: number;
     estimatedDuration?: string;
   };
+  enrollment?: EnrollmentData;
   createdAt: string;
+}
+
+export interface CourseProgress {
+  courseId: string;
+  status: "locked" | "unlocked" | "completed";
+  completedAt?: string;
+  quizResult?: QuizResult;
+}
+
+export interface EnrollmentData {
+  isEnrolled: boolean;
+  enrolledAt?: string;
+  currentCourseIndex: number;
+  courseProgress: CourseProgress[];
+}
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer?: number;
+  userAnswer?: number;
+  isCorrect?: boolean;
+}
+
+export interface QuizResult {
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  questions: QuizQuestion[];
+  completedAt?: string;
+}
+
+export interface QuizData {
+  courseId: string;
+  courseName: string;
+  questions: { question: string; options: string[] }[];
+  _quizKey: string;
 }
 
 // Course endpoints
@@ -314,6 +352,59 @@ export const deleteLearningPath = async (
   pathId: string,
 ): Promise<{ success: boolean; message: string }> => {
   const response = await authApi.delete(`/api/learning-paths/${pathId}`);
+  return response.data;
+};
+
+// Enrollment & Quiz endpoints (Auth API)
+export const enrollInPath = async (
+  pathId: string,
+): Promise<{ success: boolean; message: string; data: { enrollment: EnrollmentData } }> => {
+  const response = await authApi.post(`/api/learning-paths/${pathId}/enroll`);
+  return response.data;
+};
+
+export const getEnrollmentStatus = async (
+  pathId: string,
+): Promise<{ success: boolean; data: { enrollment: EnrollmentData } }> => {
+  const response = await authApi.get(`/api/learning-paths/${pathId}/enrollment`);
+  return response.data;
+};
+
+export const generateQuiz = async (
+  pathId: string,
+  courseId: string,
+): Promise<{ success: boolean; data: QuizData }> => {
+  const response = await authApi.post(
+    `/api/learning-paths/${pathId}/courses/${courseId}/quiz`,
+  );
+  return response.data;
+};
+
+export const submitQuiz = async (
+  pathId: string,
+  courseId: string,
+  answers: number[],
+  quizData: QuizData,
+): Promise<{
+  success: boolean;
+  message: string;
+  data: {
+    result: QuizResult;
+    nextCourseUnlocked: boolean;
+    enrollment: EnrollmentData;
+  };
+}> => {
+  const response = await authApi.post(
+    `/api/learning-paths/${pathId}/courses/${courseId}/submit-quiz`,
+    { answers, quizData },
+  );
+  return response.data;
+};
+
+export const unenrollFromPath = async (
+  pathId: string,
+): Promise<{ success: boolean; message: string }> => {
+  const response = await authApi.post(`/api/learning-paths/${pathId}/unenroll`);
   return response.data;
 };
 
