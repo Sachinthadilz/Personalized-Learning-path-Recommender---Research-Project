@@ -104,6 +104,97 @@ export interface ProfileResponse {
   data: User;
 }
 
+export interface AcademicModule {
+  moduleId?: string;
+  name: string;
+  credits: number;
+}
+
+export interface AcademicWeakSubject {
+  name: string;
+  grade: string;
+  marks: number;
+}
+
+export interface AcademicProfile {
+  _id?: string;
+  user?: string;
+  university: string;
+  degree: string;
+  yearOfStudy: number;
+  modules: AcademicModule[];
+  weakSubjects?: AcademicWeakSubject[];
+  onboardingCompleted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AcademicProfileResponse {
+  success: boolean;
+  data: AcademicProfile | null;
+}
+
+export interface MindMapNode {
+  id?: string;
+  label: string;
+  children?: MindMapNode[];
+}
+
+export interface NoteSection {
+  title: string;
+  bullets: string[];
+}
+
+export interface WeekDay {
+  day: string;
+  slots: string[];
+}
+
+export interface PracticeItem {
+  question: string;
+  answer: string;
+}
+
+export interface StudyMaterialData {
+  _id?: string;
+  subject?: string;
+  subjectName?: string;
+  marks?: number;
+  grade?: string;
+  summary?: string;
+  keyTopics?: string[];
+  mindMap: MindMapNode | { title: string; nodes: MindMapNode[] };
+  timetable?: WeekDay[];
+  notes?: NoteSection[];
+  practiceSet?: PracticeItem[];
+  weeklyPlan?: {
+    day: string;
+    topic: string;
+    activities: string[];
+  }[];
+  resources?: {
+    title: string;
+    type: string;
+    url?: string;
+  }[];
+  practiceQuestions?: {
+    question: string;
+    answer: string;
+  }[];
+  quizQuestions?: {
+    question: string;
+    options: string[];
+    correctIndex: number;
+  }[];
+  generatedAt?: string;
+}
+
+export interface StudyMaterialResponse {
+  success: boolean;
+  data: StudyMaterialData | null;
+  cached?: boolean;
+}
+
 export interface ApiError {
   success: false;
   message: string;
@@ -325,6 +416,60 @@ export const authService = {
 
   async adminDeleteUser(userId: string): Promise<{ success: boolean; message: string }> {
     const response = await authApi.delete(`/api/admin/users/${userId}`);
+    return response.data;
+  },
+
+  /**
+   * Get academic profile for the logged-in user (null if not yet created)
+   */
+  async getAcademicProfile(): Promise<AcademicProfileResponse> {
+    const response = await authApi.get<AcademicProfileResponse>("/api/profile");
+    return response.data;
+  },
+
+  /**
+   * Create or replace academic profile (onboarding submission)
+   */
+  async saveAcademicProfile(
+    data: Omit<AcademicProfile, "_id" | "user" | "onboardingCompleted" | "createdAt" | "updatedAt">
+  ): Promise<AcademicProfileResponse> {
+    const response = await authApi.post<AcademicProfileResponse>("/api/profile", data);
+    return response.data;
+  },
+
+  /**
+   * Partially update an existing academic profile
+   */
+  async updateAcademicProfile(data: Partial<Omit<AcademicProfile, "_id" | "user" | "createdAt" | "updatedAt">>): Promise<AcademicProfileResponse> {
+    const response = await authApi.patch<AcademicProfileResponse>("/api/profile", data);
+    return response.data;
+  },
+
+  /**
+   * Get cached study material for a subject (null if not yet generated)
+   */
+  async getStudyMaterial(subjectName: string): Promise<StudyMaterialResponse> {
+    const response = await authApi.get<StudyMaterialResponse>(
+      `/api/study-material?subject=${encodeURIComponent(subjectName)}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate (or return fresh cached) study material for a subject
+   */
+  async generateStudyMaterial(
+    subjectName: string,
+    marks?: number,
+    grade?: string,
+    forceRegenerate = false,
+  ): Promise<StudyMaterialResponse> {
+    const response = await authApi.post<StudyMaterialResponse>("/api/study-material/generate", {
+      subjectName,
+      marks,
+      grade,
+      forceRegenerate,
+    });
     return response.data;
   },
 };

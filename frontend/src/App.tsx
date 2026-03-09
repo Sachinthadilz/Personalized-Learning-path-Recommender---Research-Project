@@ -15,6 +15,10 @@ import SavedPathsTab from "./components/SavedPathsTab";
 import TeamComponentSelection from "./components/TeamComponentSelection";
 import AutoLearnerProfileTab from "./components/AutoLearnerProfileTab";
 import AdminDashboard from "./components/AdminDashboard";
+import TimetablePlanner from "./components/TimetablePlanner";
+import OnboardingForm from "./components/OnboardingForm";
+import AdaptiveVisualizerTab from "./components/AdaptiveVisualizerTab";
+import { authService } from "./services/authService";
 import {
   LayoutDashboard,
   Sparkles,
@@ -23,6 +27,7 @@ import {
   Bookmark,
   Zap,
   GraduationCap,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
@@ -39,7 +44,11 @@ type Tab =
   | "skills"
   | "universities"
   | "learner-status"
-  | "admin";
+  | "admin"
+  | "timetable-planner"
+  | "adaptive-visualizer";
+
+type SelectedComponent = "explore-courses" | "timetable-planner" | "adaptive-visualizer" | "learner-status";
 
 type AuthView = "landing" | "login" | "signup";
 
@@ -51,13 +60,33 @@ function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [hasSelectedComponent, setHasSelectedComponent] = useState(false);
-  const [selectedComponent, setSelectedComponent] = useState<string>("explore-courses");
+  const [selectedComponent, setSelectedComponent] = useState<SelectedComponent>("explore-courses");
   const [showLanding, setShowLanding] = useState(false);
+  const [hasAcademicProfile, setHasAcademicProfile] = useState(false);
+  const [isAcademicProfileOpen, setIsAcademicProfileOpen] = useState(false);
+  const [profileVersion, setProfileVersion] = useState(0);
 
   useEffect(() => {
     // Reset error state when tab changes
     setHasError(false);
   }, [activeTab]);
+
+  // Check whether the logged-in user has already filled their academic profile
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setHasAcademicProfile(false);
+      return;
+    }
+    authService
+      .getAcademicProfile()
+      .then((res) => {
+        setHasAcademicProfile(res.data !== null);
+      })
+      .catch(() => {
+        // If the request fails, don't show notification
+        setHasAcademicProfile(true);
+      });
+  }, [isAuthenticated]);
 
   // Show loading state
   if (isLoading) {
@@ -115,11 +144,25 @@ function App() {
   if (!hasSelectedComponent) {
     return (
       <TeamComponentSelection
-        onSelectComponent={(tab?: string) => {
-          const component = tab === "learner-status" ? "learner-status" : "explore-courses";
-          setSelectedComponent(component);
-          if (tab) setActiveTab(tab as Tab);
+        onSelectComponent={() => {
           setHasSelectedComponent(true);
+          setSelectedComponent("explore-courses");
+          setActiveTab("dashboard");
+        }}
+        onSelectTimetable={() => {
+          setHasSelectedComponent(true);
+          setSelectedComponent("timetable-planner");
+          setActiveTab("timetable-planner");
+        }}
+        onSelectAdaptive={() => {
+          setHasSelectedComponent(true);
+          setSelectedComponent("adaptive-visualizer");
+          setActiveTab("adaptive-visualizer");
+        }}
+        onSelectLearnerStatus={() => {
+          setHasSelectedComponent(true);
+          setSelectedComponent("learner-status");
+          setActiveTab("learner-status");
         }}
         onLogoClick={() => setShowLanding(true)}
         onOpenAdmin={() => {
@@ -152,6 +195,10 @@ function App() {
           return <AutoLearnerProfileTab />;
         case "admin":
           return <AdminDashboard />;
+        case "timetable-planner":
+          return <TimetablePlanner />;
+        case "adaptive-visualizer":
+          return <AdaptiveVisualizerTab profileVersion={profileVersion} />;
         default:
           return <Dashboard />;
       }
@@ -183,21 +230,26 @@ function App() {
     { id: "skills", label: "Skills", Icon: Zap },
     { id: "universities", label: "Universities", Icon: GraduationCap },
     { id: "learner-status", label: "Learner Status", Icon: Brain },
+    { id: "timetable-planner", label: "Timetable", Icon: CalendarDays },
+    { id: "adaptive-visualizer", label: "Progress Tracker", Icon: Sparkles },
   ];
 
-  const exploreCoursesTabs: Tab[] = [
-    "dashboard", "ai-search", "courses", "learning-path", "saved-paths", "skills", "universities",
-  ];
-
-  const tabs = selectedComponent === "learner-status"
-    ? allTabs.filter((t) => t.id === "learner-status")
-    : allTabs.filter((t) => exploreCoursesTabs.includes(t.id));
+  const tabs =
+    selectedComponent === "timetable-planner"
+      ? allTabs.filter((t) => t.id === "timetable-planner")
+      : selectedComponent === "adaptive-visualizer"
+      ? allTabs.filter((t) => t.id === "adaptive-visualizer")
+      : selectedComponent === "learner-status"
+      ? allTabs.filter((t) => t.id === "learner-status")
+      : allTabs.filter((t) => t.id !== "timetable-planner" && t.id !== "adaptive-visualizer" && t.id !== "learner-status");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
       {/* Header */}
       <Header
         onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenAcademicProfile={() => setIsAcademicProfileOpen(true)}
+        hasUnfilledProfile={!hasAcademicProfile}
         onLogoClick={() => setShowLanding(true)}
         onOpenAdmin={() => {
           setSelectedComponent("explore-courses");
@@ -221,6 +273,32 @@ function App() {
             </div>
             <div className="p-6">
               <UserProfile />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Academic Profile Modal */}
+      {isAcademicProfileOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Academic Profile</h2>
+              <button
+                onClick={() => setIsAcademicProfileOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <OnboardingForm
+                onComplete={() => {
+                  setHasAcademicProfile(true);
+                  setIsAcademicProfileOpen(false);
+                  setProfileVersion((v) => v + 1);
+                }}
+              />
             </div>
           </div>
         </div>

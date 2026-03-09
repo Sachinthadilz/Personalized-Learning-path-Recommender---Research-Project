@@ -3,6 +3,7 @@ Pydantic models for API request/response schemas
 """
 from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from enum import Enum
 
 
@@ -317,3 +318,70 @@ class LearnerProfileResponse(BaseModel):
         default={},
         description="Recommended learning track and actions based on predicted outcome",
     )
+
+
+# ============================================================================
+# TIMETABLE PLANNER MODELS
+# ============================================================================
+
+
+class TimetableDailyAllocation(BaseModel):
+    """Single subject allocation within a day"""
+    subject_id: str
+    subject_name: str
+    planned_hours: float = Field(ge=0)
+    completed_hours: float = Field(default=0.0, ge=0)
+    status: str = Field(default="planned")  # planned | in_progress | completed | missed
+
+
+class TimetableDay(BaseModel):
+    """One day in a student's timetable"""
+    student_id: str
+    date: str                           # YYYY-MM-DD
+    day_of_week: str
+    total_hours_available: float = Field(ge=0, le=12)
+    allocations: List[TimetableDailyAllocation]
+    total_planned: float = Field(ge=0)
+    total_completed: float = Field(default=0.0, ge=0)
+    is_locked: bool = Field(default=False)
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class TimetableSubjectInput(BaseModel):
+    """Subject supplied during timetable setup"""
+    subject_id: str
+    name: str
+    credits: int = Field(ge=1, le=4)
+    remaining_needed: float = Field(ge=0)
+
+
+class TimetableGenerateRequest(BaseModel):
+    """Body for POST /timetable/generate"""
+    student_id: str
+    name: str
+    start_date: str
+    end_date: str
+    subjects: List[TimetableSubjectInput]
+    hours_per_day: Dict[str, float] = Field(
+        default_factory=lambda: {
+            "Monday": 4, "Tuesday": 4, "Wednesday": 4,
+            "Thursday": 4, "Friday": 3, "Saturday": 6, "Sunday": 6,
+        }
+    )
+
+
+class TimetableCompletionUpdate(BaseModel):
+    """Body for POST /timetable/update"""
+    student_id: str
+    date: str
+    subject_id: str
+    completed_hours: float = Field(ge=0)
+
+
+class TimetableGetResponse(BaseModel):
+    """Response for GET /timetable/{student_id}"""
+    success: bool
+    student_id: str
+    count: int
+    timetables: List[TimetableDay]
