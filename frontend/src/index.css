@@ -8,6 +8,54 @@
   }
 }
 
+/* ── Timetable Planner custom components ── */
+@layer components {
+  .ttm-card {
+    @apply bg-white/80 backdrop-blur-xl rounded-xl shadow-lg border border-white/20 p-4 transition-all duration-500 hover:shadow-xl hover:bg-white/90 hover:-translate-y-0.5;
+  }
+
+  .ttm-btn-primary {
+    @apply relative bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 active:scale-95 overflow-hidden;
+  }
+
+  .ttm-btn-secondary {
+    @apply relative bg-white/90 backdrop-blur-sm text-blue-600 border-2 border-blue-500/30 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-500 hover:shadow-lg transform hover:scale-105 active:scale-95;
+  }
+
+  .ttm-input-field {
+    @apply w-full px-3 py-2 bg-white/70 backdrop-blur-sm border-2 border-gray-300/50 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 outline-none hover:bg-white/90 hover:border-gray-400/50 text-sm;
+  }
+
+  .ttm-subject-card {
+    @apply relative bg-gradient-to-br rounded-xl p-4 text-white shadow-md transition-all duration-500 hover:shadow-lg transform hover:scale-105 hover:-translate-y-0.5 overflow-hidden;
+  }
+
+  .ttm-glass-card {
+    @apply bg-white/60 backdrop-blur-2xl rounded-xl shadow-xl border border-white/40 transition-all duration-500 hover:bg-white/70;
+  }
+}
+
+/* Timetable shimmer animation */
+.ttm-shimmer {
+  animation: ttmShimmer 3s infinite linear;
+  background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  background-size: 1000px 100%;
+}
+
+@keyframes ttmShimmer {
+  0%   { background-position: -1000px 0; }
+  100% { background-position:  1000px 0; }
+}
+
+.ttm-page-transition {
+  animation: ttmFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ttmFadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

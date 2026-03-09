@@ -1,0 +1,55 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-01-03T14:05:06.152312",
+  "num_subjects": 10,
+  "feature_columns": [
+    "hours_available_today",
+    "days_until_end",
+    "subject_1_credits",
+    "subject_1_remaining_needed",
+    "subject_2_credits",
+    "subject_2_remaining_needed",
+    "subject_3_credits",
+    "subject_3_remaining_needed",
+    "subject_4_credits",
+    "subject_4_remaining_needed",
+    "subject_5_credits",
+    "subject_5_remaining_needed",
+    "subject_6_credits",
+    "subject_6_remaining_needed",
+    "subject_7_credits",
+    "subject_7_remaining_needed",
+    "subject_8_credits",
+    "subject_8_remaining_needed",
+    "subject_9_credits",
+    "subject_9_remaining_needed",
+    "subject_10_credits",
+    "subject_10_remaining_needed"
+  ],
+  "target_columns": [
+    "subject_1",
+    "subject_2",
+    "subject_3",
+    "subject_4",
+    "subject_5",
+    "subject_6",
+    "subject_7",
+    "subject_8",
+    "subject_9",
+    "subject_10"
+  ],
+  "day_encoding": {
+    "Friday": 0,
+    "Monday": 1,
+    "Saturday": 2,
+    "Sunday": 3,
+    "Thursday": 4,
+    "Tuesday": 5,
+    "Wednesday": 6
+  },
+  "metrics": {
+    "mae": 0.3756593199820026,
+    "rmse": 0.6687795333872726,
+    "r2": 0.4834286175001731
+  }
+}
