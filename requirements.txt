@@ -11,6 +11,9 @@ neo4j==5.25.0
 motor>=3.6
 pymongo>=4.9
 
+# Redis — async queue for activity event processing
+redis>=5.0.0
+
 # Data processing (Python 3.13 compatible versions)
 pandas==2.2.3
 numpy==2.1.3

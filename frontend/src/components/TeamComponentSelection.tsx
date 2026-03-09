@@ -7,11 +7,13 @@ import { Network, Code2, Layers, PenTool, X, ArrowRight } from "lucide-react";
 interface TeamComponentSelectionProps {
   onSelectComponent: (tab?: string) => void;
   onLogoClick?: () => void;
+  onOpenAdmin?: () => void;
 }
 
 const TeamComponentSelection = ({
   onSelectComponent,
   onLogoClick,
+  onOpenAdmin,
 }: TeamComponentSelectionProps) => {
   useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -54,7 +56,11 @@ const TeamComponentSelection = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <Header onOpenProfile={() => setIsProfileOpen(true)} onLogoClick={onLogoClick} />
+      <Header 
+        onOpenProfile={() => setIsProfileOpen(true)} 
+        onLogoClick={onLogoClick}
+        onOpenAdmin={onOpenAdmin}
+      />
 
       {/* Profile Modal */}
       {isProfileOpen && (

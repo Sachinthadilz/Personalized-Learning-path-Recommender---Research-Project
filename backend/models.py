@@ -154,6 +154,45 @@ class StatsResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+class AutoLearnerProfileRequest(BaseModel):
+    """
+    Automatic learner profile prediction request.
+    
+    The system fetches student background data from OULAD CSV files and
+    engagement features from activity logs automatically.
+    
+    **Two input modes:**
+    
+    1. **Browser extension mode** (recommended):
+       Provide `course_id` (e.g., "ml-fundamentals") — automatically maps to OULAD fields
+    
+    2. **Direct OULAD mode**:
+       Provide `code_module` and `code_presentation` directly
+    
+    At least one mode must be specified.
+    """
+    
+    student_id: str = Field(
+        ..., 
+        description="OULAD student ID (id_student from CSV files)"
+    )
+    course_id: Optional[str] = Field(
+        None,
+        description="Browser extension course identifier (e.g., 'ml-fundamentals'). "
+                    "Automatically mapped to OULAD code_module and code_presentation."
+    )
+    code_module: Optional[str] = Field(
+        None,
+        description="Direct OULAD module code (e.g., 'AAA', 'BBB'). "
+                    "Used when course_id is not provided."
+    )
+    code_presentation: Optional[str] = Field(
+        None,
+        description="Direct OULAD presentation code (e.g., '2013J', '2014B'). "
+                    "Used when course_id is not provided."
+    )
+
+
 class LearnerProfileRequest(BaseModel):
     """
     19-feature OULAD student input for the learner profile prediction pipeline.

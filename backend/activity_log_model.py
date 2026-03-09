@@ -169,6 +169,8 @@ class EngagementFeatures(BaseModel):
     """
 
     student_id        : str
+    code_module       : Optional[str] = Field(None, description="OULAD module code resolved from course_id")
+    code_presentation : Optional[str] = Field(None, description="OULAD presentation code resolved from course_id")
     total_clicks      : int   = 0
     days_active       : int   = 0
     max_daily_clicks  : int   = 0

@@ -25,6 +25,9 @@ class Settings:
     MONGODB_ACTIVITY_URI: str = os.getenv("MONGODB_ACTIVITY_URI", "mongodb://localhost:27017")
     MONGODB_ACTIVITY_DB: str  = os.getenv("MONGODB_ACTIVITY_DB",  "learner_activity")
     MONGODB_ACTIVITY_COL: str = os.getenv("MONGODB_ACTIVITY_COL", "activity_logs")
+
+    # Redis — Activity event queue
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     
     # API Configuration
     API_TITLE: str = "Course Knowledge Graph API"
@@ -34,7 +37,7 @@ class Settings:
     Provides recommendations, skill mapping, and learning path discovery.
     """
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
-    API_PORT: int = int(os.getenv("API_PORT", "8080"))
+    API_PORT: int = int(os.getenv("API_PORT", "5000"))
     API_RELOAD: bool = os.getenv("API_RELOAD", "True").lower() == "true"
     
     # Data Configuration

@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Learning Activity Tracker",
+  "version": "1.0.0",
+  "description": "Tracks student learning activities and sends them to a learning analytics backend",
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:5000/*",
+    "http://localhost:3000/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.coursera.org/*",
+        "*://*.udemy.com/*",
+        "*://*.edx.org/*",
+        "*://*.khanacademy.org/*",
+        "*://*.udacity.com/*",
+        "*://localhost:3000/*"
+      ],
+      "js": ["api_client.js", "event_tracker.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

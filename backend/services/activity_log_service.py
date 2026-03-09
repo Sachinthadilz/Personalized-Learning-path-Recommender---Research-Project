@@ -1,25 +1,17 @@
 """
-Activity Log Service  (MongoDB-backed)
-=======================================
+Activity Log Service
+====================
 
-Stores student activity events in MongoDB using the ``motor`` async driver.
-All public I/O methods are ``async`` so they integrate naturally with
-FastAPI's async request handlers.
+Reads student activity events from MongoDB (via ``motor``) and computes
+engagement features for the ML pipeline.
+
+**Writes are delegated to the Node.js logging service.**  The only write
+helper remaining here is :meth:`build_response`, which constructs the
+response payload (with a server-generated ``log_id``) that gets forwarded
+to the Node service by the FastAPI route.
 
 Feature aggregation helpers remain synchronous (pure Python) — they operate
 on lists of already-fetched documents and do not touch the database directly.
-
-Collection schema (one document per event)
-------------------------------------------
-{
-  "log_id"     : "<uuid4>",          # unique per event
-  "student_id" : "stu_001",
-  "course_id"  : "DDD_2014J",
-  "event_type" : "click",
-  "timestamp"  : "2026-03-07T09:15:00",   # ISO-8601 string (UTC)
-  "duration"   : null,
-  "metadata"   : {}
-}
 """
 
 from __future__ import annotations
@@ -38,6 +30,7 @@ from activity_log_model import (
     EventType,
 )
 from mongo_activity import get_activity_collection
+from services.course_mapping_service import CourseMappingService, CourseMappingError
 
 logger = logging.getLogger(__name__)
 
@@ -46,31 +39,27 @@ _EARLY_PERIOD_DAYS = 14
 
 class ActivityLogService:
     """
-    Async service class for storing and querying student activity logs in
-    MongoDB.  All database methods are ``async`` and should be ``await``-ed.
+    Service class for the student activity log pipeline.
+
+    * **Writes** — delegated to the Node.js logging service; this class
+      only builds the response payload (:meth:`build_response`).
+    * **Reads** — query MongoDB via Motor for log retrieval and feature
+      aggregation.
     """
 
-    # ── Write ────────────────────────────────────────────────────────────────
+    # ── Write (delegated to Node.js) ──────────────────────────────────────
 
-    @classmethod
-    async def log_event(cls, entry: ActivityLogEntry) -> ActivityLogResponse:
+    @staticmethod
+    def build_response(entry: ActivityLogEntry) -> ActivityLogResponse:
         """
-        Persist a single activity event to MongoDB and return the stored record.
+        Create an :class:`ActivityLogResponse` with a server-generated
+        ``log_id`` — **without** writing to MongoDB.
 
-        The document is stored with MongoDB's auto-generated ``_id`` discarded
-        from the response; clients see the application-level ``log_id`` (UUID4).
+        Actual persistence is handled by the Node.js logging service;
+        this helper is used by the route to build the payload that gets
+        forwarded.
         """
-        response = ActivityLogResponse.from_entry(entry)
-        doc = response.model_dump(mode="json")   # datetime → ISO string, enum → str
-
-        col = await get_activity_collection()
-        await col.insert_one(doc)                # motor auto-adds _id in-place
-
-        logger.debug(
-            "Stored event %s for student=%s course=%s (log_id=%s)",
-            entry.event_type, entry.student_id, entry.course_id, response.log_id,
-        )
-        return response
+        return ActivityLogResponse.from_entry(entry)
 
     # ── Read ─────────────────────────────────────────────────────────────────
 
@@ -237,8 +226,23 @@ class ActivityLogService:
             )
             return EngagementFeatures(student_id=student_id)
 
+        # Resolve OULAD code_module / code_presentation from course_id
+        resolved_module: str | None = None
+        resolved_presentation: str | None = None
+        if course_id:
+            try:
+                mapping = CourseMappingService.map_course(course_id)
+                resolved_module = mapping["code_module"]
+                resolved_presentation = mapping["code_presentation"]
+            except CourseMappingError:
+                logger.warning(
+                    "Could not resolve course_id=%s to OULAD module", course_id,
+                )
+
         features = EngagementFeatures(
             student_id        = student_id,
+            code_module       = resolved_module,
+            code_presentation = resolved_presentation,
             total_clicks      = cls.compute_total_clicks(records),
             days_active       = cls.compute_days_active(records),
             max_daily_clicks  = cls.compute_max_daily_clicks(records),
@@ -249,7 +253,8 @@ class ActivityLogService:
         )
 
         logger.info(
-            "Engagement features for student_id=%s: clicks=%d days=%d assessments=%d",
-            student_id, features.total_clicks, features.days_active, features.num_assessments,
+            "Engagement features for student_id=%s: clicks=%d days=%d assessments=%d module=%s/%s",
+            student_id, features.total_clicks, features.days_active,
+            features.num_assessments, resolved_module, resolved_presentation,
         )
         return features

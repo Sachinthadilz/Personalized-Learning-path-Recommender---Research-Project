@@ -12,7 +12,7 @@ Include this router in ``main.py`` with::
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
@@ -23,7 +23,10 @@ from activity_log_model import (
     EngagementFeatures,
     EventType,
 )
+from mongo_activity import get_activity_collection
 from services.activity_log_service import ActivityLogService
+from services.engagement_feature_service import EngagementFeatureService
+from services.timeline_service import TimelineService
 
 logger = logging.getLogger(__name__)
 
@@ -52,16 +55,56 @@ async def log_event(entry: ActivityLogEntry) -> ActivityLogResponse:
     """
     Record a student activity event.
 
-    **Example events:** ``click``, ``video_play``, ``assessment_submit``.
+    FastAPI validates the request body, writes the event directly to
+    MongoDB, and returns HTTP 201 immediately.
 
     - ``timestamp`` defaults to *now (UTC)* if omitted.
     - ``metadata`` accepts any JSON-serialisable key/value pairs.
     """
     try:
-        return await ActivityLogService.log_event(entry)
+        response = ActivityLogService.build_response(entry)
+
+        # Write directly to MongoDB — no Redis/worker dependency
+        col = await get_activity_collection()
+        await col.insert_one(response.model_dump(mode="json"))
+
+        return response
     except Exception as exc:
         logger.error("Failed to log event: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# GET /activity/timeline/{student_id}
+# ---------------------------------------------------------------------------
+
+@activity_log_router.get(
+    "/timeline/{student_id}",
+    response_model=List[Dict[str, Any]],
+    summary="Student engagement timeline",
+    description=(
+        "Aggregate a student's activity events by day.  Returns a list of "
+        "``{date, events, total_duration}`` objects sorted ascending — "
+        "ready to feed directly into a frontend chart library."
+    ),
+)
+async def get_timeline(
+    student_id: str,
+    course_id: Optional[str] = Query(None, description="Filter by course / module ID"),
+    start_date: Optional[date] = Query(None, description="Inclusive start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="Inclusive end date (YYYY-MM-DD)"),
+) -> List[Dict[str, Any]]:
+    """
+    Return daily event counts for a student, optionally filtered by
+    course and/or date range.  An empty list is returned when no
+    matching events exist.
+    """
+    return await TimelineService.get_daily_timeline(
+        student_id=student_id,
+        course_id=course_id,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -116,22 +159,25 @@ async def get_student_logs(
 )
 async def get_engagement_features(
     student_id: str,
-    course_id: Optional[str] = Query(
-        None,
+    course_id: str = Query(
+        ...,
         description=(
-            "Restrict aggregation to a single course.  "
-            "Omit to aggregate across all courses."
+            "Course identifier to filter activity logs. REQUIRED to ensure "
+            "engagement features are computed for a specific course only."
         ),
     ),
 ) -> EngagementFeatures:
     """
-    Return computed engagement features for a student.
+    Return computed engagement features for a student in a specific course.
 
-    Features are derived entirely from the student's activity log and map
-    directly onto the numerical columns expected by
+    Features are derived entirely from the student's activity log filtered
+    by both student_id and course_id, ensuring accurate per-course metrics.
+    Maps directly onto the numerical columns expected by
     ``POST /predict-learner-profile``.
+
+    Uses MongoDB aggregation pipelines for optimal performance.
     """
-    return await ActivityLogService.generate_engagement_features(
+    return await EngagementFeatureService.generate_engagement_features_as_model(
         student_id=student_id,
         course_id=course_id,
     )

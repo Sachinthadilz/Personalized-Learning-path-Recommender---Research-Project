@@ -22,6 +22,7 @@ import {
   Sparkles,
   Info,
 } from "lucide-react";
+import StudentEngagementTimeline from "./StudentEngagementTimeline";
 
 // â”€â”€â”€ Option lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -244,6 +245,7 @@ export default function LearnerStatusTab() {
   const [result, setResult] = useState<LearnerProfileResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState("");
 
   // Auto-calculate mean_daily_clicks whenever total_clicks or days_active changes
   useEffect(() => {
@@ -427,7 +429,19 @@ export default function LearnerStatusTab() {
         </div>
       )}
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+            {/* -- Student ID (for activity timeline) -- */}
+      <div className="flex items-center gap-3">
+        <label className="text-xs font-medium text-gray-600 whitespace-nowrap">Student ID</label>
+        <input
+          type="text"
+          value={studentId}
+          onChange={(e) => setStudentId(e.target.value.trim())}
+          placeholder="e.g. student_001"
+          className="flex-1 max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        <span className="text-xs text-gray-400">Used to load the engagement timeline below</span>
+      </div>
+{/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           SECTION 1 â€” Student Background  (8 categorical)
       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <Section
@@ -783,6 +797,19 @@ export default function LearnerStatusTab() {
               </div>
             )}
         </div>
+      )}
+
+      {/* ── Engagement Timeline ─────────────────────────────────────── */}
+      {studentId && (
+        <Section
+          title="Engagement Timeline"
+          icon={<Activity className="w-4 h-4 text-sky-600" />}
+          badge="activity log"
+          accentColor="bg-sky-50"
+          defaultOpen
+        >
+          <StudentEngagementTimeline studentId={studentId} />
+        </Section>
       )}
     </div>
   );

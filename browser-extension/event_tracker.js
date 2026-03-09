@@ -1,0 +1,489 @@
+/**
+ * Event Tracker for monitoring learning activities
+ */
+
+class EventTracker {
+  constructor() {
+    this.pageLoadTime = Date.now();
+    this.lastActivityTime = Date.now();
+    this.isActive = true;
+    this.idleThreshold = 60000; // 1 minute of inactivity
+    this.sendInterval = 30000; // Send time tracking every 30 seconds
+    this.activeTime = 0;
+    this.sessionId = this.generateSessionId();
+    this.videoElements = new Map();
+    
+    this.init();
+  }
+
+  /**
+   * Initialize the event tracker
+   */
+  async init() {
+    await this.loadConfig();
+    this.setupEventListeners();
+    this.startTimeTracking();
+    this.detectVideos();
+    this.trackPageVisit();
+
+    // Poll chrome.storage every 5 s so this.studentId is always up to date.
+    // This picks up the real user ID once the frontend content script pushes it,
+    // regardless of tab open order or timing.
+    setInterval(async () => {
+      const { studentId } = await chrome.storage.local.get(['studentId']);
+      if (studentId && studentId !== 'anonymous' && studentId !== this.studentId) {
+        this.studentId = studentId;
+        console.log('[tracker] student ID refreshed:', studentId);
+      }
+    }, 5000);
+  }
+
+  /**
+   * Load configuration from storage
+   */
+  async loadConfig() {
+    try {
+      const result = await chrome.storage.local.get(['studentId', 'courseId', 'apiBaseURL']);
+
+      // Student ID comes from the logged-in user on our frontend (localhost:5173).
+      // background.js reads localStorage there and saves it to chrome.storage.
+      this.studentId = result.studentId || 'anonymous';
+      this.courseId = result.courseId || this.extractCourseId();
+
+      if (window.apiClient) {
+        // Migrate stale port 8000 → 8080 from Chrome storage
+        let apiBaseURL = result.apiBaseURL || 'http://localhost:5000';
+        if (apiBaseURL.includes('localhost:8000') || apiBaseURL.includes('localhost:8080')) {
+          apiBaseURL = 'http://localhost:5000';
+          chrome.storage.local.set({ apiBaseURL });
+          console.log('Migrated apiBaseURL in storage → 5000');
+        }
+        window.apiClient.setBaseURL(apiBaseURL);
+      }
+    } catch (error) {
+      console.error('Error loading config:', error);
+      this.studentId = 'anonymous';
+      this.courseId = this.extractCourseId();
+    }
+  }
+
+  /**
+   * Generate a unique session ID
+   */
+  generateSessionId() {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Extract course ID from URL
+   */
+  extractCourseId() {
+    const url = window.location.href;
+    const hostname = window.location.hostname;
+    
+    // Extract course ID based on platform
+    if (hostname.includes('coursera.org')) {
+      const match = url.match(/learn\/([^\/]+)/);
+      return match ? match[1] : 'unknown';
+    } else if (hostname.includes('udemy.com')) {
+      const match = url.match(/course\/([^\/]+)/);
+      return match ? match[1] : 'unknown';
+    } else if (hostname.includes('edx.org')) {
+      const match = url.match(/course\/([^\/]+)/);
+      return match ? match[1] : 'unknown';
+    }
+    
+    return 'unknown';
+  }
+
+  /**
+   * Setup event listeners for various interactions
+   */
+  setupEventListeners() {
+    // Track user activity for idle detection
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    activityEvents.forEach(event => {
+      document.addEventListener(event, () => this.updateActivity(), { passive: true });
+    });
+
+    // Track clicks on resources (links, buttons, etc.)
+    document.addEventListener('click', (e) => this.handleClick(e), true);
+
+    // Track page visibility changes
+    document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+
+    // Track beforeunload to send final time tracking
+    window.addEventListener('beforeunload', () => this.handlePageUnload());
+  }
+
+  /**
+   * Update last activity time
+   */
+  updateActivity() {
+    const now = Date.now();
+    const wasIdle = !this.isActive;
+    
+    this.lastActivityTime = now;
+    this.isActive = true;
+
+    if (wasIdle) {
+      console.log('User became active');
+    }
+  }
+
+  /**
+   * Check if user is idle
+   */
+  checkIdleStatus() {
+    const now = Date.now();
+    const idleTime = now - this.lastActivityTime;
+    
+    if (idleTime > this.idleThreshold && this.isActive) {
+      this.isActive = false;
+      console.log('User is idle');
+    }
+  }
+
+  /**
+   * Map extension event types to backend EventType enum values
+   */
+  mapEventType(type) {
+    const mapping = {
+      'page_visit': 'click',
+      'page_exit': 'click',
+      'time_tracking': 'click',
+      'video_play': 'video_play',
+      'video_pause': 'video_pause',
+      'video_complete': 'video_complete',
+      'video_seek': 'video_play',
+      'resource_click': 'resource_view',
+      'button_click': 'click'
+    };
+    return mapping[type] || 'click';
+  }
+
+  /**
+   * Build an event payload compatible with the backend ActivityLogEntry schema.
+   * Always reads the latest studentId from chrome.storage so stale cached
+   * values (e.g. 'anonymous' set at init) are never sent once a real ID syncs.
+   */
+  async buildEvent(eventType, duration, extraMetadata = {}) {
+    // Always read fresh from storage — never trust the cached this.studentId alone
+    const stored = await chrome.storage.local.get(['studentId']);
+    const studentId = (stored.studentId && stored.studentId !== 'anonymous')
+      ? stored.studentId
+      : this.studentId;
+    // Update local cache too
+    if (studentId !== 'anonymous') this.studentId = studentId;
+    return {
+      student_id: studentId,
+      course_id: this.courseId,
+      event_type: this.mapEventType(eventType),
+      timestamp: new Date().toISOString(),
+      duration: duration || null,
+      metadata: {
+        page_url: window.location.href,
+        session_id: this.sessionId,
+        original_event: eventType,
+        ...extraMetadata
+      }
+    };
+  }
+
+  /**
+   * Track page visit
+   */
+  async trackPageVisit() {
+    const event = await this.buildEvent('page_visit', null, {
+      page_title: document.title,
+      referrer: document.referrer
+    });
+
+    await this.sendEvent(event);
+  }
+
+  /**
+   * Start time tracking
+   */
+  startTimeTracking() {
+    setInterval(() => {
+      this.checkIdleStatus();
+      
+      if (this.isActive && !document.hidden) {
+        this.activeTime += this.sendInterval;
+        this.sendTimeTracking();
+      }
+    }, this.sendInterval);
+  }
+
+  /**
+   * Send time tracking event
+   */
+  async sendTimeTracking() {
+    const event = await this.buildEvent('time_tracking', Math.floor(this.activeTime / 1000), {
+      page_title: document.title
+    });
+
+    await this.sendEvent(event);
+  }
+
+  /**
+   * Handle click events
+   */
+  async handleClick(e) {
+    const target = e.target;
+    
+    // Check if it's a link or resource
+    const link = target.closest('a');
+    if (link) {
+      await this.trackResourceClick(link);
+    }
+
+    // Check if it's a button or interactive element
+    const button = target.closest('button, [role="button"]');
+    if (button) {
+      await this.trackInteraction('button_click', {
+        button_text: button.textContent.trim().substring(0, 100),
+        button_class: button.className
+      });
+    }
+  }
+
+  /**
+   * Track resource click
+   */
+  async trackResourceClick(link) {
+    const href = link.href;
+    const text = link.textContent.trim();
+
+    const event = await this.buildEvent('resource_click', null, {
+      resource_url: href,
+      resource_text: text.substring(0, 100),
+      resource_type: this.getResourceType(href)
+    });
+
+    await this.sendEvent(event);
+  }
+
+  /**
+   * Detect and track video elements
+   */
+  detectVideos() {
+    // Look for video elements
+    const videos = document.querySelectorAll('video');
+    videos.forEach(video => this.attachVideoListeners(video));
+
+    // Use MutationObserver to detect dynamically added videos
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeName === 'VIDEO') {
+            this.attachVideoListeners(node);
+          } else if (node.querySelectorAll) {
+            node.querySelectorAll('video').forEach(video => {
+              this.attachVideoListeners(video);
+            });
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  /**
+   * Attach listeners to video elements
+   */
+  attachVideoListeners(video) {
+    const videoId = this.getVideoId(video);
+    
+    if (this.videoElements.has(videoId)) {
+      return; // Already tracking this video
+    }
+
+    const videoData = {
+      element: video,
+      startTime: null,
+      totalWatchTime: 0
+    };
+
+    this.videoElements.set(videoId, videoData);
+
+    video.addEventListener('play', () => this.handleVideoPlay(videoId));
+    video.addEventListener('pause', () => this.handleVideoPause(videoId));
+    video.addEventListener('ended', () => this.handleVideoEnd(videoId));
+    video.addEventListener('seeked', () => this.handleVideoSeek(videoId));
+  }
+
+  /**
+   * Get unique identifier for video
+   */
+  getVideoId(video) {
+    return video.src || video.currentSrc || `video_${Date.now()}_${Math.random()}`;
+  }
+
+  /**
+   * Handle video play
+   */
+  async handleVideoPlay(videoId) {
+    const videoData = this.videoElements.get(videoId);
+    if (videoData) {
+      videoData.startTime = Date.now();
+      
+      await this.trackInteraction('video_play', {
+        video_id: videoId,
+        current_time: videoData.element.currentTime,
+        duration: videoData.element.duration
+      });
+    }
+  }
+
+  /**
+   * Handle video pause
+   */
+  async handleVideoPause(videoId) {
+    const videoData = this.videoElements.get(videoId);
+    if (videoData && videoData.startTime) {
+      const watchDuration = Date.now() - videoData.startTime;
+      videoData.totalWatchTime += watchDuration;
+      videoData.startTime = null;
+
+      await this.trackInteraction('video_pause', {
+        video_id: videoId,
+        watch_duration: Math.floor(watchDuration / 1000),
+        current_time: videoData.element.currentTime,
+        total_watch_time: Math.floor(videoData.totalWatchTime / 1000)
+      });
+    }
+  }
+
+  /**
+   * Handle video end
+   */
+  async handleVideoEnd(videoId) {
+    const videoData = this.videoElements.get(videoId);
+    if (videoData) {
+      if (videoData.startTime) {
+        const watchDuration = Date.now() - videoData.startTime;
+        videoData.totalWatchTime += watchDuration;
+      }
+
+      await this.trackInteraction('video_complete', {
+        video_id: videoId,
+        total_watch_time: Math.floor(videoData.totalWatchTime / 1000),
+        video_duration: videoData.element.duration
+      });
+    }
+  }
+
+  /**
+   * Handle video seek
+   */
+  async handleVideoSeek(videoId) {
+    const videoData = this.videoElements.get(videoId);
+    if (videoData) {
+      await this.trackInteraction('video_seek', {
+        video_id: videoId,
+        current_time: videoData.element.currentTime
+      });
+    }
+  }
+
+  /**
+   * Track general interaction
+   */
+  async trackInteraction(interactionType, metadata = {}) {
+    const event = await this.buildEvent(interactionType, null, metadata);
+
+    await this.sendEvent(event);
+  }
+
+  /**
+   * Handle visibility change
+   */
+  handleVisibilityChange() {
+    if (document.hidden) {
+      console.log('Page hidden');
+      this.isActive = false;
+    } else {
+      console.log('Page visible');
+      this.updateActivity();
+    }
+  }
+
+  /**
+   * Handle page unload
+   */
+  handlePageUnload() {
+    // Send final time tracking synchronously via sendBeacon
+    // We can't await here so read from cached this.studentId (best-effort)
+    if (this.activeTime > 0) {
+      const event = {
+        student_id: this.studentId,
+        course_id: this.courseId,
+        event_type: 'click',
+        timestamp: new Date().toISOString(),
+        duration: Math.floor(this.activeTime / 1000),
+        metadata: {
+          page_url: window.location.href,
+          session_id: this.sessionId,
+          original_event: 'page_exit'
+        }
+      };
+
+      // Use sendBeacon for reliable delivery on page unload
+      const url = `${window.apiClient.baseURL}${window.apiClient.endpoint}`;
+      const blob = new Blob([JSON.stringify(event)], { type: 'application/json' });
+      navigator.sendBeacon(url, blob);
+    }
+  }
+
+  /**
+   * Get resource type from URL
+   */
+  getResourceType(url) {
+    const extension = url.split('.').pop().toLowerCase().split('?')[0];
+    const typeMap = {
+      'pdf': 'document',
+      'doc': 'document',
+      'docx': 'document',
+      'ppt': 'presentation',
+      'pptx': 'presentation',
+      'mp4': 'video',
+      'mp3': 'audio',
+      'zip': 'archive',
+      'png': 'image',
+      'jpg': 'image',
+      'jpeg': 'image'
+    };
+
+    return typeMap[extension] || 'link';
+  }
+
+  /**
+   * Send event using API client
+   */
+  async sendEvent(event) {
+    try {
+      if (window.apiClient) {
+        await window.apiClient.sendEvent(event);
+      } else {
+        console.error('API client not available');
+      }
+    } catch (error) {
+      console.error('Error sending event:', error);
+    }
+  }
+}
+
+// Initialize event tracker when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.eventTracker = new EventTracker();
+  });
+} else {
+  window.eventTracker = new EventTracker();
+}

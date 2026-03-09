@@ -13,7 +13,7 @@ import AISearchTab from "./components/AISearchTab";
 import LearningPathTab from "./components/LearningPathTab";
 import SavedPathsTab from "./components/SavedPathsTab";
 import TeamComponentSelection from "./components/TeamComponentSelection";
-import LearnerStatusTab from "./components/LearnerStatusTab";
+import AutoLearnerProfileTab from "./components/AutoLearnerProfileTab";
 import AdminDashboard from "./components/AdminDashboard";
 import {
   LayoutDashboard,
@@ -122,6 +122,11 @@ function App() {
           setHasSelectedComponent(true);
         }}
         onLogoClick={() => setShowLanding(true)}
+        onOpenAdmin={() => {
+          setSelectedComponent("explore-courses");
+          setHasSelectedComponent(true);
+          setActiveTab("admin");
+        }}
       />
     );
   }
@@ -144,7 +149,7 @@ function App() {
         case "universities":
           return <UniversitiesTab />;
         case "learner-status":
-          return <LearnerStatusTab />;
+          return <AutoLearnerProfileTab />;
         case "admin":
           return <AdminDashboard />;
         default:
