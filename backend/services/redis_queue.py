@@ -48,8 +48,8 @@ async def connect_redis() -> None:
         await _pool.ping()
         logger.info("Redis connected (%s)", REDIS_URL)
     except Exception as exc:
-        logger.warning(
-            "Redis connection failed (%s): %s. Activity events will be logged locally.",
+        logger.debug(
+            "Redis not available (%s): %s. Activity events will be logged locally.",
             REDIS_URL, exc
         )
         _pool = None

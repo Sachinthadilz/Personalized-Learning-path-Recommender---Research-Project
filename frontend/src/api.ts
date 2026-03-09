@@ -430,6 +430,86 @@ export const fetchActivityTimeline = async (
   return response.data;
 };
 
+// ── Video Activity Logs ───────────────────────────────────────────────────────
+
+export interface VideoActivityLog {
+  log_id: string;
+  student_id: string;
+  course_id: string;
+  event_type: string;
+  timestamp: string;
+  duration: number | null;
+}
+
+export const fetchVideoActivityLogs = async (
+  studentId: string,
+  courseId?: string,
+): Promise<VideoActivityLog[]> => {
+  const baseParams: Record<string, string> = { limit: "500" };
+  if (courseId) baseParams.course_id = courseId;
+
+  // Fetch play events (for session counts) + pause/complete events (for watch durations)
+  // in parallel, then combine.
+  const [playRes, pauseRes, completeRes] = await Promise.all([
+    api.get(`/activity/logs/${studentId}`, { params: { ...baseParams, event_type: "video_play" } }),
+    api.get(`/activity/logs/${studentId}`, { params: { ...baseParams, event_type: "video_pause" } }),
+    api.get(`/activity/logs/${studentId}`, { params: { ...baseParams, event_type: "video_complete" } }),
+  ]);
+
+  return [...playRes.data, ...pauseRes.data, ...completeRes.data];
+};
+
+// ── Quiz Marks ────────────────────────────────────────────────────────────────
+
+export interface CourseQuizMark {
+  pathId: string;
+  pathName: string;
+  courseId: string;
+  courseName: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  completedAt: string;
+}
+
+export interface ProgressQuizMark {
+  subjectId: string;
+  subjectName: string;
+  score: number;
+  total: number;
+  percentage: number;
+  band: string;
+  takenAt: string;
+}
+
+export interface SubjectMark {
+  subjectName: string;
+  marks: number; // 0–100
+  grade: string | null;
+  isWeak: boolean;
+  difficulty: number | null;
+  confidence: number | null;
+  source: "study_material" | "profile" | "adaptive";
+}
+
+export interface QuizMarksResponse {
+  courseQuizMarks: CourseQuizMark[];
+  progressQuizMarks: ProgressQuizMark[];
+  subjectMarks: SubjectMark[];
+  summary: {
+    totalCourseQuizzes: number;
+    totalProgressQuizzes: number;
+    totalSubjectMarks: number;
+    overallAverage: number | null;
+  };
+}
+
+export const fetchQuizMarks = async (): Promise<QuizMarksResponse> => {
+  const response = await authApi.get("/api/quiz-marks");
+  // Controller wraps in { success, data: { ... } }
+  return response.data.data ?? response.data;
+};
+
 // ── Learner Profile Prediction ────────────────────────────────────────────────
 
 export interface LearnerProfileInput {

@@ -53,7 +53,7 @@ type SelectedComponent = "explore-courses" | "timetable-planner" | "adaptive-vis
 type AuthView = "landing" | "login" | "signup";
 
 function App() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [authView, setAuthView] = useState<AuthView>("landing");
   const [_hasError, setHasError] = useState(false);

@@ -1,4 +1,16 @@
 {
+  "Unknown": {
+    "profile": "Undetermined",
+    "description": "Insufficient data to make a prediction. Please ensure your activity logs and assessment records are up to date.",
+    "learning_path": "Standard Track",
+    "actions": [
+      "Complete the academic profile to enable personalised predictions",
+      "Engage with course materials to generate activity data",
+      "Submit at least one assessment to improve prediction accuracy"
+    ],
+    "alert_level": "Low",
+    "intervention": "Data Collection"
+  },
   "Distinction": {
     "profile": "High Achiever",
     "description": "Consistently strong performer with high engagement and excellent assessment results.",

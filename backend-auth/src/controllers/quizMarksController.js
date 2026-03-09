@@ -1,17 +1,20 @@
 const User = require("../models/User");
 const AdaptiveSession = require("../models/AdaptiveSession");
+const AcademicProfile = require("../models/AcademicProfile");
+const StudyMaterial = require("../models/StudyMaterial");
 const { asyncHandler } = require("../middleware/errorHandler");
 
 /**
  * GET /api/quiz-marks
  *
- * Returns two sets of quiz marks for the authenticated user:
+ * Returns quiz/assessment marks for the authenticated user from 4 sources:
  *
- * 1. courseQuizMarks  – from User.savedLearningPaths enrollment quiz results
- *    (populated when the user completes a course and submits the AI quiz)
- *
- * 2. progressQuizMarks – from AdaptiveSession.quizHistory
- *    (populated by the progress-tracking / adaptive learning feature)
+ * 1. courseQuizMarks   – User.savedLearningPaths enrollment quiz results
+ * 2. progressQuizMarks – AdaptiveSession.quizHistory (adaptive quiz game)
+ * 3. subjectMarks      – StudyMaterial.marks (marks entered when generating study material)
+ *                        + AcademicProfile.weakSubjects (onboarding assessment scores)
+ *                        + AdaptiveSession.weeklySubjects where marks != null
+ *                        (deduplicated by subject name, priority: study_material > profile > adaptive)
  */
 exports.getQuizMarks = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -46,22 +49,82 @@ exports.getQuizMarks = asyncHandler(async (req, res) => {
     }
   }
 
-  // ── 2. Progress-tracking quiz marks (AdaptiveSession model) ────────────
-  const session = await AdaptiveSession.findOne({ user: userId })
-    .select("quizHistory weeklySubjects")
-    .lean();
+  // ── 2. Subject assessment marks ─────────────────────────────────────────
+  // Sources (in priority order, dedup by subject name):
+  //   a) StudyMaterial.marks  – entered when generating study material (most direct)
+  //   b) AcademicProfile.weakSubjects – onboarding weak subject scores
+  //   c) AdaptiveSession.weeklySubjects – diagnosis marks where set
+  const [profile, session, studyMaterials] = await Promise.all([
+    AcademicProfile.findOne({ user: userId }).select("weakSubjects").lean(),
+    AdaptiveSession.findOne({ user: userId }).select("quizHistory weeklySubjects").lean(),
+    StudyMaterial.find({ user: userId, marks: { $ne: null } })
+      .select("subjectName marks grade")
+      .lean(),
+  ]);
 
-  const progressQuizMarks = [];
+  const subjectMarks = [];
+  const seenSubjects = new Set();
 
-  if (session && Array.isArray(session.quizHistory)) {
-    // Build a subject name lookup from weeklySubjects (id === name for this schema)
-    const subjectMap = {};
-    if (Array.isArray(session.weeklySubjects)) {
-      for (const s of session.weeklySubjects) {
-        subjectMap[s.name] = s.name; // subjectId stored as subject name
+  // a) StudyMaterial.marks – highest priority (user explicitly entered their score)
+  for (const sm of studyMaterials) {
+    if (sm.marks != null && !seenSubjects.has(sm.subjectName.toLowerCase())) {
+      subjectMarks.push({
+        subjectName: sm.subjectName,
+        marks: sm.marks,
+        grade: sm.grade || null,
+        isWeak: sm.marks < 50,
+        difficulty: null,
+        confidence: null,
+        source: "study_material",
+      });
+      seenSubjects.add(sm.subjectName.toLowerCase());
+    }
+  }
+
+  // b) AcademicProfile.weakSubjects (marks is required here)
+  if (profile && Array.isArray(profile.weakSubjects)) {
+    for (const s of profile.weakSubjects) {
+      if (s.marks != null && !seenSubjects.has(s.name.toLowerCase())) {
+        subjectMarks.push({
+          subjectName: s.name,
+          marks: s.marks,
+          grade: s.grade || null,
+          isWeak: true,
+          difficulty: null,
+          confidence: null,
+          source: "profile",
+        });
+        seenSubjects.add(s.name.toLowerCase());
       }
     }
+  }
 
+  // c) AdaptiveSession.weeklySubjects (marks optional, fill gaps not covered above)
+  if (session && Array.isArray(session.weeklySubjects)) {
+    for (const s of session.weeklySubjects) {
+      if (s.marks != null && !seenSubjects.has(s.name.toLowerCase())) {
+        subjectMarks.push({
+          subjectName: s.name,
+          marks: s.marks,
+          grade: s.grade || null,
+          isWeak: s.isWeak || false,
+          difficulty: s.difficulty,
+          confidence: s.confidence,
+          source: "adaptive",
+        });
+        seenSubjects.add(s.name.toLowerCase());
+      }
+    }
+  }
+
+  // ── 3. Progress-tracking quiz marks (AdaptiveSession.quizHistory) ────────
+  const progressQuizMarks = [];
+  const subjectMap = {};
+  if (session && Array.isArray(session.weeklySubjects)) {
+    for (const s of session.weeklySubjects) subjectMap[s.name] = s.name;
+  }
+
+  if (session && Array.isArray(session.quizHistory)) {
     for (const qr of session.quizHistory) {
       progressQuizMarks.push({
         subjectId: qr.subjectId,
@@ -84,6 +147,7 @@ exports.getQuizMarks = asyncHandler(async (req, res) => {
   const allPercentages = [
     ...courseQuizMarks.map((q) => q.percentage),
     ...progressQuizMarks.map((q) => q.percentage),
+    ...subjectMarks.map((s) => s.marks),
   ].filter((p) => p != null);
 
   const overallAverage =
@@ -98,9 +162,11 @@ exports.getQuizMarks = asyncHandler(async (req, res) => {
     data: {
       courseQuizMarks,
       progressQuizMarks,
+      subjectMarks,
       summary: {
         totalCourseQuizzes: courseQuizMarks.length,
         totalProgressQuizzes: progressQuizMarks.length,
+        totalSubjectMarks: subjectMarks.length,
         overallAverage,
       },
     },

@@ -1,10 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import {
   predictLearnerProfileAuto,
   type AutoLearnerProfileInput,
   type LearnerProfileResult,
+  fetchQuizMarks,
+  type QuizMarksResponse,
+  fetchVideoActivityLogs,
+  type VideoActivityLog,
 } from "../api";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Legend,
+  ReferenceLine,
+  Dot,
+} from "recharts";
 import {
   Brain,
   AlertTriangle,
@@ -17,6 +35,8 @@ import {
   AlertCircle,
   User,
   Activity,
+  Video,
+  Award,
 } from "lucide-react";
 import StudentEngagementTimeline from "./StudentEngagementTimeline";
 
@@ -85,6 +105,8 @@ export default function AutoLearnerProfileTab() {
   const [result, setResult] = useState<LearnerProfileResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [quizMarks, setQuizMarks] = useState<QuizMarksResponse | null>(null);
+  const [videoLogs, setVideoLogs] = useState<VideoActivityLog[]>([]);
 
   const handleAnalyze = async () => {
     if (!user) {
@@ -119,6 +141,13 @@ export default function AutoLearnerProfileTab() {
     if (user) {
       handleAnalyze();
     }
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch quiz marks and video logs when user is available
+  useEffect(() => {
+    if (!user) return;
+    fetchQuizMarks().then(setQuizMarks).catch(() => {});
+    fetchVideoActivityLogs(user.id).then(setVideoLogs).catch(() => {});
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleReanalyze = () => {
@@ -395,6 +424,340 @@ export default function AutoLearnerProfileTab() {
           </h3>
           <StudentEngagementTimeline studentId={user.id} />
         </div>
+      )}
+
+      {/* ── Quiz Marks Chart ─────────────────────────────────────────────── */}
+      {user && <QuizMarksChart quizMarks={quizMarks} />}
+
+      {/* ── Video Watch Chart ────────────────────────────────────────────── */}
+      {user && <VideoWatchChart videoLogs={videoLogs} />}
+    </div>
+  );
+}
+
+// ── Quiz Marks Chart ─────────────────────────────────────────────────────────
+
+function getDotColor(percentage: number) {
+  if (percentage >= 80) return "#22c55e";
+  if (percentage >= 60) return "#6366f1";
+  if (percentage >= 40) return "#f59e0b";
+  return "#ef4444";
+}
+
+function QuizMarksChart({ quizMarks }: { quizMarks: QuizMarksResponse | null }) {
+  const courseData = useMemo(() => {
+    if (!quizMarks) return [];
+    return (quizMarks.courseQuizMarks ?? []).map((q) => ({
+      name: q.courseName.length > 22 ? q.courseName.slice(0, 22) + "…" : q.courseName,
+      score: Math.round(q.percentage),
+    }));
+  }, [quizMarks]);
+
+  const progressData = useMemo(() => {
+    if (!quizMarks) return [];
+    return [...(quizMarks.progressQuizMarks ?? [])]
+      .sort((a, b) => new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime())
+      .map((q) => ({
+        name: q.subjectName.length > 22 ? q.subjectName.slice(0, 22) + "…" : q.subjectName,
+        score: Math.round(q.percentage),
+      }));
+  }, [quizMarks]);
+
+  const hasData = courseData.length > 0 || progressData.length > 0;
+
+  const renderCustomDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    return (
+      <Dot
+        key={`dot-${cx}-${cy}`}
+        cx={cx}
+        cy={cy}
+        r={5}
+        fill={getDotColor(payload.score)}
+        stroke="#fff"
+        strokeWidth={1.5}
+      />
+    );
+  };
+
+  const LineChartSection = ({
+    data,
+    title,
+    color,
+  }: {
+    data: { name: string; score: number }[];
+    title: string;
+    color: string;
+  }) => {
+    if (data.length === 0) return null;
+    return (
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{title}</p>
+        <div className="h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 8, right: 16, bottom: 40, left: -12 }}>
+              <defs>
+                <linearGradient id={`grad-${title}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.15} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 10 }}
+                stroke="#cbd5e1"
+                angle={-30}
+                textAnchor="end"
+                interval={0}
+              />
+              <YAxis
+                tick={{ fontSize: 11 }}
+                stroke="#cbd5e1"
+                domain={[0, 100]}
+                unit="%"
+              />
+              <RechartsTooltip
+                formatter={(value: number) => [`${value}%`, "Score"]}
+              />
+              {/* Pass threshold */}
+              <ReferenceLine y={60} stroke="#6366f1" strokeDasharray="4 3" strokeWidth={1.5}
+                label={{ value: "Pass", position: "insideTopRight", fontSize: 10, fill: "#6366f1" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke={color}
+                strokeWidth={2.5}
+                dot={renderCustomDot}
+                activeDot={{ r: 7 }}
+                name="Score"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h3 className="text-base font-semibold text-gray-800 mb-1 flex items-center gap-2">
+        <Award className="w-5 h-5 text-indigo-600" />
+        Quiz Marks
+      </h3>
+      <p className="text-xs text-gray-400 mb-4">
+        Scores from course quizzes and progress assessments
+      </p>
+
+      {!quizMarks && (
+        <div className="flex items-center justify-center py-10 text-gray-400 text-sm">
+          <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading quiz marks…
+        </div>
+      )}
+
+      {quizMarks && !hasData && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+          <Award className="w-5 h-5 mx-auto mb-2 opacity-40" />
+          No quiz marks recorded yet.
+        </div>
+      )}
+
+      {quizMarks && hasData && (
+        <>
+          {/* Summary row */}
+          {quizMarks.summary && quizMarks.summary.overallAverage !== null && (
+            <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500">
+              <span>
+                Course quizzes:{" "}
+                <span className="font-semibold text-gray-700">
+                  {quizMarks.summary.totalCourseQuizzes}
+                </span>
+              </span>
+              <span>
+                Progress quizzes:{" "}
+                <span className="font-semibold text-gray-700">
+                  {quizMarks.summary.totalProgressQuizzes}
+                </span>
+              </span>
+              <span>
+                Overall avg:{" "}
+                <span className="font-semibold text-indigo-700">
+                  {Math.round(quizMarks.summary.overallAverage)}%
+                </span>
+              </span>
+            </div>
+          )}
+
+          <div className="space-y-6">
+            <LineChartSection data={courseData} title="Course Quizzes" color="#6366f1" />
+            <LineChartSection data={progressData} title="Progress Quizzes" color="#0ea5e9" />
+          </div>
+
+          {/* Dot colour legend */}
+          <div className="flex flex-wrap gap-3 mt-3 text-xs text-gray-500">
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />≥ 80% Excellent</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />60–79% Good</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />40–59% Fair</span>
+            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />&lt; 40% Needs Work</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Video Watch Chart ─────────────────────────────────────────────────────────
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const rem = minutes % 60;
+  return rem > 0 ? `${hours}h ${rem}m` : `${hours}h`;
+}
+
+function VideoWatchChart({ videoLogs }: { videoLogs: VideoActivityLog[] }) {
+  const chartData = useMemo(() => {
+    const byDate: Record<string, { date: string; plays: number; watchMins: number }> = {};
+    videoLogs.forEach((log) => {
+      const date = log.timestamp.split("T")[0];
+      if (!byDate[date]) byDate[date] = { date, plays: 0, watchMins: 0 };
+      // Play events → increment session count
+      if (log.event_type === "video_play") {
+        byDate[date].plays += 1;
+      }
+      // Pause / complete events → accumulate watch time (duration is in seconds)
+      if (
+        (log.event_type === "video_pause" || log.event_type === "video_complete") &&
+        log.duration != null &&
+        log.duration > 0
+      ) {
+        byDate[date].watchMins += log.duration / 60;
+      }
+    });
+    return Object.values(byDate)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((d) => ({ ...d, watchMins: Math.round(d.watchMins * 10) / 10 }));
+  }, [videoLogs]);
+
+  const totalPlays = chartData.reduce((s, d) => s + d.plays, 0);
+  const totalWatchMins = chartData.reduce((s, d) => s + d.watchMins, 0);
+  const totalWatchSecs = videoLogs
+    .filter((l) => l.event_type === "video_pause" || l.event_type === "video_complete")
+    .reduce((s, l) => s + (l.duration ?? 0), 0);
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h3 className="text-base font-semibold text-gray-800 mb-1 flex items-center gap-2">
+        <Video className="w-5 h-5 text-sky-600" />
+        Video Watch Activity
+      </h3>
+      <p className="text-xs text-gray-400 mb-4">
+        Daily video plays and watch time (minutes)
+      </p>
+
+      {videoLogs.length === 0 && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+          <Video className="w-5 h-5 mx-auto mb-2 opacity-40" />
+          No video activity recorded yet.
+        </div>
+      )}
+
+      {chartData.length > 0 && (
+        <>
+          <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500">
+            <span>
+              Total plays:{" "}
+              <span className="font-semibold text-gray-700">{totalPlays}</span>
+            </span>
+            <span>
+              Total watch time:{" "}
+              <span className="font-semibold text-sky-700">
+                {totalWatchSecs > 0 ? formatDuration(totalWatchSecs) : `${Math.round(totalWatchMins)}m`}
+              </span>
+            </span>
+            <span>
+              Active days:{" "}
+              <span className="font-semibold text-gray-700">{chartData.length}</span>
+            </span>
+          </div>
+
+          {/* Watch Time Chart */}
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Watch Time (minutes / day)</p>
+          <div className="h-52 mb-6">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 4, right: 8, bottom: 0, left: -12 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatDate}
+                  tick={{ fontSize: 11 }}
+                  stroke="#cbd5e1"
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  stroke="#cbd5e1"
+                  allowDecimals={false}
+                  unit="m"
+                />
+                <RechartsTooltip
+                  formatter={(value: number) => [`${value} min`, "Watch Time"]}
+                  labelFormatter={(label) => formatDate(label)}
+                />
+                <Bar
+                  dataKey="watchMins"
+                  fill="#0ea5e9"
+                  radius={[4, 4, 0, 0]}
+                  name="Watch Time"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Play Count Chart */}
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Video Plays (sessions / day)</p>
+          <div className="h-52">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 4, right: 8, bottom: 0, left: -12 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatDate}
+                  tick={{ fontSize: 11 }}
+                  stroke="#cbd5e1"
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  stroke="#cbd5e1"
+                  allowDecimals={false}
+                />
+                <RechartsTooltip
+                  formatter={(value: number) => [`${value} sessions`, "Video Plays"]}
+                  labelFormatter={(label) => formatDate(label)}
+                />
+                <Bar
+                  dataKey="plays"
+                  fill="#6366f1"
+                  radius={[4, 4, 0, 0]}
+                  name="Video Plays"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
       )}
     </div>
   );
