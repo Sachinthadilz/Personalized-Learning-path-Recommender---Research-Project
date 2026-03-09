@@ -3,6 +3,7 @@ FastAPI application for Course Knowledge Graph
 """
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from typing import List, Optional
 import uvicorn
 import logging
@@ -12,6 +13,7 @@ from models import (
     Course, CourseDetail, SearchQuery, RecommendationRequest,
     LearningPathRequest, Skill, University, StatsResponse,
     AISearchQuery, AISearchResult, LearningPathResponse,
+    LearnerProfileRequest, LearnerProfileResponse, AutoLearnerProfileRequest,
     TimetableGenerateRequest,
 )
 from services import CourseService, RecommendationService, StatsService
@@ -19,25 +21,53 @@ from services.ai_search_service import AISearchService
 from services.learning_path_service import LearningPathService
 from services.cross_domain_service import CrossDomainService
 from services.ai_learning_path_service import ai_learning_path_service
+from services.learner_profile_service import LearnerProfileService
+from services.student_data_service import StudentDataService
+from services.activity_log_service import ActivityLogService
+from services.engagement_feature_service import EngagementFeatureService
+from activity_log_routes import activity_log_router
+from mongo_activity import ensure_indexes, close_client
+from services.redis_queue import connect_redis, close_redis
 from services.timetable_service import timetable_service
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup / shutdown lifecycle handler."""
+    await ensure_indexes()   # create MongoDB indexes once at startup
+    await connect_redis()    # open Redis connection for the event queue
+    yield
+    await close_redis()              # close Redis connection
+    close_client()                   # clean up Motor connection on shutdown
 
 # Create FastAPI app
 app = FastAPI(
     title=settings.API_TITLE,
     version=settings.API_VERSION,
-    description=settings.API_DESCRIPTION
+    description=settings.API_DESCRIPTION,
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
+# allow_origins must list explicit origins (not "*") when allow_credentials=True,
+# because browsers block wildcard + credentialed requests.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routers
+app.include_router(activity_log_router)
 
 
 @app.get("/")
@@ -275,6 +305,153 @@ def ai_semantic_search(search_query: AISearchQuery):
         )
         
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= LEARNER PROFILE PREDICTION ENDPOINT =============
+
+@app.post("/predict-learner-profile", response_model=LearnerProfileResponse)
+def predict_learner_profile(request: LearnerProfileRequest):
+    """
+    Predict learner profile, academic outcome, and early-warning risk.
+
+    Runs a three-stage ML pipeline on 19 OULAD student features:
+
+    1. **Learner profile classification** – clusters the student into one of:
+       *Balanced learners*, *Disengaged learners*, *Fast learners*,
+       *Struggling learners*.
+    2. **Academic outcome prediction** – forecasts the final result:
+       *Distinction*, *Pass*, *Fail*, or *Withdrawn*.
+    3. **Early warning detection** – flags the student as *At-Risk* or
+       *Not At-Risk* and provides a risk score (0–1).
+
+    The response also includes a recommended learning track and
+    action plan mapped to the predicted outcome.
+    """
+    try:
+        features = request.model_dump()
+        result = LearnerProfileService.predict(features)
+        return LearnerProfileResponse(**result.to_dict())
+    except Exception as e:
+        logger.error("Error in learner profile prediction: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/predict-learner-profile/auto", response_model=LearnerProfileResponse)
+async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
+    """
+    **Automatic learner profile prediction** based on logged-in student ID.
+
+    This endpoint automatically fetches:
+    - Student demographics from OULAD CSV files
+    - Engagement features from activity log database
+    - Assessment scores from OULAD data
+    - Registration information
+
+    **Input Options:**
+    
+    1. **Browser Extension Mode** (Recommended):
+       ```json
+       {
+         "student_id": "student_123",
+         "course_id": "ml-fundamentals"
+       }
+       ```
+       The `course_id` is automatically mapped to OULAD `code_module` and `code_presentation`.
+    
+    2. **Direct OULAD Mode**:
+       ```json
+       {
+         "student_id": "student_123",
+         "code_module": "DDD",
+         "code_presentation": "2014J"
+       }
+       ```
+
+    The system builds the full 19-feature input internally and runs the
+    same 3-stage ML pipeline as the manual endpoint.
+    """
+    try:
+        student_id = request.student_id
+        
+        # Resolve course identifiers (all optional — student_id alone is enough)
+        code_module = None
+        code_presentation = None
+
+        if request.course_id:
+            # Browser extension mode — map course_id to OULAD fields
+            from services.course_mapping_service import CourseMappingService, CourseMappingError
+            try:
+                mapping = CourseMappingService.map_course(request.course_id)
+                code_module = mapping["code_module"]
+                code_presentation = mapping["code_presentation"]
+                logger.info(
+                    "Mapped course_id '%s' → %s / %s",
+                    request.course_id, code_module, code_presentation
+                )
+            except CourseMappingError as e:
+                logger.warning(
+                    "Could not map course_id '%s': %s — proceeding without module filter",
+                    request.course_id, e
+                )
+        elif request.code_module and request.code_presentation:
+            # Direct OULAD mode
+            code_module = request.code_module
+            code_presentation = request.code_presentation
+        # else: no course identifiers — fetch student-level data across all modules
+
+        # 1. Fetch student background data (11 fields)
+        student_features = StudentDataService.build_student_features(
+            student_id=student_id,
+            code_module=code_module,
+            code_presentation=code_presentation,
+        )
+
+        # 2. Fetch engagement features from activity logs (course_id optional)
+        # When course_id is None, aggregates all activity logs for the student
+        engagement_features = await EngagementFeatureService.generate_engagement_features_as_model(
+            student_id=student_id,
+            course_id=request.course_id,
+        )
+
+        # 3. Merge into full 19-feature dict
+        features = {
+            # Demographics (8)
+            "gender": student_features["gender"],
+            "region": student_features["region"],
+            "highest_education": student_features["highest_education"],
+            "imd_band": student_features["imd_band"],
+            "age_band": student_features["age_band"],
+            "disability": student_features["disability"],
+            "code_module": student_features["code_module"],
+            "code_presentation": student_features["code_presentation"],
+            # Engagement (7)
+            "total_clicks": engagement_features.total_clicks,
+            "days_active": engagement_features.days_active,
+            "max_daily_clicks": engagement_features.max_daily_clicks,
+            "mean_daily_clicks": engagement_features.mean_daily_clicks,
+            "early_clicks": engagement_features.early_clicks,
+            "num_assessments": engagement_features.num_assessments,
+            "first_reg_before_start": student_features["first_reg_before_start"],
+            # Academic (4)
+            "mean_score": student_features["mean_score"],
+            "ever_unregistered": student_features["ever_unregistered"],
+            "num_of_prev_attempts": student_features["num_of_prev_attempts"],
+            "studied_credits": student_features["studied_credits"],
+        }
+
+        # 4. Run ML prediction pipeline
+        result = LearnerProfileService.predict(features)
+        return LearnerProfileResponse(**result.to_dict())
+
+    except ValueError as e:
+        logger.error("Student data not found: %s", e)
+        raise HTTPException(
+            status_code=404,
+            detail=f"Student not found: {e}"
+        )
+    except Exception as e:
+        logger.error("Error in automatic learner profile prediction: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 

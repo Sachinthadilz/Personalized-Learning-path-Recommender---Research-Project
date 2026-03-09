@@ -13,6 +13,8 @@ import AISearchTab from "./components/AISearchTab";
 import LearningPathTab from "./components/LearningPathTab";
 import SavedPathsTab from "./components/SavedPathsTab";
 import TeamComponentSelection from "./components/TeamComponentSelection";
+import AutoLearnerProfileTab from "./components/AutoLearnerProfileTab";
+import AdminDashboard from "./components/AdminDashboard";
 import TimetablePlanner from "./components/TimetablePlanner";
 import OnboardingForm from "./components/OnboardingForm";
 import AdaptiveVisualizerTab from "./components/AdaptiveVisualizerTab";
@@ -30,6 +32,7 @@ import {
   ChevronRight,
   ArrowLeft,
   X,
+  Brain,
 } from "lucide-react";
 
 type Tab =
@@ -40,15 +43,17 @@ type Tab =
   | "saved-paths"
   | "skills"
   | "universities"
+  | "learner-status"
+  | "admin"
   | "timetable-planner"
   | "adaptive-visualizer";
 
-type SelectedComponent = "explore-courses" | "timetable-planner" | "adaptive-visualizer";
+type SelectedComponent = "explore-courses" | "timetable-planner" | "adaptive-visualizer" | "learner-status";
 
 type AuthView = "landing" | "login" | "signup";
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [authView, setAuthView] = useState<AuthView>("landing");
   const [_hasError, setHasError] = useState(false);
@@ -154,7 +159,17 @@ function App() {
           setSelectedComponent("adaptive-visualizer");
           setActiveTab("adaptive-visualizer");
         }}
+        onSelectLearnerStatus={() => {
+          setHasSelectedComponent(true);
+          setSelectedComponent("learner-status");
+          setActiveTab("learner-status");
+        }}
         onLogoClick={() => setShowLanding(true)}
+        onOpenAdmin={() => {
+          setSelectedComponent("explore-courses");
+          setHasSelectedComponent(true);
+          setActiveTab("admin");
+        }}
       />
     );
   }
@@ -176,6 +191,10 @@ function App() {
           return <SkillsTab />;
         case "universities":
           return <UniversitiesTab />;
+        case "learner-status":
+          return <AutoLearnerProfileTab />;
+        case "admin":
+          return <AdminDashboard />;
         case "timetable-planner":
           return <TimetablePlanner />;
         case "adaptive-visualizer":
@@ -210,6 +229,7 @@ function App() {
     { id: "saved-paths", label: "Saved Paths", Icon: Bookmark },
     { id: "skills", label: "Skills", Icon: Zap },
     { id: "universities", label: "Universities", Icon: GraduationCap },
+    { id: "learner-status", label: "Learner Status", Icon: Brain },
     { id: "timetable-planner", label: "Timetable", Icon: CalendarDays },
     { id: "adaptive-visualizer", label: "Progress Tracker", Icon: Sparkles },
   ];
@@ -219,7 +239,9 @@ function App() {
       ? allTabs.filter((t) => t.id === "timetable-planner")
       : selectedComponent === "adaptive-visualizer"
       ? allTabs.filter((t) => t.id === "adaptive-visualizer")
-      : allTabs.filter((t) => t.id !== "timetable-planner" && t.id !== "adaptive-visualizer");
+      : selectedComponent === "learner-status"
+      ? allTabs.filter((t) => t.id === "learner-status")
+      : allTabs.filter((t) => t.id !== "timetable-planner" && t.id !== "adaptive-visualizer" && t.id !== "learner-status");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
@@ -229,6 +251,11 @@ function App() {
         onOpenAcademicProfile={() => setIsAcademicProfileOpen(true)}
         hasUnfilledProfile={!hasAcademicProfile}
         onLogoClick={() => setShowLanding(true)}
+        onOpenAdmin={() => {
+          setSelectedComponent("explore-courses");
+          setHasSelectedComponent(true);
+          setActiveTab("admin");
+        }}
       />
 
       {/* Profile Modal */}

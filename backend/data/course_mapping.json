@@ -1,0 +1,32 @@
+{
+  "_comment": "Maps course_id values from browser-extension activity logs to OULAD code_module / code_presentation pairs required by the ML pipeline. Add new entries as courses are onboarded.",
+
+  "exploring-beethoven-piano-sonatas-2": { "code_module": "AAA", "code_presentation": "2014J" },
+  "ml-fundamentals":                     { "code_module": "DDD", "code_presentation": "2014J" },
+  "python-basics":                       { "code_module": "AAA", "code_presentation": "2013J" },
+  "data-science-intro":                  { "code_module": "BBB", "code_presentation": "2014B" },
+  "web-development":                     { "code_module": "CCC", "code_presentation": "2014J" },
+  "algorithms-and-complexity":           { "code_module": "DDD", "code_presentation": "2013J" },
+  "statistics-foundations":              { "code_module": "EEE", "code_presentation": "2014B" },
+  "database-systems":                    { "code_module": "FFF", "code_presentation": "2014J" },
+  "software-engineering":                { "code_module": "GGG", "code_presentation": "2014J" },
+  "deep-learning-specialization":        { "code_module": "DDD", "code_presentation": "2014B" },
+  "natural-language-processing":         { "code_module": "EEE", "code_presentation": "2014J" },
+  "computer-networks":                   { "code_module": "FFF", "code_presentation": "2013B" },
+  "operating-systems":                   { "code_module": "GGG", "code_presentation": "2014B" },
+  "linear-algebra":                      { "code_module": "BBB", "code_presentation": "2013J" },
+  "calculus-for-engineers":              { "code_module": "BBB", "code_presentation": "2014J" },
+  
+  "react-complete-guide":                { "code_module": "CCC", "code_presentation": "2014B" },
+  "nodejs-backend-development":          { "code_module": "CCC", "code_presentation": "2013J" },
+  "cloud-computing-aws":                 { "code_module": "FFF", "code_presentation": "2014B" },
+  "devops-pipeline":                     { "code_module": "GGG", "code_presentation": "2013J" },
+  "cybersecurity-basics":                { "code_module": "FFF", "code_presentation": "2013J" },
+  "mobile-app-development":              { "code_module": "CCC", "code_presentation": "2014B" },
+  "artificial-intelligence":             { "code_module": "DDD", "code_presentation": "2014J" },
+  "blockchain-fundamentals":             { "code_module": "FFF", "code_presentation": "2014J" },
+  "ux-ui-design":                        { "code_module": "AAA", "code_presentation": "2014B" },
+  "data-visualization":                  { "code_module": "BBB", "code_presentation": "2014B" },
+
+  "_default": { "code_module": "AAA", "code_presentation": "2014J" }
+}

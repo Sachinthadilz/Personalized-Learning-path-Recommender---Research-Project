@@ -6,6 +6,7 @@ import {
   User,
   HelpCircle,
   LogOut,
+  Shield,
   BookOpen,
 } from "lucide-react";
 
@@ -14,9 +15,10 @@ interface HeaderProps {
   onOpenAcademicProfile?: () => void;
   hasUnfilledProfile?: boolean;
   onLogoClick?: () => void;
+  onOpenAdmin?: () => void;
 }
 
-export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfilledProfile = false, onLogoClick }: HeaderProps) {
+export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfilledProfile = false, onLogoClick, onOpenAdmin }: HeaderProps) {
   const { user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -116,6 +118,12 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
                     <p className="text-xs text-gray-500 truncate">
                       {user.email}
                     </p>
+                    {user.role === "admin" && (
+                      <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200">
+                        <Shield className="w-3 h-3" />
+                        Admin
+                      </span>
+                    )}
                   </div>
 
                   {/* Menu Items */}
@@ -130,6 +138,19 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
                       <User className="w-4 h-4 mr-3" />
                       My Profile
                     </button>
+
+                    {user.role === "admin" && onOpenAdmin && (
+                      <button
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          onOpenAdmin();
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
+                      >
+                        <Shield className="w-4 h-4 mr-3" />
+                        Admin Dashboard
+                      </button>
+                    )}
 
                     <button
                       onClick={() => {

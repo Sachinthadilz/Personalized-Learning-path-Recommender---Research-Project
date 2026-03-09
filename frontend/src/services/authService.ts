@@ -70,6 +70,7 @@ export interface User {
   fullName: string;
   email: string;
   role: string;
+  isActive?: boolean;
   isEmailVerified?: boolean;
   lastLogin?: string;
   createdAt?: string;
@@ -218,6 +219,7 @@ export const authService = {
       localStorage.setItem("accessToken", response.data.data.accessToken);
       localStorage.setItem("refreshToken", response.data.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(response.data.data.user));
+      localStorage.setItem("student_id", String(response.data.data.user.id));
     }
     return response.data;
   },
@@ -232,6 +234,7 @@ export const authService = {
       localStorage.setItem("accessToken", response.data.data.accessToken);
       localStorage.setItem("refreshToken", response.data.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(response.data.data.user));
+      localStorage.setItem("student_id", String(response.data.data.user.id));
     }
     return response.data;
   },
@@ -250,6 +253,7 @@ export const authService = {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("student_id");
     }
   },
 
@@ -260,6 +264,7 @@ export const authService = {
     const response = await authApi.get<ProfileResponse>("/api/auth/profile");
     if (response.data.success) {
       localStorage.setItem("user", JSON.stringify(response.data.data));
+      localStorage.setItem("student_id", String(response.data.data.id));
     }
     return response.data;
   },
@@ -277,6 +282,7 @@ export const authService = {
     );
     if (response.data.success) {
       localStorage.setItem("user", JSON.stringify(response.data.data));
+      localStorage.setItem("student_id", String(response.data.data.id));
     }
     return response.data;
   },
@@ -284,6 +290,7 @@ export const authService = {
   /**
    * Change password
    */
+
   async changePassword(data: {
     currentPassword: string;
     newPassword: string;
@@ -295,6 +302,7 @@ export const authService = {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("student_id");
     }
     return response.data;
   },
@@ -318,7 +326,12 @@ export const authService = {
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
-        return JSON.parse(userStr);
+        const user = JSON.parse(userStr);
+        // Ensure the flat student_id key always exists for the browser extension
+        if (user?.id && localStorage.getItem("student_id") !== String(user.id)) {
+          localStorage.setItem("student_id", String(user.id));
+        }
+        return user;
       } catch {
         return null;
       }
@@ -338,6 +351,72 @@ export const authService = {
    */
   getAccessToken(): string | null {
     return localStorage.getItem("accessToken");
+  },
+
+  /**
+   * Check if current user has admin role
+   */
+  isAdmin(): boolean {
+    const user = authService.getCurrentUser();
+    return user?.role === "admin";
+  },
+
+  // ── Admin API methods (require admin role) ─────────────────────────────
+
+  async adminGetCurrentAdmin(): Promise<{ success: boolean; data: User }> {
+    const response = await authApi.get("/api/admin/me");
+    return response.data;
+  },
+
+  async adminGetStats(): Promise<{
+    success: boolean;
+    data: {
+      totalUsers: number;
+      activeUsers: number;
+      inactiveUsers: number;
+      verifiedUsers: number;
+      newUsersThisMonth: number;
+      roleBreakdown: Record<string, number>;
+    };
+  }> {
+    const response = await authApi.get("/api/admin/stats");
+    return response.data;
+  },
+
+  async adminGetUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<{
+    success: boolean;
+    data: {
+      users: User[];
+      pagination: { total: number; page: number; limit: number; totalPages: number };
+    };
+  }> {
+    const response = await authApi.get("/api/admin/users", { params });
+    return response.data;
+  },
+
+  async adminUpdateRole(
+    userId: string,
+    role: "user" | "admin" | "moderator",
+  ): Promise<{ success: boolean; message: string; data: User }> {
+    const response = await authApi.patch(`/api/admin/users/${userId}/role`, { role });
+    return response.data;
+  },
+
+  async adminUpdateStatus(
+    userId: string,
+    isActive: boolean,
+  ): Promise<{ success: boolean; message: string; data: User }> {
+    const response = await authApi.patch(`/api/admin/users/${userId}/status`, { isActive });
+    return response.data;
+  },
+
+  async adminDeleteUser(userId: string): Promise<{ success: boolean; message: string }> {
+    const response = await authApi.delete(`/api/admin/users/${userId}`);
+    return response.data;
   },
 
   /**

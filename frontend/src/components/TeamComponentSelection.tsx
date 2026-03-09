@@ -9,14 +9,18 @@ interface TeamComponentSelectionProps {
   onSelectComponent: () => void;
   onSelectTimetable?: () => void;
   onSelectAdaptive?: () => void;
+  onSelectLearnerStatus?: () => void;
   onLogoClick?: () => void;
+  onOpenAdmin?: () => void;
 }
 
 const TeamComponentSelection = ({
   onSelectComponent,
   onSelectTimetable,
   onSelectAdaptive,
+  onSelectLearnerStatus,
   onLogoClick,
+  onOpenAdmin,
 }: TeamComponentSelectionProps) => {
   useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -44,8 +48,8 @@ const TeamComponentSelection = ({
       name: "Learner Status",
       color: "from-green-500 to-teal-600",
       Icon: Layers,
-      available: false,
-      onClick: undefined,
+      available: true,
+      onClick: onSelectLearnerStatus ?? onSelectComponent,
     },
     {
       id: 4,
@@ -64,6 +68,7 @@ const TeamComponentSelection = ({
         onOpenProfile={() => setIsProfileOpen(true)}
         onOpenAcademicProfile={() => setIsAcademicProfileOpen(true)}
         onLogoClick={onLogoClick}
+        onOpenAdmin={onOpenAdmin}
       />
 
       {/* Profile Modal */}
