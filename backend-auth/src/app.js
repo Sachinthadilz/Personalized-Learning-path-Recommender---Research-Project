@@ -12,6 +12,7 @@ const adaptiveRoutes = require("./routes/adaptiveRoutes");
 const studyMaterialRoutes = require("./routes/studyMaterialRoutes");
 const quizMarksRoutes = require("./routes/quizMarksRoutes");
 const logsRoutes = require("./routes/logsRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const { errorHandler, notFound } = require("./middleware/errorHandler");
 
 // Register ActivityLog model so it is available across the app
@@ -85,6 +86,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/adaptive", adaptiveRoutes);
 app.use("/api/study-material", studyMaterialRoutes);
 app.use("/api/quiz-marks", quizMarksRoutes);
+app.use("/api/admin", adminRoutes);
 // Activity logging — unauthenticated, called server-to-server from FastAPI
 app.use("/logs", logsRoutes);
 
