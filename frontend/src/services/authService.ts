@@ -128,6 +128,7 @@ export const authService = {
       localStorage.setItem("accessToken", response.data.data.accessToken);
       localStorage.setItem("refreshToken", response.data.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(response.data.data.user));
+      localStorage.setItem("student_id", String(response.data.data.user.id));
     }
     return response.data;
   },
@@ -142,6 +143,7 @@ export const authService = {
       localStorage.setItem("accessToken", response.data.data.accessToken);
       localStorage.setItem("refreshToken", response.data.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(response.data.data.user));
+      localStorage.setItem("student_id", String(response.data.data.user.id));
     }
     return response.data;
   },
@@ -160,6 +162,7 @@ export const authService = {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("student_id");
     }
   },
 
@@ -170,6 +173,7 @@ export const authService = {
     const response = await authApi.get<ProfileResponse>("/api/auth/profile");
     if (response.data.success) {
       localStorage.setItem("user", JSON.stringify(response.data.data));
+      localStorage.setItem("student_id", String(response.data.data.id));
     }
     return response.data;
   },
@@ -187,6 +191,7 @@ export const authService = {
     );
     if (response.data.success) {
       localStorage.setItem("user", JSON.stringify(response.data.data));
+      localStorage.setItem("student_id", String(response.data.data.id));
     }
     return response.data;
   },
@@ -194,6 +199,7 @@ export const authService = {
   /**
    * Change password
    */
+
   async changePassword(data: {
     currentPassword: string;
     newPassword: string;
@@ -205,6 +211,7 @@ export const authService = {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("student_id");
     }
     return response.data;
   },
@@ -228,7 +235,12 @@ export const authService = {
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
-        return JSON.parse(userStr);
+        const user = JSON.parse(userStr);
+        // Ensure the flat student_id key always exists for the browser extension
+        if (user?.id && localStorage.getItem("student_id") !== String(user.id)) {
+          localStorage.setItem("student_id", String(user.id));
+        }
+        return user;
       } catch {
         return null;
       }

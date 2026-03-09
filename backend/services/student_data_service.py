@@ -121,8 +121,30 @@ class StudentDataService:
         """
         df = _load_student_info()
 
+        # OULAD uses integer student IDs; auth-system users have MongoDB ObjectId
+        # strings. When the ID is not a valid integer, skip the OULAD lookup.
+        try:
+            oulad_id = int(student_id)
+        except (ValueError, TypeError):
+            logger.info(
+                "student_id '%s' is not an OULAD integer ID — returning default demographics",
+                student_id,
+            )
+            return {
+                "gender": "M",
+                "region": "London Region",
+                "highest_education": "A Level or Equivalent",
+                "imd_band": "50-60%",
+                "age_band": "25-35",
+                "num_of_prev_attempts": 0,
+                "studied_credits": 60,
+                "disability": "N",
+                "code_module": "FFF",
+                "code_presentation": "2014J",
+            }
+
         # Build query
-        mask = df["id_student"] == int(student_id)
+        mask = df["id_student"] == oulad_id
         if code_module:
             mask &= df["code_module"] == code_module
         if code_presentation:
@@ -181,8 +203,13 @@ class StudentDataService:
         """
         df = _load_student_assessment()
 
-        # Filter by student
-        mask = df["id_student"] == int(student_id)
+        # Filter by student (guard non-integer IDs for auth-system users)
+        try:
+            oulad_id = int(student_id)
+        except (ValueError, TypeError):
+            return {"mean_score": 0.0}
+
+        mask = df["id_student"] == oulad_id
         student_assessments = df[mask]
 
         if student_assessments.empty:
@@ -237,8 +264,14 @@ class StudentDataService:
         """
         df = _load_student_registration()
 
+        # Guard non-integer IDs for auth-system users
+        try:
+            oulad_id = int(student_id)
+        except (ValueError, TypeError):
+            return {"first_reg_before_start": 0, "ever_unregistered": 0}
+
         # Build query
-        mask = df["id_student"] == int(student_id)
+        mask = df["id_student"] == oulad_id
         if code_module:
             mask &= df["code_module"] == code_module
         if code_presentation:

@@ -17,6 +17,10 @@ async function syncUserFromFrontend() {
       target: { tabId: tab.id },
       func: () => {
         try {
+          // Prefer the flat key written by authService on every login/register
+          const directId = localStorage.getItem('student_id');
+          if (directId && directId !== 'anonymous') return directId;
+          // Fall back to parsing the user JSON object
           const raw = localStorage.getItem('user');
           if (!raw) return null;
           const user = JSON.parse(raw);
@@ -61,6 +65,8 @@ chrome.runtime.onInstalled.addListener((details) => {
 
   // Set up retry alarm
   chrome.alarms.create('retryFailedEvents', { periodInMinutes: 5 });
+  // Periodically sync the logged-in user ID from the frontend
+  chrome.alarms.create('syncStudentIdAlarm', { periodInMinutes: 1 });
   syncUserFromFrontend();
 });
 
@@ -79,6 +85,8 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'retryFailedEvents') {
     retryFailedEvents();
+  } else if (alarm.name === 'syncStudentIdAlarm') {
+    syncUserFromFrontend();
   }
 });
 
@@ -88,7 +96,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   switch (request.action) {
     case 'logEvent':
-      handleLogEvent(request.data)
+      // Refresh student ID from the frontend before logging so we never
+      // record an event as 'anonymous' if the user has since logged in.
+      syncUserFromFrontend()
+        .catch(() => {})
+        .then(() => chrome.storage.local.get(['studentId']))
+        .then(({ studentId }) => {
+          // Patch the event if it was built before the ID was synced
+          if (studentId && studentId !== 'anonymous') {
+            request.data.student_id = studentId;
+          }
+          return handleLogEvent(request.data);
+        })
         .then(response => sendResponse({ success: true, data: response }))
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true; // Keep message channel open for async response
@@ -122,6 +141,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         .then(stats => sendResponse({ success: true, stats }))
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true;
+
+    case 'contentScriptReady':
+      // Content script loaded — try to sync the student ID immediately
+      syncUserFromFrontend().catch(() => {});
+      sendResponse({ success: true });
+      break;
 
     default:
       sendResponse({ success: false, error: 'Unknown action' });

@@ -49,9 +49,16 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+# allow_origins must list explicit origins (not "*") when allow_credentials=True,
+# because browsers block wildcard + credentialed requests.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -365,9 +372,12 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
     try:
         student_id = request.student_id
         
-        # Resolve course identifiers (support both modes)
+        # Resolve course identifiers (all optional — student_id alone is enough)
+        code_module = None
+        code_presentation = None
+
         if request.course_id:
-            # Mode 1: Browser extension — map course_id to OULAD fields
+            # Browser extension mode — map course_id to OULAD fields
             from services.course_mapping_service import CourseMappingService, CourseMappingError
             try:
                 mapping = CourseMappingService.map_course(request.course_id)
@@ -378,20 +388,15 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
                     request.course_id, code_module, code_presentation
                 )
             except CourseMappingError as e:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid course_id: {e}"
+                logger.warning(
+                    "Could not map course_id '%s': %s — proceeding without module filter",
+                    request.course_id, e
                 )
         elif request.code_module and request.code_presentation:
-            # Mode 2: Direct OULAD fields
+            # Direct OULAD mode
             code_module = request.code_module
             code_presentation = request.code_presentation
-        else:
-            # Neither mode specified
-            raise HTTPException(
-                status_code=400,
-                detail="Must provide either 'course_id' OR both 'code_module' and 'code_presentation'"
-            )
+        # else: no course identifiers — fetch student-level data across all modules
 
         # 1. Fetch student background data (11 fields)
         student_features = StudentDataService.build_student_features(
@@ -400,16 +405,8 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
             code_presentation=code_presentation,
         )
 
-        # 2. Fetch engagement features from activity logs (8 fields)
-        # Uses optimized MongoDB aggregation pipelines
-        # CRITICAL: Must pass course_id (not code_module) to filter MongoDB logs correctly
-        # MongoDB stores logs with course_id field, not OULAD code_module
-        if not request.course_id:
-            raise HTTPException(
-                status_code=400,
-                detail="course_id is required for engagement feature computation from activity logs"
-            )
-        
+        # 2. Fetch engagement features from activity logs (course_id optional)
+        # When course_id is None, aggregates all activity logs for the student
         engagement_features = await EngagementFeatureService.generate_engagement_features_as_model(
             student_id=student_id,
             course_id=request.course_id,

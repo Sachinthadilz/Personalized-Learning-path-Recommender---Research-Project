@@ -12,8 +12,54 @@ class EventTracker {
     this.activeTime = 0;
     this.sessionId = this.generateSessionId();
     this.videoElements = new Map();
+    this.isLocalhost = (window.location.hostname === 'localhost' && window.location.port === '3000');
     
     this.init();
+  }
+
+  /**
+   * Read the logged-in user's ID from the page's localStorage.
+   * Works on localhost:3000 where authService writes both the flat
+   * "student_id" key and the "user" JSON object.
+   * Returns null if nothing is found.
+   */
+  _readStudentIdFromLocalStorage() {
+    try {
+      const directId = localStorage.getItem('student_id');
+      if (directId && directId !== 'anonymous') return directId;
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        if (user?.id) return String(user.id);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /**
+   * Get the most reliable student ID available right now.
+   * On localhost:3000 we can read localStorage directly (instant, no async).
+   * On external sites (Coursera etc.) we rely on chrome.storage that was
+   * synced earlier by content.js / background.js.
+   */
+  async _resolveStudentId() {
+    // On our own frontend, localStorage is the source of truth
+    if (this.isLocalhost) {
+      const id = this._readStudentIdFromLocalStorage();
+      if (id) {
+        this.studentId = id;
+        return id;
+      }
+    }
+    // On external sites, read from chrome.storage (set by background sync)
+    try {
+      const { studentId } = await chrome.storage.local.get(['studentId']);
+      if (studentId && studentId !== 'anonymous') {
+        this.studentId = studentId;
+        return studentId;
+      }
+    } catch (_) {}
+    return this.studentId || 'anonymous';
   }
 
   /**
@@ -26,14 +72,11 @@ class EventTracker {
     this.detectVideos();
     this.trackPageVisit();
 
-    // Poll chrome.storage every 5 s so this.studentId is always up to date.
-    // This picks up the real user ID once the frontend content script pushes it,
-    // regardless of tab open order or timing.
+    // Poll every 5 s to pick up the real user ID once synced
     setInterval(async () => {
-      const { studentId } = await chrome.storage.local.get(['studentId']);
-      if (studentId && studentId !== 'anonymous' && studentId !== this.studentId) {
-        this.studentId = studentId;
-        console.log('[tracker] student ID refreshed:', studentId);
+      const id = await this._resolveStudentId();
+      if (id && id !== 'anonymous' && id !== this.studentId) {
+        this.studentId = id;
       }
     }, 5000);
   }
@@ -45,9 +88,13 @@ class EventTracker {
     try {
       const result = await chrome.storage.local.get(['studentId', 'courseId', 'apiBaseURL']);
 
-      // Student ID comes from the logged-in user on our frontend (localhost:5173).
-      // background.js reads localStorage there and saves it to chrome.storage.
-      this.studentId = result.studentId || 'anonymous';
+      // On localhost:3000, read student ID directly from localStorage
+      if (this.isLocalhost) {
+        const localId = this._readStudentIdFromLocalStorage();
+        this.studentId = localId || result.studentId || 'anonymous';
+      } else {
+        this.studentId = result.studentId || 'anonymous';
+      }
       this.courseId = result.courseId || this.extractCourseId();
 
       if (window.apiClient) {
@@ -164,17 +211,10 @@ class EventTracker {
 
   /**
    * Build an event payload compatible with the backend ActivityLogEntry schema.
-   * Always reads the latest studentId from chrome.storage so stale cached
-   * values (e.g. 'anonymous' set at init) are never sent once a real ID syncs.
+   * Resolves the student ID from the best available source each time.
    */
   async buildEvent(eventType, duration, extraMetadata = {}) {
-    // Always read fresh from storage — never trust the cached this.studentId alone
-    const stored = await chrome.storage.local.get(['studentId']);
-    const studentId = (stored.studentId && stored.studentId !== 'anonymous')
-      ? stored.studentId
-      : this.studentId;
-    // Update local cache too
-    if (studentId !== 'anonymous') this.studentId = studentId;
+    const studentId = await this._resolveStudentId();
     return {
       student_id: studentId,
       course_id: this.courseId,
@@ -418,11 +458,16 @@ class EventTracker {
    * Handle page unload
    */
   handlePageUnload() {
-    // Send final time tracking synchronously via sendBeacon
-    // We can't await here so read from cached this.studentId (best-effort)
+    // Send final time tracking synchronously via sendBeacon (can't await)
+    // On localhost:3000 we can read localStorage synchronously for the real ID
+    let studentId = this.studentId;
+    if (this.isLocalhost) {
+      const localId = this._readStudentIdFromLocalStorage();
+      if (localId) studentId = localId;
+    }
     if (this.activeTime > 0) {
       const event = {
-        student_id: this.studentId,
+        student_id: studentId,
         course_id: this.courseId,
         event_type: 'click',
         timestamp: new Date().toISOString(),
@@ -464,17 +509,37 @@ class EventTracker {
   }
 
   /**
-   * Send event using API client
+   * Send event via background script so it can patch the student ID
+   * from the frontend's localStorage before forwarding to the backend.
+   * Falls back to direct fetch if the background message fails.
    */
   async sendEvent(event) {
     try {
-      if (window.apiClient) {
-        await window.apiClient.sendEvent(event);
-      } else {
-        console.error('API client not available');
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          { action: 'logEvent', data: event },
+          (resp) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else if (resp && resp.success) {
+              resolve(resp);
+            } else {
+              reject(new Error(resp?.error || 'logEvent failed'));
+            }
+          }
+        );
+      });
+      console.log('Event logged successfully:', response.data);
+    } catch (bgError) {
+      // Background unavailable — send directly as fallback
+      console.warn('Background send failed, using direct fetch:', bgError.message);
+      try {
+        if (window.apiClient) {
+          await window.apiClient.sendEvent(event);
+        }
+      } catch (error) {
+        console.error('Error sending event:', error);
       }
-    } catch (error) {
-      console.error('Error sending event:', error);
     }
   }
 }

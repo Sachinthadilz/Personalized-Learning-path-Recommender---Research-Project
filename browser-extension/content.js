@@ -14,15 +14,30 @@ if (window.location.hostname === 'localhost' && window.location.port === '3000')
 
   function pushUserIdToBackground() {
     try {
-      const raw = localStorage.getItem('user');
-      if (!raw) return;
-      const user = JSON.parse(raw);
-      const id = user?.id ? String(user.id) : null;
-      if (id && id !== _lastSyncedId) {
-        _lastSyncedId = id;
-        chrome.runtime.sendMessage({ action: 'syncStudentId', studentId: id })
-          .catch(() => {});
-        console.log('[tracker] pushed student ID from frontend:', id);
+      // Try the flat key first (written by authService on login/register)
+      let id = localStorage.getItem('student_id') || null;
+
+      // Fall back to parsing the full user JSON object
+      if (!id) {
+        const raw = localStorage.getItem('user');
+        if (raw) {
+          const user = JSON.parse(raw);
+          id = user?.id ? String(user.id) : null;
+        }
+      }
+
+      if (id) {
+        // Directly patch the event tracker running in the same page (instant, no async)
+        if (window.eventTracker && window.eventTracker.studentId !== id) {
+          window.eventTracker.studentId = id;
+        }
+
+        // Also push to background so Coursera tabs and chrome.storage stay in sync
+        if (id !== _lastSyncedId) {
+          _lastSyncedId = id;
+          chrome.runtime.sendMessage({ action: 'syncStudentId', studentId: id })
+            .catch(() => {});
+        }
       }
     } catch (e) {}
   }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import {
   predictLearnerProfileAuto,
@@ -15,9 +15,7 @@ import {
   RefreshCw,
   ChevronRight,
   AlertCircle,
-  Sparkles,
   User,
-  GraduationCap,
   Activity,
 } from "lucide-react";
 import StudentEngagementTimeline from "./StudentEngagementTimeline";
@@ -87,9 +85,6 @@ export default function AutoLearnerProfileTab() {
   const [result, setResult] = useState<LearnerProfileResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [studentId, setStudentId] = useState("");
-  const [codeModule, setCodeModule] = useState("");
-  const [codePresentation, setCodePresentation] = useState("");
 
   const handleAnalyze = async () => {
     if (!user) {
@@ -102,41 +97,34 @@ export default function AutoLearnerProfileTab() {
     setResult(null);
 
     try {
-      // Use logged-in user ID or manually entered student ID
-      const targetStudentId = studentId || user.id;
-
       const input: AutoLearnerProfileInput = {
-        student_id: targetStudentId,
-        code_module: codeModule || undefined,
-        code_presentation: codePresentation || undefined,
+        student_id: user.id,
       };
 
       const data = await predictLearnerProfileAuto(input);
       setResult(data);
-
-      // Scroll results into view
-      setTimeout(() => {
-        document
-          .getElementById("auto-results")
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
     } catch (err: any) {
       const errorMsg =
         err?.response?.data?.detail ||
         err?.message ||
-        "Prediction failed. Make sure the student exists in the OULAD dataset.";
+        "Analysis failed. Make sure your student data is available in the system.";
       setError(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReset = () => {
+  // Auto-run analysis when the component mounts and user is available
+  useEffect(() => {
+    if (user) {
+      handleAnalyze();
+    }
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleReanalyze = () => {
     setResult(null);
     setError(null);
-    setStudentId("");
-    setCodeModule("");
-    setCodePresentation("");
+    handleAnalyze();
   };
 
   // ── Derived outcome styles ──────────────────────────────────────────────
@@ -178,14 +166,27 @@ export default function AutoLearnerProfileTab() {
           </div>
 
           {user && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <User className="w-5 h-5 text-indigo-600" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-indigo-900">
-                  Logged in as: {user.fullName}
-                </p>
-                <p className="text-xs text-indigo-600">User ID: {user.id}</p>
+            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-indigo-600" />
+                <div>
+                  <p className="text-sm font-semibold text-indigo-900">
+                    {user.fullName}
+                  </p>
+                  <p className="text-xs text-indigo-500">ID: {user.id}</p>
+                </div>
               </div>
+              <button
+                onClick={handleReanalyze}
+                disabled={loading}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+              >
+                {loading ? (
+                  <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Analyzing…</>
+                ) : (
+                  <><RefreshCw className="w-3.5 h-3.5" /> Re-analyze</>
+                )}
+              </button>
             </div>
           )}
 
@@ -193,7 +194,7 @@ export default function AutoLearnerProfileTab() {
             <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
               <AlertCircle className="w-5 h-5 text-amber-600" />
               <p className="text-sm text-amber-800">
-                You must be logged in to use automatic predictions.
+                You must be logged in to view your learner analysis.
               </p>
             </div>
           )}
@@ -208,92 +209,13 @@ export default function AutoLearnerProfileTab() {
         </div>
       )}
 
-      {/* ── Input section ──────────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-600" />
-          Optional Filters
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Student ID (Optional)
-            </label>
-            <input
-              type="text"
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value.trim())}
-              placeholder={
-                user ? `Leave blank to use your ID (${user.id})` : "Enter student ID"
-              }
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              OULAD student ID (e.g., "11391"). Defaults to logged-in user.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Module Code (Optional)
-            </label>
-            <input
-              type="text"
-              value={codeModule}
-              onChange={(e) => setCodeModule(e.target.value.trim().toUpperCase())}
-              placeholder="e.g., AAA, BBB, DDD"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Filter by specific OULAD module.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Presentation Code (Optional)
-            </label>
-            <input
-              type="text"
-              value={codePresentation}
-              onChange={(e) => setCodePresentation(e.target.value.trim().toUpperCase())}
-              placeholder="e.g., 2013J, 2014B"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Filter by semester (J = October, B = February).
-            </p>
-          </div>
+      {/* ── Loading skeleton ─────────────────────────────────────────── */}
+      {loading && !result && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center gap-3">
+          <RefreshCw className="w-8 h-8 text-indigo-400 animate-spin" />
+          <p className="text-sm text-gray-500">Analyzing your learner profile…</p>
         </div>
-
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={handleAnalyze}
-            disabled={loading || !user}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-semibold shadow-sm"
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Analyzing…
-              </>
-            ) : (
-              <>
-                <Brain className="w-4 h-4" />
-                Analyze My Profile
-              </>
-            )}
-          </button>
-          <button
-            onClick={handleReset}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-5 py-2.5 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm font-medium"
-          >
-            Reset
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════
           RESULTS
@@ -301,7 +223,7 @@ export default function AutoLearnerProfileTab() {
       {result && (
         <div id="auto-results" className="space-y-4 pt-1">
           <h3 className="text-base font-semibold text-gray-700">
-            Prediction Results
+            Your Learner Analysis
           </h3>
 
           {/* KPI cards */}
@@ -471,7 +393,7 @@ export default function AutoLearnerProfileTab() {
             <Activity className="w-5 h-5 text-sky-600" />
             My Engagement Timeline
           </h3>
-          <StudentEngagementTimeline studentId={studentId || user.id} />
+          <StudentEngagementTimeline studentId={user.id} />
         </div>
       )}
     </div>

@@ -82,7 +82,7 @@ class TimelineService:
                     "_id": {
                         "$dateToString": {
                             "format": "%Y-%m-%d",
-                            "date": "$timestamp",
+                            "date": {"$toDate": "$timestamp"},
                         }
                     },
                     "events": {"$sum": 1},

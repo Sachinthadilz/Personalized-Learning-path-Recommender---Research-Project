@@ -49,21 +49,21 @@ class EngagementFeatureService:
     async def generate_engagement_features(
         cls,
         student_id: str,
-        course_id: str,
+        course_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Generate all engagement features for a student using MongoDB aggregation.
 
-        All features are computed by filtering activity logs for both the student
-        and the specific course to ensure accurate per-course engagement metrics.
+        When ``course_id`` is provided the query is scoped to that course.
+        When omitted, all activity logs for the student are aggregated.
 
         Parameters
         ----------
         student_id : str
             Target student identifier.
-        course_id : str
-            Course identifier to filter activity logs. REQUIRED to ensure
-            engagement features are scoped to a single course.
+        course_id : str, optional
+            Course identifier to filter activity logs. If *None*, engagement
+            features are computed across all courses for the student.
 
         Returns
         -------
@@ -96,11 +96,10 @@ class EngagementFeatureService:
             'code_presentation': '2014J'
         }
         """
-        # Initialize match filter with BOTH student_id AND course_id
-        match_stage: Dict[str, Any] = {
-            "student_id": student_id,
-            "course_id": course_id
-        }
+        # Match by student_id; optionally narrow to a specific course
+        match_stage: Dict[str, Any] = {"student_id": student_id}
+        if course_id:
+            match_stage["course_id"] = course_id
 
         # Resolve OULAD code_module / code_presentation from course_id
         resolved_module: str | None = None
@@ -184,7 +183,7 @@ class EngagementFeatureService:
             {
                 "$group": {
                     "_id": {
-                        "$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}
+                        "$dateToString": {"format": "%Y-%m-%d", "date": {"$toDate": "$timestamp"}}
                     }
                 }
             },
@@ -204,7 +203,7 @@ class EngagementFeatureService:
             {
                 "$group": {
                     "_id": {
-                        "$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}
+                        "$dateToString": {"format": "%Y-%m-%d", "date": {"$toDate": "$timestamp"}}
                     },
                     "count": {"$sum": 1},
                 }
@@ -278,7 +277,7 @@ class EngagementFeatureService:
             logger.warning(
                 "No activity logs found for student_id=%s (course_id=%s)",
                 student_id,
-                course_id,
+                course_id or "<all>",
             )
 
         return features
@@ -287,7 +286,7 @@ class EngagementFeatureService:
     async def generate_engagement_features_as_model(
         cls,
         student_id: str,
-        course_id: str,
+        course_id: Optional[str] = None,
     ) -> EngagementFeatures:
         """
         Generate engagement features and return as EngagementFeatures model.
@@ -299,8 +298,9 @@ class EngagementFeatureService:
         ----------
         student_id : str
             Target student identifier.
-        course_id : str
-            Course identifier to filter activity logs. REQUIRED.
+        course_id : str, optional
+            Course identifier to filter activity logs. If *None*, aggregates
+            across all courses.
 
         Returns
         -------

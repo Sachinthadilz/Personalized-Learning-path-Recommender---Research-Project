@@ -21,9 +21,9 @@ class Settings:
     NEO4J_USER: str = os.getenv("NEO4J_USER", "neo4j")
     NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "password")
 
-    # MongoDB — Activity Log database (separate from the auth DB)
-    MONGODB_ACTIVITY_URI: str = os.getenv("MONGODB_ACTIVITY_URI", "mongodb://localhost:27017")
-    MONGODB_ACTIVITY_DB: str  = os.getenv("MONGODB_ACTIVITY_DB",  "learner_activity")
+    # MongoDB — Activity Log database (same Atlas cluster as auth)
+    MONGODB_ACTIVITY_URI: str = os.getenv("MONGODB_ACTIVITY_URI", "mongodb+srv://sachinthadilshan:abcd1234@itppro1.d6u6lyh.mongodb.net")
+    MONGODB_ACTIVITY_DB: str  = os.getenv("MONGODB_ACTIVITY_DB",  "leaner-auth")
     MONGODB_ACTIVITY_COL: str = os.getenv("MONGODB_ACTIVITY_COL", "activity_logs")
 
     # Redis — Activity event queue

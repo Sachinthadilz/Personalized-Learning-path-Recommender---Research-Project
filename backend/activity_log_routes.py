@@ -65,8 +65,12 @@ async def log_event(entry: ActivityLogEntry) -> ActivityLogResponse:
         response = ActivityLogService.build_response(entry)
 
         # Write directly to MongoDB — no Redis/worker dependency
+        # Use model_dump() without mode="json" so datetime is stored as
+        # BSON Date (required by $dateToString aggregation pipelines).
         col = await get_activity_collection()
-        await col.insert_one(response.model_dump(mode="json"))
+        doc = response.model_dump()
+        doc["event_type"] = doc["event_type"].value if hasattr(doc["event_type"], "value") else doc["event_type"]
+        await col.insert_one(doc)
 
         return response
     except Exception as exc:

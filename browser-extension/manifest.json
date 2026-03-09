@@ -7,7 +7,8 @@
     "storage",
     "tabs",
     "activeTab",
-    "scripting"
+    "scripting",
+    "alarms"
   ],
   "host_permissions": [
     "http://localhost:5000/*",
@@ -25,7 +26,7 @@
         "*://*.edx.org/*",
         "*://*.khanacademy.org/*",
         "*://*.udacity.com/*",
-        "*://localhost:3000/*"
+        "http://localhost:3000/*"
       ],
       "js": ["api_client.js", "event_tracker.js", "content.js"],
       "run_at": "document_idle"

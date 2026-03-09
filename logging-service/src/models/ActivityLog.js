@@ -32,6 +32,7 @@ const activityLogSchema = new mongoose.Schema(
     },
     student_id: {
       type: String,
+      ref: "User",
       required: [true, "student_id is required"],
       index: true,
     },

@@ -8,6 +8,10 @@ const morgan = require("morgan");
 const connectDatabase = require("./config/database");
 const logsRouter = require("./routes/logs");
 
+// Register Mongoose models (User model needed for ActivityLog.student_id ref)
+require("./models/User");
+require("./models/ActivityLog");
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
