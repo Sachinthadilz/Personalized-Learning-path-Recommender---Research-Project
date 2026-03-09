@@ -69,8 +69,8 @@ const WeeklyPackage: React.FC<Props> = ({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow p-12 flex flex-col items-center gap-4 text-slate-500">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-12 flex flex-col items-center gap-4 text-slate-500">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         <p className="text-sm">Loading study material...</p>
       </div>
     );
@@ -78,7 +78,7 @@ const WeeklyPackage: React.FC<Props> = ({
 
   if (generating) {
     return (
-      <div className="bg-white rounded-2xl shadow p-12 flex flex-col items-center gap-4 text-slate-500">
+      <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-12 flex flex-col items-center gap-4 text-slate-500">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         <p className="text-sm font-medium text-slate-700">
           Generating your personalised study package for <span className="text-indigo-600 font-semibold">{subjectName}</span>...
@@ -90,13 +90,13 @@ const WeeklyPackage: React.FC<Props> = ({
 
   if (error) {
     return (
-      <div className="bg-white rounded-2xl shadow p-10 flex flex-col items-center gap-4">
+      <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-10 flex flex-col items-center gap-4">
         <p className="text-sm text-red-600 text-center">{error}</p>
         <div className="flex gap-3">
           <button onClick={onBack} className="text-sm text-slate-500 hover:underline">Back</button>
           <button
             onClick={() => loadMaterial(true)}
-            className="text-sm px-4 py-1.5 rounded-full bg-indigo-600 text-white hover:bg-indigo-700"
+            className="text-sm px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold"
           >
             Retry
           </button>
@@ -119,13 +119,13 @@ const WeeklyPackage: React.FC<Props> = ({
       onClick={() => setActivePanel(activePanel === panel ? "overview" : panel)}
       className={`border rounded-2xl p-4 text-left flex flex-col gap-2 transition-all ${
         activePanel === panel
-          ? "border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400"
+          ? "border-blue-400 bg-blue-50 ring-1 ring-blue-400"
           : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
       }`}
     >
       <div className="flex items-center gap-2">
-        <Icon className={`w-4 h-4 ${activePanel === panel ? "text-indigo-600" : "text-slate-400"}`} />
-        <span className={`text-xs font-semibold uppercase tracking-wide ${activePanel === panel ? "text-indigo-700" : "text-slate-500"}`}>
+        <Icon className={`w-4 h-4 ${activePanel === panel ? "text-blue-600" : "text-slate-400"}`} />
+        <span className={`text-xs font-semibold uppercase tracking-wide ${activePanel === panel ? "text-blue-700" : "text-slate-500"}`}>
           {label}
         </span>
       </div>
@@ -134,7 +134,7 @@ const WeeklyPackage: React.FC<Props> = ({
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow p-8 space-y-6">
+    <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-8 space-y-6">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-semibold text-slate-800">Study Package - {subjectName}</h2>
@@ -254,7 +254,7 @@ const WeeklyPackage: React.FC<Props> = ({
       )}
 
       <div className="flex justify-end pt-2">
-        <button type="button" onClick={onStartQuiz} className="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+        <button type="button" onClick={onStartQuiz} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold hover:from-blue-700 hover:to-indigo-700 shadow-sm transition-all">
           Start Weekly Quiz
         </button>
       </div>

@@ -1,11 +1,11 @@
-/**
+﻿/**
  * AdaptiveVisualizerTab
  *
  * Self-contained entry point for the Adaptive Progress Tracker.
  * Implements a full mastery-based learning loop:
- *   SubjectForm â†’ Diagnosis â†’ WeeklyPackage â†’ Quiz
- *     â†’ PASS: Mastery screen âœ“
- *     â†’ FAIL: Feedback â†’ RetryLearningPackage (simplified) â†’ Quiz (loop until pass)
+ *   SubjectForm -> Diagnosis -> WeeklyPackage -> Quiz
+ *     -> PASS: Mastery screen
+ *     -> FAIL: Feedback -> RetryLearningPackage (simplified) -> Quiz (loop until pass)
  */
 import React, { useEffect, useState } from "react";
 import { Trophy } from "lucide-react";
@@ -50,18 +50,15 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
   const [quizHistory, setQuizHistory] = useState<QuizResult[]>([]);
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
 
-  // â”€â”€ Mastery loop state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // retryCount tracks how many times each subject has been failed (key = subjectId)
+  // -- Mastery loop state ---------------------------------------------------
   const [retryCount, setRetryCount] = useState<Record<string, number>>({});
-  // masteredSubjects tracks subjects the student has passed
   const [masteredSubjects, setMasteredSubjects] = useState<string[]>([]);
 
-  // â”€â”€ Load persisted session on mount â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Load persisted session on mount -------------------------------------
   useEffect(() => {
     (async () => {
       try {
-        setStatus({ type: "loading", message: "Loading your sessionâ€¦" });
-        // Load weak subjects from the academic profile
+        setStatus({ type: "loading", message: "Loading your session..." });
         const profileRes = await authService.getAcademicProfile();
         const weakSubjs = profileRes.data?.weakSubjects ?? [];
         setSubjects(weakSubjs.map((w) => ({
@@ -74,7 +71,6 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
           isWeak: w.marks < 50,
         })));
 
-        // Restore quiz history from session
         const session = await adaptiveApi.getSession();
         if (session.quizHistory?.length > 0) {
           setQuizHistory(session.quizHistory);
@@ -97,21 +93,16 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
     })();
   }, [profileVersion]);
 
-  // â”€â”€ Derived helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Derived helpers -----------------------------------------------------
   const selectedSubject = subjects.find((s) => s.id === selectedSubjectId) ?? null;
 
-  /** How many attempts has the student made for the selected subject? */
   const currentAttemptNumber = selectedSubjectId
     ? (retryCount[selectedSubjectId] ?? 0) + 1
     : 1;
 
-  /** Retry level â€” 1 = normal package, 2+ = simplified retry package */
   const currentLevel = currentAttemptNumber;
 
-  // â”€â”€ Subject submission â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Subjects loaded from Academic Profile  no manual submission needed
-
-  // â”€â”€ Quiz completion (core mastery loop) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Quiz completion (core mastery loop) ---------------------------------
   const handleQuizCompleted = async (result: QuizResult) => {
     const passMark = Math.ceil(result.total * 0.5);
     const passed = result.score >= passMark;
@@ -128,13 +119,11 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
     }
 
     if (passed) {
-      // âœ“ Mastered â€” add to mastered list
       setMasteredSubjects((prev) =>
         prev.includes(result.subjectId) ? prev : [...prev, result.subjectId]
       );
       setView("mastery");
     } else {
-      // âœ— Failed â€” increment retry count, go to feedback
       setRetryCount((prev) => ({
         ...prev,
         [result.subjectId]: (prev[result.subjectId] ?? 0) + 1,
@@ -143,12 +132,12 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
     }
   };
 
-  // â”€â”€ Start retraining (from feedback screen) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Start retraining (from feedback screen) -----------------------------
   const handleStartRetraining = () => {
     setView("retryPackage");
   };
 
-  // â”€â”€ Reset session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Reset session -------------------------------------------------------
   const handleReset = async () => {
     try {
       await adaptiveApi.resetSession();
@@ -158,7 +147,6 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
     setSelectedSubjectId(null);
     setRetryCount({});
     setMasteredSubjects([]);
-    // Re-fetch weak subjects from the academic profile
     try {
       const profileRes = await authService.getAcademicProfile();
       const weakSubjs = profileRes.data?.weakSubjects ?? [];
@@ -177,23 +165,12 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
     setView("diagnosis");
   };
 
-  // â”€â”€ Page background per view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const pageBg: Record<AdaptiveView, string> = {
-    diagnosis:     "from-slate-50 via-red-50 to-orange-50",
-    weeklyPackage: "from-slate-50 via-indigo-50 to-sky-50",
-    retryPackage:  "from-slate-50 via-orange-50 to-red-50",
-    quiz:          "from-slate-50 via-rose-50 to-amber-50",
-    feedback:      "from-slate-50 via-red-50 to-orange-50",
-    dashboard:     "from-slate-50 via-cyan-50 to-blue-50",
-    mastery:       "from-slate-50 via-emerald-50 to-teal-50",
-  };
-
-  // â”€â”€ Mastery celebration screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Mastery celebration screen ------------------------------------------
   const MasteryScreen = () => {
     const subject = selectedSubject;
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="bg-white rounded-3xl shadow-xl p-10 max-w-md w-full text-center space-y-6">
+        <div className="bg-white rounded-3xl border border-blue-100 shadow-sm p-10 max-w-md w-full text-center space-y-6">
           <div className="flex justify-center">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
               <Trophy className="w-10 h-10 text-white" />
@@ -211,7 +188,9 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
               <p className="text-3xl font-black text-emerald-600">
                 {Math.round((quizResult.score / quizResult.total) * 100)}%
               </p>
-              <p className="text-xs text-emerald-700">Band {quizResult.band} Â· {quizResult.score}/{quizResult.total} correct</p>
+              <p className="text-xs text-emerald-700">
+                {`Band ${quizResult.band} \u00B7 ${quizResult.score}/${quizResult.total} correct`}
+              </p>
             </div>
           )}
           <p className="text-sm text-slate-600">
@@ -222,13 +201,13 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
           <div className="flex flex-col gap-2">
             <button
               onClick={() => setView("diagnosis")}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold hover:from-indigo-700 hover:to-purple-700 transition"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold hover:from-blue-700 hover:to-indigo-700 transition"
             >
-              Continue to Next Subject â†’
+              Continue to Next Subject
             </button>
             <button
               onClick={() => setView("dashboard")}
-              className="w-full py-2.5 rounded-xl border border-slate-300 text-slate-600 text-sm hover:bg-slate-50 transition"
+              className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition"
             >
               View Progress Dashboard
             </button>
@@ -238,7 +217,7 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
     );
   };
 
-  // â”€â”€ Render current view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Render current view -------------------------------------------------
   const renderContent = () => {
     switch (view) {
       case "diagnosis":
@@ -247,7 +226,6 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
             subjects={subjects}
             onStartPlan={(id) => {
               setSelectedSubjectId(id);
-              // If this subject was already fully retried, go to retry package directly
               const attempts = retryCount[id] ?? 0;
               setView(attempts > 0 ? "retryPackage" : "weeklyPackage");
             }}
@@ -317,28 +295,27 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
     }
   };
 
-  // â”€â”€ Tab navigation breadcrumb â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // -- Tab navigation ------------------------------------------------------
   const navItems: { label: string; view: AdaptiveView }[] = [
     { label: "Diagnosis", view: "diagnosis" },
     { label: "Dashboard", view: "dashboard" },
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${pageBg[view]} -m-4 md:-m-8`} style={{ margin: 0, padding: "0 0 2rem" }}>
-      {/* Dotted overlay */}
-      <div className="pointer-events-none fixed inset-0 opacity-20 [background-image:radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:20px_20px]" />
-
+    <div className="w-full space-y-5">
       {/* Sub-header */}
-      <div className="relative z-10 border-b bg-white/70 backdrop-blur px-4 md:px-8 py-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 max-w-5xl mx-auto">
+      <div className="rounded-2xl bg-white border border-blue-100 shadow-sm px-5 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Progress Tracking Adaptive Visualizer</h2>
+            <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Progress Tracking Adaptive Visualizer
+            </h2>
             {user && (
-              <p className="text-xs text-slate-600 mt-0.5">
-                Logged in as <span className="font-semibold">{user.firstName ?? user.email}</span>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Logged in as <span className="font-semibold text-slate-700">{user.firstName ?? user.email}</span>
                 {masteredSubjects.length > 0 && (
                   <span className="ml-2 text-emerald-600 font-semibold">
-                    Â· {masteredSubjects.length} mastered âœ“
+                    {`\u00B7 ${masteredSubjects.length} mastered \u2713`}
                   </span>
                 )}
               </p>
@@ -350,10 +327,10 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
               <button
                 key={n.view}
                 onClick={() => setView(n.view)}
-                className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
+                className={`text-xs px-4 py-1.5 rounded-full font-semibold transition-all duration-200 ${
                   view === n.view
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm"
+                    : "bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600"
                 }`}
               >
                 {n.label}
@@ -361,7 +338,7 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
             ))}
             <button
               onClick={handleReset}
-              className="text-xs px-3 py-1.5 rounded-full bg-white border border-slate-300 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
+              className="text-xs px-4 py-1.5 rounded-full bg-white border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all duration-200 font-semibold"
               title="Reset session and start over"
             >
               Reset
@@ -372,12 +349,12 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
         {/* Status banner */}
         {status.type !== "idle" && (
           <div
-            className={`mt-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+            className={`mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
               status.type === "loading"
-                ? "bg-amber-100 text-amber-900"
+                ? "bg-blue-100 text-blue-800"
                 : status.type === "success"
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-red-100 text-red-900"
+                ? "bg-emerald-100 text-emerald-800"
+                : "bg-red-100 text-red-800"
             }`}
           >
             {status.message}
@@ -386,7 +363,7 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
       </div>
 
       {/* Content */}
-      <div className="relative z-0 max-w-5xl mx-auto px-4 md:px-8 py-8">
+      <div className="w-full">
         {renderContent()}
       </div>
     </div>

@@ -69,7 +69,7 @@ export const FeedbackBand: React.FC<Props> = ({
 }) => {
   if (!result) {
     return (
-      <div className="bg-white rounded-2xl shadow p-8 space-y-4">
+      <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-8 space-y-4">
         <p className="text-sm text-slate-700">No quiz result found. Please take a quiz first.</p>
         <button className="text-sm text-indigo-600 hover:underline" onClick={onGoDashboard}>
           Go to Dashboard
@@ -92,7 +92,7 @@ export const FeedbackBand: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6 max-w-2xl mx-auto">
+    <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-8 space-y-6 max-w-2xl mx-auto">
 
       {/* BIG PASS / FAIL banner */}
       <div
@@ -151,11 +151,11 @@ export const FeedbackBand: React.FC<Props> = ({
       )}
 
       {/* Training band */}
-      <div className="border border-amber-200 bg-amber-50 rounded-2xl px-6 py-5 space-y-3">
-        <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Personalised Training Plan</p>
-        <h3 className="text-sm font-semibold text-amber-900">{training.title}</h3>
-        <p className="text-sm text-amber-800">{training.description}</p>
-        <ul className="mt-1 text-sm text-amber-900 list-disc list-inside space-y-1">
+      <div className="border border-indigo-200 bg-indigo-50 rounded-2xl px-6 py-5 space-y-3">
+        <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Personalised Training Plan</p>
+        <h3 className="text-sm font-semibold text-indigo-900">{training.title}</h3>
+        <p className="text-sm text-indigo-800">{training.description}</p>
+        <ul className="mt-1 text-sm text-indigo-900 list-disc list-inside space-y-1">
           {training.bullets.map((b, i) => (
             <li key={i}>{b}</li>
           ))}

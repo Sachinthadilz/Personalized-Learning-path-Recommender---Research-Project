@@ -95,16 +95,16 @@ const RetryLearningPackage: React.FC<Props> = ({
   ];
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-2xl mx-auto">
+    <div className="bg-white rounded-2xl border border-blue-100 shadow-sm overflow-hidden max-w-2xl mx-auto">
       {/* Header banner */}
-      <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-5">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5">
         <div className="flex items-center gap-3">
           <AlertTriangle className="w-7 h-7 text-white flex-shrink-0" />
           <div>
             <p className="text-white font-black text-lg leading-tight">
               Adaptive Retraining – Level {level}
             </p>
-            <p className="text-orange-100 text-sm mt-0.5">
+            <p className="text-blue-100 text-sm mt-0.5">
               {subjectName} · Attempt #{attemptNumber} · Simplified for you
             </p>
           </div>
@@ -112,18 +112,18 @@ const RetryLearningPackage: React.FC<Props> = ({
         <div className="mt-3 flex gap-2 flex-wrap">
           {Array.from({ length: level - 1 }).map((_, i) => (
             <span key={i} className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">
-              ✗ Attempt {i + 1} (failed)
+              ✕ Attempt {i + 1} (failed)
             </span>
           ))}
-          <span className="text-xs bg-white text-orange-700 font-semibold px-2 py-0.5 rounded-full">
+          <span className="text-xs bg-white text-indigo-700 font-semibold px-2 py-0.5 rounded-full">
             ➜ Now on Attempt {attemptNumber}
           </span>
         </div>
       </div>
 
       {/* Encouragement bar */}
-      <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
-        <p className="text-sm text-amber-800">
+      <div className="bg-blue-50 border-b border-blue-100 px-6 py-3">
+        <p className="text-sm text-blue-800">
           💡 This is a <strong>simplified version</strong> — shorter, clearer, and with a game to help
           concepts stick. Work through it at your own pace, then retry the quiz.
         </p>
@@ -137,7 +137,7 @@ const RetryLearningPackage: React.FC<Props> = ({
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 flex-1 justify-center px-3 py-3 text-xs font-semibold transition-colors ${
               activeTab === tab.id
-                ? "border-b-2 border-orange-500 text-orange-700 bg-orange-50"
+                ? "border-b-2 border-blue-500 text-blue-700 bg-blue-50"
                 : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             }`}
           >
@@ -160,7 +160,7 @@ const RetryLearningPackage: React.FC<Props> = ({
             </p>
             <div className="flex flex-col items-center gap-4">
               {/* Center node */}
-              <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white font-bold text-sm rounded-2xl px-6 py-3 shadow-md">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-sm rounded-2xl px-6 py-3 shadow-md">
                 {mindmap.center}
               </div>
               {/* Branch connector */}
@@ -192,7 +192,7 @@ const RetryLearningPackage: React.FC<Props> = ({
             <ul className="space-y-3">
               {notes.map((note, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-bold flex items-center justify-center mt-0.5">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center mt-0.5">
                     {i + 1}
                   </span>
                   <p className="text-sm text-slate-700">{note}</p>
@@ -250,7 +250,7 @@ const RetryLearningPackage: React.FC<Props> = ({
                 >
                   <span
                     className={`text-xs font-bold min-w-[50px] text-right ${
-                      item.task.includes("Retry") ? "text-indigo-600" : "text-orange-600"
+                      item.task.includes("Retry") ? "text-indigo-600" : "text-blue-600"
                     }`}
                   >
                     {item.time}
@@ -273,7 +273,7 @@ const RetryLearningPackage: React.FC<Props> = ({
         </button>
         <button
           onClick={onStartQuiz}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-bold hover:from-orange-600 hover:to-red-600 transition shadow"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold hover:from-blue-700 hover:to-indigo-700 transition shadow"
         >
           Ready — Retry Quiz
           <ChevronRight className="w-4 h-4" />

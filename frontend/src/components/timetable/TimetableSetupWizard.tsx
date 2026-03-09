@@ -1,21 +1,38 @@
 import { useState, useEffect } from 'react';
-import { FaRocket, FaCheck, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaRocket, FaCheck, FaPlus, FaTrash, FaStar, FaClock, FaBook } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import timetableAPI from '../../services/timetableApi';
 import { getSavedLearningPaths, type SavedLearningPath } from '../../api';
 import { authService, type AcademicProfile } from '../../services/authService';
 
+/**
+ * Priority tiers based on credit value.
+ * Higher credits → higher-intensity gradient to visually signal priority.
+ */
+const CREDIT_PRIORITY_COLORS: Record<number, string> = {
+  6: 'from-violet-600 to-purple-700',
+  5: 'from-indigo-600 to-blue-700',
+  4: 'from-blue-500 to-cyan-600',
+  3: 'from-teal-500 to-emerald-600',
+  2: 'from-green-400 to-teal-500',
+  1: 'from-slate-400 to-gray-500',
+};
+
+function getCreditColor(credits: number): string {
+  return CREDIT_PRIORITY_COLORS[credits] ?? CREDIT_PRIORITY_COLORS[3];
+}
+
 const SUBJECT_COLORS = [
-  'from-blue-200 to-blue-300',
-  'from-purple-200 to-purple-300',
-  'from-pink-200 to-pink-300',
-  'from-red-200 to-red-300',
-  'from-orange-200 to-orange-300',
-  'from-yellow-200 to-yellow-300',
-  'from-green-200 to-green-300',
-  'from-teal-200 to-teal-300',
-  'from-cyan-200 to-cyan-300',
-  'from-indigo-200 to-indigo-300',
+  'from-violet-600 to-purple-700',
+  'from-indigo-600 to-blue-700',
+  'from-blue-500 to-cyan-600',
+  'from-teal-500 to-emerald-600',
+  'from-green-400 to-teal-500',
+  'from-slate-400 to-gray-500',
+  'from-sky-500 to-blue-600',
+  'from-purple-500 to-indigo-600',
+  'from-cyan-500 to-blue-600',
+  'from-emerald-500 to-green-600',
 ];
 
 /** Credit value → estimated study hours (15 h per credit is standard academic convention) */
@@ -140,20 +157,22 @@ function TimetableSetupWizard({ onComplete }: Props) {
             ? matchModuleCredits(course.name, academicProfile.modules)
             : null;
         const credits = matchedCredits ?? 3;
-        const colorIdx = derived.length % SUBJECT_COLORS.length;
 
         derived.push({
           subject_id: course.id ?? `course_${derived.length + 1}`,
           name: course.name,
           credits,
           remaining_needed: credits * HOURS_PER_CREDIT,
-          color: SUBJECT_COLORS[colorIdx],
+          color: getCreditColor(credits),
         });
 
         if (derived.length >= 10) break;
       }
       if (derived.length >= 10) break;
     }
+
+    // Sort by credit value descending — higher credits = higher priority
+    derived.sort((a, b) => b.credits - a.credits);
 
     setFormData((prev) => ({ ...prev, subjects: derived }));
   }, [selectedPathIds, savedPaths, academicProfile]);
@@ -426,87 +445,126 @@ function TimetableSetupWizard({ onComplete }: Props) {
 
             {/* ── Derived subject cards ─────────────────────────────────────── */}
             {formData.subjects.length > 0 && (
-              <div className="space-y-3 pt-2 border-t-2 border-gray-100">
+              <div className="space-y-4 pt-2 border-t-2 border-gray-100">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
                     Subjects ({formData.subjects.length}/10)
                   </p>
-                  {academicProfile && (
-                    <span className="text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                      Credits matched from academic profile
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {academicProfile && (
+                      <span className="text-xs text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                        ✓ Credits matched from academic profile
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-400 font-medium">Sorted by priority</span>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                {/* Priority legend */}
+                <div className="flex flex-wrap gap-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span className="text-xs text-gray-500 font-semibold mr-1 self-center">Priority:</span>
+                  {[
+                    { credits: 6, label: '6 cr – Highest' },
+                    { credits: 4, label: '4 cr – High' },
+                    { credits: 3, label: '3 cr – Medium' },
+                    { credits: 1, label: '1 cr – Low' },
+                  ].map(({ credits, label }) => (
+                    <span
+                      key={credits}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getCreditColor(credits)}`}
+                    >
+                      <FaStar className="text-[8px]" />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {formData.subjects.map((subject, index) => {
                     const isProfileMatch =
                       academicProfile &&
                       matchModuleCredits(subject.name, academicProfile.modules) !== null;
+                    const priorityLabel =
+                      subject.credits >= 6
+                        ? 'Highest Priority'
+                        : subject.credits >= 5
+                        ? 'Very High Priority'
+                        : subject.credits >= 4
+                        ? 'High Priority'
+                        : subject.credits >= 3
+                        ? 'Medium Priority'
+                        : subject.credits >= 2
+                        ? 'Low Priority'
+                        : 'Minimal Priority';
+
                     return (
                       <div
                         key={subject.subject_id}
-                        className={`ttm-subject-card bg-gradient-to-br ${subject.color}`}
+                        className={`relative rounded-2xl overflow-hidden shadow-lg border border-white/10 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5`}
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <div className="space-y-3">
+                        {/* Top color band showing priority tier */}
+                        <div className={`bg-gradient-to-r ${getCreditColor(subject.credits)} px-4 py-3 flex items-center justify-between`}>
                           <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                              <FaBook className="text-white text-xs" />
+                            </div>
+                            <span className="text-xs font-bold text-white/80 uppercase tracking-wider">
+                              {priorityLabel}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {/* Credit star indicators */}
+                            {Array.from({ length: Math.min(subject.credits, 6) }).map((_, i) => (
+                              <FaStar key={i} className="text-yellow-300 text-[9px]" />
+                            ))}
+                            <button
+                              onClick={() => removeSubject(index)}
+                              className="ml-2 p-1.5 bg-white/20 hover:bg-white/40 rounded-lg text-white transition-colors"
+                              title="Remove subject"
+                            >
+                              <FaTrash className="text-[10px]" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Card body */}
+                        <div className="bg-white px-4 py-3 space-y-3">
+                          {/* Subject name input */}
+                          <div>
                             <input
                               type="text"
-                              className="flex-1 px-3 py-2 bg-white bg-opacity-25 backdrop-blur-sm border-2 border-white border-opacity-40 rounded-lg text-white placeholder-white placeholder-opacity-80 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-30 focus:bg-opacity-30 transition-all duration-300 font-semibold text-sm"
+                              className="w-full px-3 py-2 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 font-semibold text-gray-800 text-sm placeholder-gray-400"
                               placeholder={`Subject ${index + 1}`}
                               value={subject.name}
                               onChange={(e) => handleSubjectChange(index, 'name', e.target.value)}
                             />
-                            <button
-                              onClick={() => removeSubject(index)}
-                              className="flex-shrink-0 p-1.5 bg-white/20 hover:bg-white/40 rounded-lg text-white transition-colors"
-                              title="Remove subject"
-                            >
-                              <FaTrash className="text-xs" />
-                            </button>
+                            {isProfileMatch && (
+                              <p className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
+                                <FaCheck className="text-[9px]" /> Auto-matched from academic profile
+                              </p>
+                            )}
                           </div>
-                          {isProfileMatch && (
-                            <p className="text-xs text-white/80 font-semibold -mt-1">
-                              ✓ Credits matched from academic profile
-                            </p>
-                          )}
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="block text-xs text-white font-semibold mb-1">
-                                Credits
-                              </label>
-                              <select
-                                className="w-full px-2 py-1.5 bg-white bg-opacity-25 backdrop-blur-sm border-2 border-white border-opacity-40 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-30 font-semibold text-sm"
-                                value={subject.credits}
-                                onChange={(e) =>
-                                  handleSubjectChange(index, 'credits', parseInt(e.target.value))
-                                }
-                              >
-                                {[1, 2, 3, 4, 5, 6].map((c) => (
-                                  <option key={c} value={c} className="text-gray-800 font-semibold">
-                                    {c}
-                                  </option>
-                                ))}
-                              </select>
+
+                          {/* Credits & Hours — read-only badges */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
+                              <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${getCreditColor(subject.credits)} flex items-center justify-center flex-shrink-0`}>
+                                <FaStar className="text-white text-[9px]" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wide">Credits</p>
+                                <p className="text-lg font-extrabold text-blue-800 leading-none">{subject.credits}</p>
+                              </div>
                             </div>
-                            <div>
-                              <label className="block text-xs text-white font-semibold mb-1">
-                                Hours
-                              </label>
-                              <input
-                                type="number"
-                                className="w-full px-2 py-1.5 bg-white bg-opacity-25 backdrop-blur-sm border-2 border-white border-opacity-40 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-30 font-semibold text-sm"
-                                value={subject.remaining_needed}
-                                onChange={(e) =>
-                                  handleSubjectChange(
-                                    index,
-                                    'remaining_needed',
-                                    parseFloat(e.target.value),
-                                  )
-                                }
-                                min="1"
-                                step="0.5"
-                              />
+                            <div className="flex-1 flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
+                              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                                <FaClock className="text-white text-[9px]" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Study Hours</p>
+                                <p className="text-lg font-extrabold text-indigo-800 leading-none">{subject.remaining_needed}<span className="text-xs font-semibold text-indigo-400">h</span></p>
+                              </div>
                             </div>
                           </div>
                         </div>
