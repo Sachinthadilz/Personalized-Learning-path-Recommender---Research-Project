@@ -80,6 +80,94 @@ def _load_model(path: Path, label: str) -> Any | None:
         return None
 
 
+def _engineer_outcome_features(base_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Derive the extended feature set required by best_model_pipeline from
+    the 19 base OULAD features.  All derived values are reasonable proxies
+    so the model can actually run instead of raising a missing-column error.
+    """
+    df = base_df.copy()
+    tc  = float(df["total_clicks"].iloc[0])
+    ec  = float(df["early_clicks"].iloc[0])
+    da  = float(df["days_active"].iloc[0])
+    ms  = float(df["mean_score"].iloc[0])
+    mdl = float(df["mean_daily_clicks"].iloc[0])
+    na  = int(df["num_assessments"].iloc[0])
+
+    safe_tc = tc + 1  # avoid division by zero
+
+    # Click ratio across three course phases
+    df["click_ratio_early"] = ec / safe_tc
+    df["click_ratio_mid"]   = ((tc - ec) * 0.5) / safe_tc
+    df["click_ratio_late"]  = ((tc - ec) * 0.5) / safe_tc
+
+    # Assessment completion rate (OULAD modules typically have ~7 assessments)
+    df["assessment_completion_rate"] = min(1.0, na / 7.0)
+
+    # Score statistics (only mean available; approximate others)
+    df["score_trend"]      = 0.0
+    df["score_max"]        = ms
+    df["score_min"]        = ms
+    df["score_std"]        = 0.0
+    df["score_engagement"] = ms * min(1.0, da / 30.0)
+
+    # Score sub-types (proxy all to overall mean)
+    df["cma_mean_score"]      = ms
+    df["tma_mean_score"]      = ms
+    df["weighted_mean_score"] = ms
+    df["exam_score"]          = ms
+    df["has_exam_score"]      = int(ms > 0)
+
+    # Activity-type breakdowns (estimated fractions of total clicks)
+    resource_clicks = int(tc * 0.50)
+    quiz_clicks     = int(tc * 0.10)
+    social_clicks   = 0  # not tracked in base features
+
+    df["resource_clicks"]    = resource_clicks
+    df["quiz_clicks"]        = quiz_clicks
+    df["social_clicks"]      = social_clicks
+    df["distinct_activity_types"] = 3  # typical OULAD value
+
+    # Log-transformed click features
+    df["log_total_clicks"]    = np.log1p(tc)
+    df["log_early_clicks"]    = np.log1p(ec)
+    df["log_resource_clicks"] = np.log1p(resource_clicks)
+    df["log_quiz_clicks"]     = np.log1p(quiz_clicks)
+    df["log_social_clicks"]   = np.log1p(social_clicks)
+
+    # Module-level pass rate (unknown for non-OULAD users; use neutral 0.5)
+    df["module_pass_rate"] = 0.5
+
+    return df
+
+
+def _engineer_early_warning_features(base_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Derive the early-period features required by early_warning_pipeline from
+    the 19 base OULAD features.
+    """
+    df = base_df.copy()
+    ec   = float(df["early_clicks"].iloc[0])
+    da   = float(df["days_active"].iloc[0])
+    ms   = float(df["mean_score"].iloc[0])
+    mc   = float(df["max_daily_clicks"].iloc[0])
+    na   = int(df["num_assessments"].iloc[0])
+    frbs = int(df["first_reg_before_start"].iloc[0])
+
+    early_days = max(min(da, 30), 1)  # first ~30 days proxy
+
+    df["early_total_clicks"]     = ec
+    df["early_days_active"]      = early_days
+    df["early_mean_daily_clicks"]= ec / early_days
+    df["early_max_daily_clicks"] = mc
+    df["early_mean_score"]       = ms
+    df["early_num_submitted"]    = min(na, 3)
+    df["early_activity_types"]   = 2  # neutral default
+    df["first_reg_before_start_ew"] = frbs
+
+    return df
+
+
 def _rule_based_early_warning(features: dict) -> tuple[str, float]:
     """
     Fallback early-warning logic when the ML model cannot be loaded.
@@ -294,8 +382,9 @@ class LearnerProfileService:
         model = _ModelRegistry.outcome_model
         if model is not None:
             try:
-                prediction: str = model.predict(df)[0]
-                probabilities: np.ndarray = model.predict_proba(df)[0]
+                enriched = _engineer_outcome_features(df)
+                prediction: str = model.predict(enriched)[0]
+                probabilities: np.ndarray = model.predict_proba(enriched)[0]
                 confidence = float(round(float(np.max(probabilities)), 4))
                 return prediction, confidence
             except Exception as exc:
@@ -321,8 +410,9 @@ class LearnerProfileService:
         model = _ModelRegistry.early_warning_model
         if model is not None:
             try:
-                prediction: str = model.predict(df)[0]
-                probabilities: np.ndarray = model.predict_proba(df)[0]
+                enriched = _engineer_early_warning_features(df)
+                prediction: str = model.predict(enriched)[0]
+                probabilities: np.ndarray = model.predict_proba(enriched)[0]
                 risk_score = float(round(float(np.max(probabilities)), 4))
                 return prediction, risk_score
             except Exception as exc:
