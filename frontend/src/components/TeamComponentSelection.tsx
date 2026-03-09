@@ -2,19 +2,23 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import Header from "./Header";
 import UserProfile from "./UserProfile";
+import OnboardingForm from "./OnboardingForm";
 import { Network, Code2, Layers, PenTool, X, ArrowRight } from "lucide-react";
 
 interface TeamComponentSelectionProps {
   onSelectComponent: () => void;
+  onSelectTimetable?: () => void;
   onLogoClick?: () => void;
 }
 
 const TeamComponentSelection = ({
   onSelectComponent,
+  onSelectTimetable,
   onLogoClick,
 }: TeamComponentSelectionProps) => {
   useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAcademicProfileOpen, setIsAcademicProfileOpen] = useState(false);
 
   const components = [
     {
@@ -23,13 +27,15 @@ const TeamComponentSelection = ({
       color: "from-blue-500 to-indigo-600",
       Icon: Network,
       available: true,
+      onClick: onSelectComponent,
     },
     {
       id: 2,
       name: "Timetable Planner",
       color: "from-purple-500 to-pink-600",
       Icon: Code2,
-      available: false,
+      available: true,
+      onClick: onSelectTimetable ?? onSelectComponent,
     },
     {
       id: 3,
@@ -37,6 +43,7 @@ const TeamComponentSelection = ({
       color: "from-green-500 to-teal-600",
       Icon: Layers,
       available: false,
+      onClick: undefined,
     },
     {
       id: 4,
@@ -44,13 +51,18 @@ const TeamComponentSelection = ({
       color: "from-orange-500 to-red-600",
       Icon: PenTool,
       available: false,
+      onClick: undefined,
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <Header onOpenProfile={() => setIsProfileOpen(true)} onLogoClick={onLogoClick} />
+      <Header
+        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenAcademicProfile={() => setIsAcademicProfileOpen(true)}
+        onLogoClick={onLogoClick}
+      />
 
       {/* Profile Modal */}
       {isProfileOpen && (
@@ -67,6 +79,26 @@ const TeamComponentSelection = ({
             </div>
             <div className="p-6">
               <UserProfile />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Academic Profile Modal */}
+      {isAcademicProfileOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Academic Profile</h2>
+              <button
+                onClick={() => setIsAcademicProfileOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <OnboardingForm onComplete={() => setIsAcademicProfileOpen(false)} />
             </div>
           </div>
         </div>
@@ -93,7 +125,7 @@ const TeamComponentSelection = ({
                   ? "hover:scale-105 hover:shadow-2xl cursor-pointer"
                   : "opacity-75 cursor-not-allowed"
               }`}
-              onClick={component.available ? onSelectComponent : undefined}
+              onClick={component.available ? component.onClick : undefined}
             >
               {/* Gradient Header */}
               <div

@@ -112,6 +112,29 @@ export interface ApiError {
   }>;
 }
 
+export interface AcademicModule {
+  moduleId?: string;
+  name: string;
+  credits: number;
+}
+
+export interface AcademicProfile {
+  _id?: string;
+  user?: string;
+  university: string;
+  degree: string;
+  yearOfStudy: number;
+  modules: AcademicModule[];
+  onboardingCompleted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AcademicProfileResponse {
+  success: boolean;
+  data: AcademicProfile | null;
+}
+
 // Auth API functions
 export const authService = {
   /**
@@ -247,6 +270,25 @@ export const authService = {
    */
   getAccessToken(): string | null {
     return localStorage.getItem("accessToken");
+  },
+
+  // ─── Academic Profile (Onboarding) ────────────────────────────────────────
+
+  /**
+   * Fetch the academic profile for the logged-in user.
+   * Returns { success: true, data: null } when onboarding not yet done.
+   */
+  async getAcademicProfile(): Promise<AcademicProfileResponse> {
+    const response = await authApi.get<AcademicProfileResponse>("/api/profile");
+    return response.data;
+  },
+
+  /**
+   * Save (create or replace) the academic profile on onboarding completion.
+   */
+  async saveAcademicProfile(data: Omit<AcademicProfile, "_id" | "user" | "onboardingCompleted" | "createdAt" | "updatedAt">): Promise<AcademicProfileResponse> {
+    const response = await authApi.post<AcademicProfileResponse>("/api/profile", data);
+    return response.data;
   },
 };
 

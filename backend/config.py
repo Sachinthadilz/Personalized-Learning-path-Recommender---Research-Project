@@ -41,4 +41,11 @@ class Settings:
     MIN_SIMILARITY_SCORE: float = 0.3
     MAX_PATH_LENGTH: int = 5
 
+    # ── Timetable Planner (MongoDB) ──────────────────────────────────────────
+    MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017/timetable_db")
+    TIMETABLE_MODEL_PATH:    str = os.getenv("TIMETABLE_MODEL_PATH",    "models/timetable_model.pkl")
+    TIMETABLE_SCALER_PATH:   str = os.getenv("TIMETABLE_SCALER_PATH",   "models/feature_scaler.pkl")
+    TIMETABLE_ENCODER_PATH:  str = os.getenv("TIMETABLE_ENCODER_PATH",  "models/day_encoder.pkl")
+    TIMETABLE_METADATA_PATH: str = os.getenv("TIMETABLE_METADATA_PATH", "models/model_metadata.json")
+
 settings = Settings()
