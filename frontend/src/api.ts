@@ -408,4 +408,81 @@ export const unenrollFromPath = async (
   return response.data;
 };
 
+// ── Activity Timeline ─────────────────────────────────────────────────────────
+
+export interface TimelineDataPoint {
+  date: string;           // "YYYY-MM-DD"
+  events: number;
+  total_duration: number; // seconds
+}
+
+export const fetchActivityTimeline = async (
+  studentId: string,
+  courseId?: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<TimelineDataPoint[]> => {
+  const params: Record<string, string> = {};
+  if (courseId) params.course_id = courseId;
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  const response = await api.get(`/activity/timeline/${studentId}`, { params });
+  return response.data;
+};
+
+// ── Learner Profile Prediction ────────────────────────────────────────────────
+
+export interface LearnerProfileInput {
+  gender: string;
+  region: string;
+  highest_education: string;
+  imd_band: string;
+  age_band: string;
+  disability: string;
+  code_module: string;
+  code_presentation: string;
+  total_clicks: number;
+  days_active: number;
+  max_daily_clicks: number;
+  mean_daily_clicks: number;
+  early_clicks: number;
+  mean_score: number;
+  num_assessments: number;
+  first_reg_before_start: number;
+  ever_unregistered: number;
+  num_of_prev_attempts: number;
+  studied_credits: number;
+}
+
+export interface AutoLearnerProfileInput {
+  student_id: string;
+  course_id?: string;
+  code_module?: string;
+  code_presentation?: string;
+}
+
+export interface LearnerProfileResult {
+  learner_profile: string;
+  profile_confidence: number;
+  predicted_outcome: string;
+  outcome_confidence: number;
+  risk_prediction: string;
+  risk_score: number;
+  learning_path_recommendation: Record<string, any>;
+}
+
+export const predictLearnerProfile = async (
+  input: LearnerProfileInput,
+): Promise<LearnerProfileResult> => {
+  const response = await api.post("/predict-learner-profile", input);
+  return response.data;
+};
+
+export const predictLearnerProfileAuto = async (
+  input: AutoLearnerProfileInput,
+): Promise<LearnerProfileResult> => {
+  const response = await api.post("/predict-learner-profile/auto", input);
+  return response.data;
+};
+
 export default api;
