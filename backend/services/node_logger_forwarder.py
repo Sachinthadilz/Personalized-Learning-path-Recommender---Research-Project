@@ -26,7 +26,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-NODE_LOGGER_URL: str = os.getenv("NODE_LOGGER_URL", "http://localhost:4000/logs")
+NODE_LOGGER_URL: str = os.getenv("NODE_LOGGER_URL", "http://localhost:5001/logs")
 MAX_RETRIES: int = 3
 INITIAL_BACKOFF: float = 0.5        # seconds; doubles each retry
 REQUEST_TIMEOUT: float = 5.0        # per-attempt timeout

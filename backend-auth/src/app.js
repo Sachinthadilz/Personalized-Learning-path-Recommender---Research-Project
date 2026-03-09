@@ -10,7 +10,12 @@ const timetableRoutes = require("./routes/timetableRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const adaptiveRoutes = require("./routes/adaptiveRoutes");
 const studyMaterialRoutes = require("./routes/studyMaterialRoutes");
+const quizMarksRoutes = require("./routes/quizMarksRoutes");
+const logsRoutes = require("./routes/logsRoutes");
 const { errorHandler, notFound } = require("./middleware/errorHandler");
+
+// Register ActivityLog model so it is available across the app
+require("./models/ActivityLog");
 
 /**
  * Create Express application
@@ -79,6 +84,9 @@ app.use("/api/timetable", timetableRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/adaptive", adaptiveRoutes);
 app.use("/api/study-material", studyMaterialRoutes);
+app.use("/api/quiz-marks", quizMarksRoutes);
+// Activity logging — unauthenticated, called server-to-server from FastAPI
+app.use("/logs", logsRoutes);
 
 /**
  * Root Route
