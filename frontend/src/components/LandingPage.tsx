@@ -1,4 +1,4 @@
-﻿import {
+import {
   Sparkles,
   GitBranch,
   BarChart2,

@@ -125,7 +125,45 @@ export interface SavedLearningPath {
     avgRating?: number;
     estimatedDuration?: string;
   };
+  enrollment?: EnrollmentData;
   createdAt: string;
+}
+
+export interface CourseProgress {
+  courseId: string;
+  status: "locked" | "unlocked" | "completed";
+  completedAt?: string;
+  quizResult?: QuizResult;
+}
+
+export interface EnrollmentData {
+  isEnrolled: boolean;
+  enrolledAt?: string;
+  currentCourseIndex: number;
+  courseProgress: CourseProgress[];
+}
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer?: number;
+  userAnswer?: number;
+  isCorrect?: boolean;
+}
+
+export interface QuizResult {
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  questions: QuizQuestion[];
+  completedAt?: string;
+}
+
+export interface QuizData {
+  courseId: string;
+  courseName: string;
+  questions: { question: string; options: string[] }[];
+  _quizKey: string;
 }
 
 // Course endpoints
@@ -317,109 +355,56 @@ export const deleteLearningPath = async (
   return response.data;
 };
 
-// Learner Profile Prediction
-export interface LearnerProfileInput {
-  // Categorical
-  gender: string;
-  region: string;
-  highest_education: string;
-  imd_band: string;
-  age_band: string;
-  disability: string;
-  code_module: string;
-  code_presentation: string;
-  // Numerical
-  total_clicks: number;
-  days_active: number;
-  max_daily_clicks: number;
-  mean_daily_clicks: number;
-  early_clicks: number;
-  mean_score: number;
-  num_assessments: number;
-  first_reg_before_start: number;
-  ever_unregistered: number;
-  num_of_prev_attempts: number;
-  studied_credits: number;
-}
+// Enrollment & Quiz endpoints (Auth API)
+export const enrollInPath = async (
+  pathId: string,
+): Promise<{ success: boolean; message: string; data: { enrollment: EnrollmentData } }> => {
+  const response = await authApi.post(`/api/learning-paths/${pathId}/enroll`);
+  return response.data;
+};
 
-export interface LearnerProfileResult {
-  learner_profile: string;
-  profile_confidence: number;
-  predicted_outcome: string;
-  outcome_confidence: number;
-  risk_prediction: string;
-  risk_score: number;
-  learning_path_recommendation: {
-    profile?: string;
-    description?: string;
-    learning_path?: string;
-    actions?: string[];
-    alert_level?: string;
-    intervention?: string;
+export const getEnrollmentStatus = async (
+  pathId: string,
+): Promise<{ success: boolean; data: { enrollment: EnrollmentData } }> => {
+  const response = await authApi.get(`/api/learning-paths/${pathId}/enrollment`);
+  return response.data;
+};
+
+export const generateQuiz = async (
+  pathId: string,
+  courseId: string,
+): Promise<{ success: boolean; data: QuizData }> => {
+  const response = await authApi.post(
+    `/api/learning-paths/${pathId}/courses/${courseId}/quiz`,
+  );
+  return response.data;
+};
+
+export const submitQuiz = async (
+  pathId: string,
+  courseId: string,
+  answers: number[],
+  quizData: QuizData,
+): Promise<{
+  success: boolean;
+  message: string;
+  data: {
+    result: QuizResult;
+    nextCourseUnlocked: boolean;
+    enrollment: EnrollmentData;
   };
-}
-
-export const predictLearnerProfile = async (
-  input: LearnerProfileInput,
-): Promise<LearnerProfileResult> => {
-  const response = await api.post("/predict-learner-profile", input);
+}> => {
+  const response = await authApi.post(
+    `/api/learning-paths/${pathId}/courses/${courseId}/submit-quiz`,
+    { answers, quizData },
+  );
   return response.data;
 };
 
-// Automatic learner profile prediction (student-based)
-export interface AutoLearnerProfileInput {
-  student_id: string;
-  code_module?: string;
-  code_presentation?: string;
-}
-
-export const predictLearnerProfileAuto = async (
-  input: AutoLearnerProfileInput,
-): Promise<LearnerProfileResult> => {
-  const response = await api.post("/predict-learner-profile/auto", input);
-  return response.data;
-};
-
-// Activity Logs
-export interface ActivityLog {
-  log_id: string;
-  student_id: string;
-  course_id: string;
-  event_type: string;
-  timestamp: string;
-  duration: number | null;
-  metadata: Record<string, unknown>;
-}
-
-export const fetchActivityLogs = async (
-  studentId: string,
-  courseId?: string,
-  limit = 200,
-): Promise<ActivityLog[]> => {
-  const params: Record<string, string | number> = { limit };
-  if (courseId) params.course_id = courseId;
-  const response = await api.get(`/activity/logs/${encodeURIComponent(studentId)}`, { params });
-  return response.data;
-};
-
-// Activity Timeline (aggregated by day)
-export interface TimelineDataPoint {
-  date: string;           // YYYY-MM-DD
-  events: number;         // Total events on this day
-  total_duration: number; // Total duration in seconds
-}
-
-export const fetchActivityTimeline = async (
-  studentId: string,
-  courseId?: string,
-  startDate?: string, // YYYY-MM-DD
-  endDate?: string,   // YYYY-MM-DD
-): Promise<TimelineDataPoint[]> => {
-  const params: Record<string, string> = {};
-  if (courseId) params.course_id = courseId;
-  if (startDate) params.start_date = startDate;
-  if (endDate) params.end_date = endDate;
-  const response = await api.get(`/activity/timeline/${encodeURIComponent(studentId)}`, { params });
+export const unenrollFromPath = async (
+  pathId: string,
+): Promise<{ success: boolean; message: string }> => {
+  const response = await authApi.post(`/api/learning-paths/${pathId}/unenroll`);
   return response.data;
 };
 

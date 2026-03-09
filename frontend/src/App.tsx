@@ -5,6 +5,12 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Header from "./components/Header";
 import UserProfile from "./components/UserProfile";
+import { useAuth } from "./contexts/AuthContext";
+import LandingPage from "./components/LandingPage";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
+import Header from "./components/Header";
+import UserProfile from "./components/UserProfile";
 import Dashboard from "./components/Dashboard";
 import CoursesTab from "./components/CoursesTab";
 import SkillsTab from "./components/SkillsTab";
@@ -35,6 +41,7 @@ type Tab =
   | "ai-search"
   | "courses"
   | "learning-path"
+  | "saved-paths"
   | "saved-paths"
   | "skills"
   | "universities"
@@ -144,6 +151,8 @@ function App() {
           return <LearningPathTab />;
         case "saved-paths":
           return <SavedPathsTab />;
+        case "saved-paths":
+          return <SavedPathsTab />;
         case "skills":
           return <SkillsTab />;
         case "universities":
@@ -160,6 +169,7 @@ function App() {
       return (
         <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">
+            Component Error
             Component Error
           </h2>
           <p className="text-red-600 mb-4">{String(error)}</p>
@@ -194,6 +204,7 @@ function App() {
     : allTabs.filter((t) => exploreCoursesTabs.includes(t.id));
 
   return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
       {/* Header */}
       <Header
@@ -275,7 +286,62 @@ function App() {
                 onClick={() => setHasSelectedComponent(false)}
                 className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-3 py-2.5 text-left rounded-lg transition-all text-gray-500 hover:bg-orange-50 hover:text-orange-600`}
                 title={isSidebarCollapsed ? "Back to Components" : ""}
+      )}
+
+      {/* Main Layout with Sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar Navigation */}
+        <aside
+          className={`${isSidebarCollapsed ? "w-16" : "w-56"} bg-white border-r border-gray-200 flex flex-col transition-all duration-300 flex-shrink-0`}
+        >
+          {/* Toggle Button */}
+          <div className="p-3 border-b border-gray-200">
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="w-full flex items-center justify-center p-2 text-gray-500 hover:bg-gray-100 hover:text-indigo-600 rounded-lg transition-colors"
+              title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isSidebarCollapsed ? (
+                <ChevronRight className="w-5 h-5" />
+              ) : (
+                <ChevronLeft className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+
+          <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+            {tabs.map((tab) => {
+              const { Icon } = tab;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-3 py-2.5 text-left rounded-lg transition-all ${
+                    activeTab === tab.id
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+                  title={isSidebarCollapsed ? tab.label : ""}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  {!isSidebarCollapsed && (
+                    <span className="text-sm font-medium">{tab.label}</span>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Back to Components Button */}
+            <div className="pt-4 mt-4 border-t border-gray-200">
+              <button
+                onClick={() => setHasSelectedComponent(false)}
+                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"} px-3 py-2.5 text-left rounded-lg transition-all text-gray-500 hover:bg-orange-50 hover:text-orange-600`}
+                title={isSidebarCollapsed ? "Back to Components" : ""}
               >
+                <ArrowLeft className="w-5 h-5 flex-shrink-0" />
+                {!isSidebarCollapsed && (
+                  <span className="text-sm font-medium">Back to Components</span>
+                )}
                 <ArrowLeft className="w-5 h-5 flex-shrink-0" />
                 {!isSidebarCollapsed && (
                   <span className="text-sm font-medium">Back to Components</span>
@@ -284,11 +350,25 @@ function App() {
             </div>
           </nav>
         </aside>
+            </div>
+          </nav>
+        </aside>
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="container mx-auto px-4 py-8">{renderTab()}</div>
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="container mx-auto px-4 py-8">{renderTab()}</div>
 
+          {/* Footer */}
+          <footer className="bg-white border-t border-gray-200 mt-12">
+            <div className="container mx-auto px-4 py-6 text-center text-gray-600">
+              <p>Course Knowledge Graph API - Built with FastAPI & Neo4j</p>
+            </div>
+          </footer>
+        </main>
+      </div>
           {/* Footer */}
           <footer className="bg-white border-t border-gray-200 mt-12">
             <div className="container mx-auto px-4 py-6 text-center text-gray-600">
