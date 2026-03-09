@@ -21,8 +21,13 @@ import {
   GraduationCap,
   Sparkles,
   Info,
+  Play,
+  BookOpen,
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 import StudentEngagementTimeline from "./StudentEngagementTimeline";
+import VideoWatchChart from "./VideoWatchChart";
+import QuizMarksChart from "./QuizMarksChart";
 
 // â”€â”€â”€ Option lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -241,11 +246,19 @@ const ALERT_LEVEL_STYLES: Record<string, string> = {
 // â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function LearnerStatusTab() {
+  const { user } = useAuth();
   const [input, setInput] = useState<LearnerProfileInput>({ ...DEFAULT_INPUT });
   const [result, setResult] = useState<LearnerProfileResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [studentId, setStudentId] = useState("");
+  const [studentId, setStudentId] = useState(
+    () => localStorage.getItem("student_id") ?? ""
+  );
+
+  // Keep studentId in sync when the user logs in/changes
+  useEffect(() => {
+    if (user?.id) setStudentId(user.id);
+  }, [user?.id]);
 
   // Auto-calculate mean_daily_clicks whenever total_clicks or days_active changes
   useEffect(() => {
@@ -439,8 +452,45 @@ export default function LearnerStatusTab() {
           placeholder="e.g. student_001"
           className="flex-1 max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
         />
-        <span className="text-xs text-gray-400">Used to load the engagement timeline below</span>
+        <span className="text-xs text-gray-400">Auto-filled from your account · override for another student</span>
       </div>
+
+      {/* ── Quiz Marks ──────────────────────────────────────────────── */}
+      <Section
+        title="Quiz Marks"
+        icon={<BookOpen className="w-4 h-4 text-emerald-600" />}
+        badge="course, progress & assessment marks"
+        accentColor="bg-emerald-50"
+        defaultOpen
+      >
+        <QuizMarksChart />
+      </Section>
+
+      {/* ── Study Activity (per day) ────────────────────────────────── */}
+      {studentId && (
+        <Section
+          title="Study Activity"
+          icon={<Play className="w-4 h-4 text-violet-600" />}
+          badge="study duration per day"
+          accentColor="bg-violet-50"
+          defaultOpen
+        >
+          <VideoWatchChart studentId={studentId} />
+        </Section>
+      )}
+
+      {/* ── Engagement Timeline ─────────────────────────────────────── */}
+      {studentId && (
+        <Section
+          title="Engagement Timeline"
+          icon={<Activity className="w-4 h-4 text-sky-600" />}
+          badge="activity log"
+          accentColor="bg-sky-50"
+          defaultOpen
+        >
+          <StudentEngagementTimeline studentId={studentId} />
+        </Section>
+      )}
 {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           SECTION 1 â€” Student Background  (8 categorical)
       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
@@ -799,18 +849,6 @@ export default function LearnerStatusTab() {
         </div>
       )}
 
-      {/* ── Engagement Timeline ─────────────────────────────────────── */}
-      {studentId && (
-        <Section
-          title="Engagement Timeline"
-          icon={<Activity className="w-4 h-4 text-sky-600" />}
-          badge="activity log"
-          accentColor="bg-sky-50"
-          defaultOpen
-        >
-          <StudentEngagementTimeline studentId={studentId} />
-        </Section>
-      )}
     </div>
   );
 }

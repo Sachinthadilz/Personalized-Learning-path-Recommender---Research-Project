@@ -292,13 +292,27 @@ class LearnerProfileService:
     @staticmethod
     def _predict_outcome(df: pd.DataFrame) -> tuple[str, float]:
         model = _ModelRegistry.outcome_model
-        if model is None:
-            return "Unknown", 0.0
+        if model is not None:
+            try:
+                prediction: str = model.predict(df)[0]
+                probabilities: np.ndarray = model.predict_proba(df)[0]
+                confidence = float(round(float(np.max(probabilities)), 4))
+                return prediction, confidence
+            except Exception as exc:
+                logger.warning(
+                    "outcome model inference failed, using score-based fallback: %s", exc
+                )
 
-        prediction: str = model.predict(df)[0]
-        probabilities: np.ndarray = model.predict_proba(df)[0]
-        confidence = float(round(float(np.max(probabilities)), 4))
-        return prediction, confidence
+        # Rule-based fallback based on mean_score when model is unavailable
+        mean_score = float(df["mean_score"].iloc[0]) if "mean_score" in df.columns else 0.0
+        if mean_score >= 70:
+            return "Distinction", 0.6
+        elif mean_score >= 50:
+            return "Pass", 0.6
+        elif mean_score > 0:
+            return "Fail", 0.6
+        else:
+            return "Pass", 0.5
 
     @staticmethod
     def _predict_risk(

@@ -391,12 +391,15 @@ class EventTracker {
       videoData.totalWatchTime += watchDuration;
       videoData.startTime = null;
 
-      await this.trackInteraction('video_pause', {
+      const watchSecs = Math.floor(watchDuration / 1000);
+      // Build event directly so we can set duration = watchSecs on the event
+      const event = await this.buildEvent('video_pause', watchSecs, {
         video_id: videoId,
-        watch_duration: Math.floor(watchDuration / 1000),
+        watch_duration: watchSecs,
         current_time: videoData.element.currentTime,
         total_watch_time: Math.floor(videoData.totalWatchTime / 1000)
       });
+      await this.sendEvent(event);
     }
   }
 
@@ -411,11 +414,14 @@ class EventTracker {
         videoData.totalWatchTime += watchDuration;
       }
 
-      await this.trackInteraction('video_complete', {
+      const totalWatchSecs = Math.floor(videoData.totalWatchTime / 1000);
+      // Build event directly so we can set duration = totalWatchSecs on the event
+      const event = await this.buildEvent('video_complete', totalWatchSecs, {
         video_id: videoId,
-        total_watch_time: Math.floor(videoData.totalWatchTime / 1000),
+        total_watch_time: totalWatchSecs,
         video_duration: videoData.element.duration
       });
+      await this.sendEvent(event);
     }
   }
 

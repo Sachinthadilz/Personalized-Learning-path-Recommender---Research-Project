@@ -151,12 +151,7 @@ export default function StudentEngagementTimeline({
             <Activity className="w-3.5 h-3.5" />
             <span className="font-medium text-gray-700">{totalEvents}</span> total events
           </span>
-          {totalDuration > 0 && (
-            <span className="inline-flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              <span className="font-medium text-gray-700">{formatDuration(totalDuration)}</span> total time
-            </span>
-          )}
+
           {peakDay && (
             <span className="inline-flex items-center gap-1">
               <TrendingUp className="w-3.5 h-3.5" />

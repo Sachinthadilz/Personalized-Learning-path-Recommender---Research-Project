@@ -135,7 +135,7 @@ class StudentDataService:
                 "region": "London Region",
                 "highest_education": "A Level or Equivalent",
                 "imd_band": "50-60%",
-                "age_band": "25-35",
+                "age_band": "0-35",
                 "num_of_prev_attempts": 0,
                 "studied_credits": 60,
                 "disability": "N",
