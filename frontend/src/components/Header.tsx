@@ -6,14 +6,17 @@ import {
   User,
   HelpCircle,
   LogOut,
+  BookOpen,
 } from "lucide-react";
 
 interface HeaderProps {
   onOpenProfile: () => void;
+  onOpenAcademicProfile?: () => void;
+  hasUnfilledProfile?: boolean;
   onLogoClick?: () => void;
 }
 
-export default function Header({ onOpenProfile, onLogoClick }: HeaderProps) {
+export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfilledProfile = false, onLogoClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -76,9 +79,14 @@ export default function Header({ onOpenProfile, onLogoClick }: HeaderProps) {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center space-x-3 hover:bg-gray-50 rounded-xl px-3 py-2 transition-colors"
               >
-                {/* Avatar */}
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                  {getInitials(user.firstName, user.lastName)}
+                {/* Avatar with notification dot */}
+                <div className="relative">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                    {getInitials(user.firstName, user.lastName)}
+                  </div>
+                  {hasUnfilledProfile && (
+                    <span className="absolute top-0 right-0 block w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                  )}
                 </div>
 
                 {/* User Info */}
@@ -121,6 +129,23 @@ export default function Header({ onOpenProfile, onLogoClick }: HeaderProps) {
                     >
                       <User className="w-4 h-4 mr-3" />
                       My Profile
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        onOpenAcademicProfile?.();
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                    >
+                      <BookOpen className="w-4 h-4 mr-3" />
+                      <span className="flex-1 text-left">Academic Profile</span>
+                      {hasUnfilledProfile && (
+                        <span className="ml-2 flex items-center gap-1 text-xs font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+                          Pending
+                        </span>
+                      )}
                     </button>
 
                     <a

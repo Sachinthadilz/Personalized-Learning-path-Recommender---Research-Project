@@ -5,6 +5,10 @@ const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const authRoutes = require("./routes/authRoutes");
 const learningPathRoutes = require("./routes/learningPathRoutes");
+const timetableRoutes = require("./routes/timetableRoutes");
+const profileRoutes = require("./routes/profileRoutes");
+const adaptiveRoutes = require("./routes/adaptiveRoutes");
+const studyMaterialRoutes = require("./routes/studyMaterialRoutes");
 const { errorHandler, notFound } = require("./middleware/errorHandler");
 
 /**
@@ -69,6 +73,10 @@ app.get("/health", (req, res) => {
  */
 app.use("/api/auth", authRoutes);
 app.use("/api/learning-paths", learningPathRoutes);
+app.use("/api/timetable", timetableRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/adaptive", adaptiveRoutes);
+app.use("/api/study-material", studyMaterialRoutes);
 
 /**
  * Root Route

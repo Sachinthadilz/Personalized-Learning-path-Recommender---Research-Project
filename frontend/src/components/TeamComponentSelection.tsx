@@ -2,62 +2,71 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import Header from "./Header";
 import UserProfile from "./UserProfile";
+import OnboardingForm from "./OnboardingForm";
 import { Network, Code2, Layers, PenTool, X, ArrowRight } from "lucide-react";
 
 interface TeamComponentSelectionProps {
-  onSelectComponent: (component: string) => void;
+  onSelectComponent: () => void;
+  onSelectTimetable?: () => void;
+  onSelectAdaptive?: () => void;
   onLogoClick?: () => void;
 }
 
 const TeamComponentSelection = ({
   onSelectComponent,
+  onSelectTimetable,
+  onSelectAdaptive,
   onLogoClick,
 }: TeamComponentSelectionProps) => {
   useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAcademicProfileOpen, setIsAcademicProfileOpen] = useState(false);
 
   const components = [
     {
       id: 1,
-      key: "courses",
       name: "Explore Courses",
       color: "from-blue-500 to-indigo-600",
       Icon: Network,
       available: true,
+      onClick: onSelectComponent,
     },
     {
       id: 2,
-      key: "dashboard",
       name: "Timetable Planner",
       color: "from-purple-500 to-pink-600",
       Icon: Code2,
-      available: false,
+      available: true,
+      onClick: onSelectTimetable ?? onSelectComponent,
     },
     {
       id: 3,
-      key: "dashboard",
       name: "Learner Status",
       color: "from-green-500 to-teal-600",
       Icon: Layers,
       available: false,
+      onClick: undefined,
     },
     {
       id: 4,
-      key: "progress-tracker",
       name: "Progress Tracker",
       color: "from-orange-500 to-red-600",
       Icon: PenTool,
       available: true,
+      onClick: onSelectAdaptive ?? onSelectComponent,
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
       <Header
         onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenAcademicProfile={() => setIsAcademicProfileOpen(true)}
         onLogoClick={onLogoClick}
       />
 
+      {/* Profile Modal */}
       {isProfileOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -77,6 +86,27 @@ const TeamComponentSelection = ({
         </div>
       )}
 
+      {/* Academic Profile Modal */}
+      {isAcademicProfileOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Academic Profile</h2>
+              <button
+                onClick={() => setIsAcademicProfileOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <OnboardingForm onComplete={() => setIsAcademicProfileOpen(false)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -87,6 +117,7 @@ const TeamComponentSelection = ({
           </p>
         </div>
 
+        {/* Component Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {components.map((component) => (
             <div
@@ -96,24 +127,23 @@ const TeamComponentSelection = ({
                   ? "hover:scale-105 hover:shadow-2xl cursor-pointer"
                   : "opacity-75 cursor-not-allowed"
               }`}
-              onClick={
-                component.available
-                  ? () => onSelectComponent(component.key)
-                  : undefined
-              }
+              onClick={component.available ? component.onClick : undefined}
             >
+              {/* Gradient Header */}
               <div
                 className={`h-32 bg-gradient-to-r ${component.color} flex items-center justify-center`}
               >
                 <component.Icon className="w-14 h-14 text-white opacity-90" />
               </div>
 
+              {/* Content */}
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900">
                   {component.name}
                 </h3>
               </div>
 
+              {/* Hover Effect Overlay */}
               {component.available && (
                 <div className="absolute inset-0 bg-indigo-600 bg-opacity-0 hover:bg-opacity-5 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
                   <span className="flex items-center gap-2 text-white font-semibold text-base bg-indigo-600 px-5 py-2.5 rounded-lg shadow">

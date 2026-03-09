@@ -11,13 +11,15 @@ from config import settings
 from models import (
     Course, CourseDetail, SearchQuery, RecommendationRequest,
     LearningPathRequest, Skill, University, StatsResponse,
-    AISearchQuery, AISearchResult, LearningPathResponse
+    AISearchQuery, AISearchResult, LearningPathResponse,
+    TimetableGenerateRequest,
 )
 from services import CourseService, RecommendationService, StatsService
 from services.ai_search_service import AISearchService
 from services.learning_path_service import LearningPathService
 from services.cross_domain_service import CrossDomainService
 from services.ai_learning_path_service import ai_learning_path_service
+from services.timetable_service import timetable_service
 
 logger = logging.getLogger(__name__)
 
@@ -286,6 +288,23 @@ def get_statistics():
         return StatsResponse(**stats)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= TIMETABLE PLANNER ENDPOINTS =============
+
+@app.post("/timetable/generate")
+def timetable_generate(request: TimetableGenerateRequest):
+    """
+    Generate a full AI-powered timetable for a student.
+    Uses the trained ML model (or proportional fallback).
+    Returns the full timetable data — saving is done by the Node.js auth backend.
+    """
+    try:
+        result = timetable_service.generate_timetable(request.model_dump())
+        return result
+    except Exception as e:
+        logger.error(f"Timetable generate error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 def main():

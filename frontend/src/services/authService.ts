@@ -112,6 +112,36 @@ export interface ApiError {
   }>;
 }
 
+export interface AcademicModule {
+  moduleId?: string;
+  name: string;
+  credits: number;
+}
+
+export interface AcademicWeakSubject {
+  name: string;
+  grade: string;
+  marks: number;
+}
+
+export interface AcademicProfile {
+  _id?: string;
+  user?: string;
+  university: string;
+  degree: string;
+  yearOfStudy: number;
+  modules: AcademicModule[];
+  weakSubjects?: AcademicWeakSubject[];
+  onboardingCompleted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AcademicProfileResponse {
+  success: boolean;
+  data: AcademicProfile | null;
+}
+
 // Auth API functions
 export const authService = {
   /**
@@ -248,6 +278,95 @@ export const authService = {
   getAccessToken(): string | null {
     return localStorage.getItem("accessToken");
   },
+
+  // ─── Academic Profile (Onboarding) ────────────────────────────────────────
+
+  /**
+   * Fetch the academic profile for the logged-in user.
+   * Returns { success: true, data: null } when onboarding not yet done.
+   */
+  async getAcademicProfile(): Promise<AcademicProfileResponse> {
+    const response = await authApi.get<AcademicProfileResponse>("/api/profile");
+    return response.data;
+  },
+
+  /**
+   * Save (create or replace) the academic profile on onboarding completion.
+   */
+  async saveAcademicProfile(data: Omit<AcademicProfile, "_id" | "user" | "onboardingCompleted" | "createdAt" | "updatedAt">): Promise<AcademicProfileResponse> {
+    const response = await authApi.post<AcademicProfileResponse>("/api/profile", data);
+    return response.data;
+  },
+
+  // ─── Study Material (Groq AI generated) ───────────────────────────────────
+
+  /**
+   * Fetch cached study material for a subject (returns null if not generated yet).
+   */
+  async getStudyMaterial(subjectName: string): Promise<StudyMaterialResponse> {
+    const response = await authApi.get<StudyMaterialResponse>(
+      `/api/study-material?subject=${encodeURIComponent(subjectName)}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate (or return fresh cache) AI study material for a subject.
+   * Falls back to stale cache if Groq API key is not configured.
+   */
+  async generateStudyMaterial(
+    subjectName: string,
+    marks?: number,
+    grade?: string,
+    forceRegenerate?: boolean
+  ): Promise<StudyMaterialResponse> {
+    const response = await authApi.post<StudyMaterialResponse>(
+      "/api/study-material/generate",
+      { subjectName, marks, grade, forceRegenerate: forceRegenerate ?? false }
+    );
+    return response.data;
+  },
 };
 
 export default authApi;
+
+// ─── Study Material types ──────────────────────────────────────────────────
+
+export interface MindMapNode {
+  label: string;
+  children?: { label: string }[];
+}
+
+export interface NoteSection {
+  title: string;
+  bullets: string[];
+}
+
+export interface WeekDay {
+  day: string;
+  slots: string[];
+}
+
+export interface PracticeItem {
+  question: string;
+  answer: string;
+}
+
+export interface StudyMaterialData {
+  _id?: string;
+  subjectName: string;
+  marks?: number;
+  grade?: string;
+  mindMap: { title: string; nodes: MindMapNode[] };
+  timetable: WeekDay[];
+  notes: NoteSection[];
+  practiceSet: PracticeItem[];
+  quizQuestions?: { question: string; options: string[]; correctIndex: number }[];
+  generatedAt?: string;
+}
+
+export interface StudyMaterialResponse {
+  success: boolean;
+  data: StudyMaterialData | null;
+  cached?: boolean;
+}

@@ -2,10 +2,16 @@
 Configuration settings for the Course Knowledge Graph application
 """
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load .env from backend dir first, then fall back to project root
+_backend_env = Path(__file__).parent / ".env"
+_root_env = Path(__file__).parent.parent / ".env"
+if _backend_env.exists():
+    load_dotenv(_backend_env)
+else:
+    load_dotenv(_root_env)
 
 class Settings:
     """Application settings"""
@@ -34,5 +40,12 @@ class Settings:
     MAX_RECOMMENDATIONS: int = 10
     MIN_SIMILARITY_SCORE: float = 0.3
     MAX_PATH_LENGTH: int = 5
+
+    # ── Timetable Planner (MongoDB) ──────────────────────────────────────────
+    MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017/timetable_db")
+    TIMETABLE_MODEL_PATH:    str = os.getenv("TIMETABLE_MODEL_PATH",    "models/timetable_model.pkl")
+    TIMETABLE_SCALER_PATH:   str = os.getenv("TIMETABLE_SCALER_PATH",   "models/feature_scaler.pkl")
+    TIMETABLE_ENCODER_PATH:  str = os.getenv("TIMETABLE_ENCODER_PATH",  "models/day_encoder.pkl")
+    TIMETABLE_METADATA_PATH: str = os.getenv("TIMETABLE_METADATA_PATH", "models/model_metadata.json")
 
 settings = Settings()
