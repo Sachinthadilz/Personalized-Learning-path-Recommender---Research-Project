@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { authService } from "../services/authService";
 import Header from "./Header";
 import UserProfile from "./UserProfile";
 import OnboardingForm from "./OnboardingForm";
@@ -22,9 +23,27 @@ const TeamComponentSelection = ({
   onLogoClick,
   onOpenAdmin,
 }: TeamComponentSelectionProps) => {
-  useAuth();
+  const { isAuthenticated } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAcademicProfileOpen, setIsAcademicProfileOpen] = useState(false);
+  const [hasAcademicProfile, setHasAcademicProfile] = useState(false);
+
+  // Check whether the logged-in user has already filled their academic profile
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setHasAcademicProfile(false);
+      return;
+    }
+    authService
+      .getAcademicProfile()
+      .then((res) => {
+        setHasAcademicProfile(res.data !== null);
+      })
+      .catch(() => {
+        // If the request fails, don't show notification
+        setHasAcademicProfile(true);
+      });
+  }, [isAuthenticated]);
 
   const components = [
     {
@@ -67,6 +86,7 @@ const TeamComponentSelection = ({
       <Header
         onOpenProfile={() => setIsProfileOpen(true)}
         onOpenAcademicProfile={() => setIsAcademicProfileOpen(true)}
+        hasUnfilledProfile={!hasAcademicProfile}
         onLogoClick={onLogoClick}
         onOpenAdmin={onOpenAdmin}
       />
@@ -105,7 +125,12 @@ const TeamComponentSelection = ({
               </button>
             </div>
             <div className="p-6">
-              <OnboardingForm onComplete={() => setIsAcademicProfileOpen(false)} />
+              <OnboardingForm 
+                onComplete={() => {
+                  setHasAcademicProfile(true);
+                  setIsAcademicProfileOpen(false);
+                }} 
+              />
             </div>
           </div>
         </div>
