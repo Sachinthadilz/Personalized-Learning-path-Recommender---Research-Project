@@ -605,12 +605,22 @@ export default function SavedPathsTab() {
                 )}
 
                 <div className="space-y-3">
+                  {/* Hint banner when not enrolled */}
+                  {!path.enrollment?.isEnrolled && (
+                    <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
+                      <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                      <p className="text-sm text-amber-800">
+                        <strong>Enroll in this path</strong> to unlock courses, track your progress, and take quizzes.
+                      </p>
+                    </div>
+                  )}
+
                   {path.courses.map((course, idx) => {
                     const progress = getCourseStatus(path, course.id);
-                    const isLocked = progress?.status === "locked";
-                    const isCompleted = progress?.status === "completed";
-                    const isUnlocked = progress?.status === "unlocked";
                     const isEnrolled = path.enrollment?.isEnrolled;
+                    const isLocked = !isEnrolled || progress?.status === "locked";
+                    const isCompleted = isEnrolled === true && progress?.status === "completed";
+                    const isUnlocked = isEnrolled === true && progress?.status === "unlocked";
 
                     return (
                     <div

@@ -32,7 +32,7 @@ export default function LandingPage({
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
 
-      {/* â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* HEADER */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -65,7 +65,7 @@ export default function LandingPage({
         </div>
       </header>
 
-      {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* HERO */}
       <section className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50 pt-24 pb-32">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-gradient-to-br from-indigo-100/60 to-purple-100/60 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-72 h-72 bg-pink-100/40 rounded-full blur-2xl pointer-events-none" />
@@ -80,7 +80,7 @@ export default function LandingPage({
             <span className="text-gray-900">Grow Faster.</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Discover AI-curated learning paths, thousands of courses from top universities, and personalised skill recommendations â€” all in one platform.
+            Discover AI-curated learning paths, thousands of courses from top universities, and personalised skill recommendations - all in one platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button onClick={onBackToDashboard ?? onGetStarted} className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-base">
@@ -92,13 +92,13 @@ export default function LandingPage({
           </div>
           <p className="mt-8 text-sm text-gray-400 flex items-center justify-center gap-2 flex-wrap">
             <CheckCircle2 className="w-4 h-4 text-green-500" /> No credit card required
-            &nbsp;Â·&nbsp;
+            <span className="mx-1">&#183;</span>
             <CheckCircle2 className="w-4 h-4 text-green-500" /> Free to explore
           </p>
         </div>
       </section>
 
-      {/* â”€â”€ STATS BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* STATS BAR */}
       <section id="stats" className="bg-white border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {([
@@ -116,7 +116,7 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* â”€â”€ FEATURES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* FEATURES */}
       <section id="features" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -145,7 +145,7 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* â”€â”€ HOW IT WORKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* HOW IT WORKS */}
       <section id="how-it-works" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -169,7 +169,7 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* â”€â”€ CTA BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* CTA BANNER */}
       {!onBackToDashboard && (
         <section className="py-24 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
           <div className="max-w-4xl mx-auto px-6 text-center">
