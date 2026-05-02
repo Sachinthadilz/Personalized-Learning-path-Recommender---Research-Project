@@ -19,7 +19,6 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  Legend,
   ReferenceLine,
   Dot,
 } from "recharts";
@@ -126,11 +125,18 @@ export default function AutoLearnerProfileTab() {
       const data = await predictLearnerProfileAuto(input);
       setResult(data);
     } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.detail ||
-        err?.message ||
-        "Analysis failed. Make sure your student data is available in the system.";
-      setError(errorMsg);
+      // Check if this is an insufficient data error
+      const errorDetail = err?.response?.data?.detail;
+      if (typeof errorDetail === 'object' && errorDetail?.error === 'insufficient_data') {
+        setError(errorDetail.message || "No learning activity found. Start learning to unlock your profile analysis!");
+      } else {
+        const errorMsg =
+          typeof errorDetail === 'string' ? errorDetail :
+          errorDetail?.message ||
+          err?.message ||
+          "Analysis failed. Make sure your student data is available in the system.";
+        setError(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -151,9 +157,14 @@ export default function AutoLearnerProfileTab() {
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleReanalyze = () => {
+    // Clear all state completely before reanalyzing
     setResult(null);
     setError(null);
-    handleAnalyze();
+    setLoading(false);
+    // Small delay to ensure UI updates before fetching new data
+    setTimeout(() => {
+      handleAnalyze();
+    }, 50);
   };
 
   // ── Derived outcome styles ──────────────────────────────────────────────
@@ -232,9 +243,41 @@ export default function AutoLearnerProfileTab() {
 
       {/* ── Error banner ───────────────────────────────────────────────── */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-red-700 text-sm">{error}</p>
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-amber-900 font-semibold mb-2">No Learning Activity Found</h3>
+              <p className="text-amber-800 text-sm leading-relaxed">{error}</p>
+            </div>
+          </div>
+          <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium text-gray-700">Get started with these activities:</p>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                <span>Browse and enroll in courses</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                <span>Watch video lectures</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                <span>Complete quizzes and assessments</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                <span>Download learning resources</span>
+              </li>
+            </ul>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="mt-3 w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+            >
+              Start Learning Now
+            </button>
+          </div>
         </div>
       )}
 
@@ -249,7 +292,7 @@ export default function AutoLearnerProfileTab() {
       {/* ══════════════════════════════════════════════════════════════════
           RESULTS
       ══════════════════════════════════════════════════════════════════ */}
-      {result && (
+      {result && !error && !loading && (
         <div id="auto-results" className="space-y-4 pt-1">
           <h3 className="text-base font-semibold text-gray-700">
             Your Learner Analysis
@@ -518,7 +561,7 @@ function QuizMarksChart({ quizMarks }: { quizMarks: QuizMarksResponse | null }) 
                 unit="%"
               />
               <RechartsTooltip
-                formatter={(value: number) => [`${value}%`, "Score"]}
+                formatter={(value) => [`${value ?? 0}%`, "Score"]}
               />
               {/* Pass threshold */}
               <ReferenceLine y={60} stroke="#6366f1" strokeDasharray="4 3" strokeWidth={1.5}
@@ -711,7 +754,7 @@ function VideoWatchChart({ videoLogs }: { videoLogs: VideoActivityLog[] }) {
                   unit="m"
                 />
                 <RechartsTooltip
-                  formatter={(value: number) => [`${value} min`, "Watch Time"]}
+                  formatter={(value) => [`${value ?? 0} min`, "Watch Time"]}
                   labelFormatter={(label) => formatDate(label)}
                 />
                 <Bar
@@ -745,7 +788,7 @@ function VideoWatchChart({ videoLogs }: { videoLogs: VideoActivityLog[] }) {
                   allowDecimals={false}
                 />
                 <RechartsTooltip
-                  formatter={(value: number) => [`${value} sessions`, "Video Plays"]}
+                  formatter={(value) => [`${value ?? 0} sessions`, "Video Plays"]}
                   labelFormatter={(label) => formatDate(label)}
                 />
                 <Bar

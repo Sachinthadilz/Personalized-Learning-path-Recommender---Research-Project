@@ -21,9 +21,27 @@ async function loadConfig() {
       'trackingEnabled'
     ]);
 
+    // Get current tab info to show context
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const isCoursera = tab?.url?.includes('coursera.org');
+    const isUdemy = tab?.url?.includes('udemy.com');
+    const isEdX = tab?.url?.includes('edx.org');
+    const isLocalhost = tab?.url?.includes('localhost:3000');
+
+    const courseIdInput = document.getElementById('courseId');
+    courseIdInput.value = result.courseId || '';
+    
+    // Show helpful placeholder based on detected site
+    if (isCoursera || isUdemy || isEdX) {
+      courseIdInput.placeholder = 'Auto-detected from URL';
+    } else if (isLocalhost) {
+      courseIdInput.placeholder = 'learning-platform (detected)';
+    } else if (!result.courseId || result.courseId === 'unknown') {
+      courseIdInput.placeholder = 'Enter course ID manually';
+    }
+
     document.getElementById('studentId').value = result.studentId || '';
-    document.getElementById('courseId').value = result.courseId || '';
-    document.getElementById('apiBaseURL').value = result.apiBaseURL || 'http://localhost:5000';
+    document.getElementById('apiBaseURL').value = result.apiBaseURL || 'http://localhost:5001';
     document.getElementById('trackingEnabled').checked = result.trackingEnabled !== false;
 
     updateStatus(result.trackingEnabled !== false);
@@ -70,10 +88,12 @@ function setupEventListeners() {
  */
 async function saveConfig() {
   try {
+    const courseIdValue = document.getElementById('courseId').value.trim();
+    
     const config = {
       studentId: document.getElementById('studentId').value.trim() || 'anonymous',
-      courseId: document.getElementById('courseId').value.trim() || 'unknown',
-      apiBaseURL: document.getElementById('apiBaseURL').value.trim() || 'http://localhost:5000',
+      courseId: courseIdValue || 'not-set',
+      apiBaseURL: document.getElementById('apiBaseURL').value.trim() || 'http://localhost:5001',
       trackingEnabled: document.getElementById('trackingEnabled').checked
     };
 
@@ -128,12 +148,12 @@ async function retryFailedEvents() {
 
     // Send each failed event
     const config = await chrome.storage.local.get(['apiBaseURL']);
-    const apiURL = config.apiBaseURL || 'http://localhost:5000';
+    const apiURL = config.apiBaseURL || 'http://localhost:5001';
     let successCount = 0;
 
     for (const event of failedEvents) {
       try {
-        const response = await fetch(`${apiURL}/activity/log-event`, {
+        const response = await fetch(`${apiURL}/logs`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

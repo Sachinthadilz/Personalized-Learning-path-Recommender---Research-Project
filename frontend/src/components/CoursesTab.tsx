@@ -27,7 +27,9 @@ export default function CoursesTab() {
   const [minRating, setMinRating] = useState<number>(0);
 
   // Manual selection state
-  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(new Set());
+  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(
+    new Set(),
+  );
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [pathName, setPathName] = useState("");
   const [targetSkill, setTargetSkill] = useState("");
@@ -137,7 +139,7 @@ export default function CoursesTab() {
     if (selectedCourses.size === courses.length) {
       setSelectedCourses(new Set());
     } else {
-      setSelectedCourses(new Set(courses.map(c => c.id)));
+      setSelectedCourses(new Set(courses.map((c) => c.id)));
     }
   };
 
@@ -171,9 +173,13 @@ export default function CoursesTab() {
     setError(null);
 
     try {
-      const selectedCoursesData = courses.filter(c => selectedCourses.has(c.id));
-      
-      const avgRating = selectedCoursesData.reduce((sum, c) => sum + c.rating, 0) / selectedCoursesData.length;
+      const selectedCoursesData = courses.filter((c) =>
+        selectedCourses.has(c.id),
+      );
+
+      const avgRating =
+        selectedCoursesData.reduce((sum, c) => sum + c.rating, 0) /
+        selectedCoursesData.length;
 
       await saveLearningPath({
         pathName: pathName.trim(),
@@ -183,7 +189,7 @@ export default function CoursesTab() {
         metadata: {
           totalCourses: selectedCoursesData.length,
           avgRating: avgRating,
-        }
+        },
       });
 
       setSaveSuccess(true);
@@ -201,10 +207,8 @@ export default function CoursesTab() {
   return (
     <div className="space-y-6">
       {/* Search Section */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Search Courses
-        </h2>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Search Courses</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <input
@@ -212,7 +216,7 @@ export default function CoursesTab() {
             placeholder="Search query..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
           <input
@@ -220,13 +224,13 @@ export default function CoursesTab() {
             placeholder="Skills (comma-separated)"
             value={skillFilter}
             onChange={(e) => setSkillFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
           <select
             value={difficultyFilter}
             onChange={(e) => setDifficultyFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">All Difficulties</option>
             <option value="Beginner">Beginner</option>
@@ -242,28 +246,28 @@ export default function CoursesTab() {
             min="0"
             max="5"
             step="0.1"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
         <div className="flex gap-2">
           <button
             onClick={handleSearch}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-colors"
           >
             Search
           </button>
 
           <button
             onClick={handleSearchBySkill}
-            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
           >
             Search by Skill
           </button>
 
           <button
             onClick={loadCourses}
-            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
           >
             All Courses
           </button>
@@ -272,7 +276,7 @@ export default function CoursesTab() {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600">
           {error}
         </div>
       )}
@@ -280,21 +284,21 @@ export default function CoursesTab() {
       {/* Loading State */}
       {loading && (
         <div className="flex justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700"></div>
         </div>
       )}
 
       {/* Course Detail Modal */}
       {selectedCourse && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-2xl font-bold text-gray-800">
                 {selectedCourse.name}
               </h2>
               <button
                 onClick={() => setSelectedCourse(null)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -307,7 +311,7 @@ export default function CoursesTab() {
               </div>
               <div>
                 <span className="font-semibold">Difficulty:</span>{" "}
-                <span className="px-2 py-1 bg-indigo-100 text-indigo-600 rounded">
+                <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
                   {selectedCourse.difficulty}
                 </span>
               </div>
@@ -338,7 +342,7 @@ export default function CoursesTab() {
                     {selectedCourse.skills.map((skill, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1 bg-green-100 text-green-600 rounded-full text-sm"
+                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                       >
                         {skill}
                       </span>
@@ -368,37 +372,37 @@ export default function CoursesTab() {
                 href={selectedCourse.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-center px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="block text-center px-6 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-colors"
               >
                 View Course
               </a>
             </div>
-
-
           </div>
         </div>
       )}
 
       {/* Courses Grid */}
       {!loading && courses.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-gray-800">
               Results ({courses.length} courses)
             </h3>
-            
+
             {user && (
               <div className="flex gap-2 items-center">
                 <button
                   onClick={handleSelectAll}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium"
                 >
-                  {selectedCourses.size === courses.length ? "Deselect All" : "Select All"}
+                  {selectedCourses.size === courses.length
+                    ? "Deselect All"
+                    : "Select All"}
                 </button>
                 {selectedCourses.size > 0 && (
                   <button
                     onClick={handleOpenSaveModal}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-md"
+                    className="px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-medium shadow-sm"
                   >
                     Save Selected ({selectedCourses.size})
                   </button>
@@ -411,9 +415,9 @@ export default function CoursesTab() {
             {courses.map((course) => (
               <div
                 key={course.id}
-                className={`border-2 rounded-lg p-4 hover:shadow-lg transition-all ${
+                className={`border rounded-2xl p-4 hover:shadow-lg transition-all ${
                   selectedCourses.has(course.id)
-                    ? "border-purple-500 bg-purple-50"
+                    ? "border-blue-500 bg-blue-50"
                     : "border-gray-200 bg-white"
                 }`}
               >
@@ -424,15 +428,18 @@ export default function CoursesTab() {
                       checked={selectedCourses.has(course.id)}
                       onChange={() => handleToggleSelection(course.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                     />
                     <span className="text-sm font-medium text-gray-700">
                       {selectedCourses.has(course.id) ? "Selected" : "Select"}
                     </span>
                   </div>
                 )}
-                
-                <div onClick={() => handleViewCourse(course.id)} className="cursor-pointer">
+
+                <div
+                  onClick={() => handleViewCourse(course.id)}
+                  className="cursor-pointer"
+                >
                   <h4 className="font-semibold text-gray-800 mb-2 line-clamp-2">
                     {course.name}
                   </h4>
@@ -454,7 +461,7 @@ export default function CoursesTab() {
                   )}
 
                   <div className="flex justify-between items-center">
-                    <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-600 rounded">
+                    <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
                       {course.difficulty}
                     </span>
                     <span className="inline-flex items-center gap-1 text-amber-500 text-sm">
@@ -470,25 +477,25 @@ export default function CoursesTab() {
       )}
 
       {!loading && courses.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-600">
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center text-gray-600">
           No courses found. Try searching or loading all courses.
         </div>
       )}
 
       {/* Save Modal */}
       {showSaveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
               Save Learning Path
             </h3>
 
             {saveSuccess ? (
               <div className="text-center py-8">
-                <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mx-auto mb-4">
-                  <CheckCircle2 className="w-9 h-9 text-green-600" />
+                <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4">
+                  <CheckCircle2 className="w-9 h-9 text-blue-600" />
                 </div>
-                <p className="text-lg font-semibold text-green-600">
+                <p className="text-lg font-semibold text-blue-600">
                   Learning Path Saved Successfully!
                 </p>
               </div>
@@ -503,7 +510,7 @@ export default function CoursesTab() {
                     value={pathName}
                     onChange={(e) => setPathName(e.target.value)}
                     placeholder="e.g., My Custom Learning Path"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     autoFocus
                   />
                 </div>
@@ -517,12 +524,12 @@ export default function CoursesTab() {
                     value={targetSkill}
                     onChange={(e) => setTargetSkill(e.target.value)}
                     placeholder="e.g., Machine Learning"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                  <p className="text-sm text-purple-800">
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                  <p className="text-sm text-blue-800">
                     <strong>{selectedCourses.size}</strong> courses selected
                   </p>
                 </div>
@@ -537,14 +544,14 @@ export default function CoursesTab() {
                   <button
                     onClick={handleSaveSelectedCourses}
                     disabled={saving}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? "Saving..." : "Save Learning Path"}
                   </button>
                   <button
                     onClick={handleCloseSaveModal}
                     disabled={saving}
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>

@@ -204,6 +204,27 @@ export interface ApiError {
   }>;
 }
 
+export interface AdminQuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+export interface AdminQuizBankItem {
+  id: string;
+  courseKey: string;
+  courseId?: string | null;
+  courseName: string;
+  courseDescription?: string;
+  difficulty?: string;
+  skills?: string[];
+  questions?: AdminQuizQuestion[];
+  createdBy: "ai" | "admin";
+  sourceModel?: string;
+  updatedAt: string;
+  createdAt: string;
+}
+
 // Auth API functions
 export const authService = {
   /**
@@ -214,13 +235,8 @@ export const authService = {
       "/api/auth/register",
       data,
     );
-    if (response.data.success) {
-      // Save tokens and user to localStorage
-      localStorage.setItem("accessToken", response.data.data.accessToken);
-      localStorage.setItem("refreshToken", response.data.data.refreshToken);
-      localStorage.setItem("user", JSON.stringify(response.data.data.user));
-      localStorage.setItem("student_id", String(response.data.data.user.id));
-    }
+    // Don't save tokens on registration - user must login separately
+    // Only return the response without auto-authenticating
     return response.data;
   },
 
@@ -328,7 +344,10 @@ export const authService = {
       try {
         const user = JSON.parse(userStr);
         // Ensure the flat student_id key always exists for the browser extension
-        if (user?.id && localStorage.getItem("student_id") !== String(user.id)) {
+        if (
+          user?.id &&
+          localStorage.getItem("student_id") !== String(user.id)
+        ) {
           localStorage.setItem("student_id", String(user.id));
         }
         return user;
@@ -391,7 +410,12 @@ export const authService = {
     success: boolean;
     data: {
       users: User[];
-      pagination: { total: number; page: number; limit: number; totalPages: number };
+      pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
     };
   }> {
     const response = await authApi.get("/api/admin/users", { params });
@@ -402,7 +426,9 @@ export const authService = {
     userId: string,
     role: "user" | "admin" | "moderator",
   ): Promise<{ success: boolean; message: string; data: User }> {
-    const response = await authApi.patch(`/api/admin/users/${userId}/role`, { role });
+    const response = await authApi.patch(`/api/admin/users/${userId}/role`, {
+      role,
+    });
     return response.data;
   },
 
@@ -410,12 +436,72 @@ export const authService = {
     userId: string,
     isActive: boolean,
   ): Promise<{ success: boolean; message: string; data: User }> {
-    const response = await authApi.patch(`/api/admin/users/${userId}/status`, { isActive });
+    const response = await authApi.patch(`/api/admin/users/${userId}/status`, {
+      isActive,
+    });
     return response.data;
   },
 
-  async adminDeleteUser(userId: string): Promise<{ success: boolean; message: string }> {
+  async adminDeleteUser(
+    userId: string,
+  ): Promise<{ success: boolean; message: string }> {
     const response = await authApi.delete(`/api/admin/users/${userId}`);
+    return response.data;
+  },
+
+  async adminGetQuizzes(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<{
+    success: boolean;
+    data: {
+      quizzes: AdminQuizBankItem[];
+      pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    };
+  }> {
+    const response = await authApi.get("/api/admin/quizzes", { params });
+    return response.data;
+  },
+
+  async adminGetQuizById(quizId: string): Promise<{
+    success: boolean;
+    data: AdminQuizBankItem;
+  }> {
+    const response = await authApi.get(`/api/admin/quizzes/${quizId}`);
+    return response.data;
+  },
+
+  async adminUpdateQuiz(
+    quizId: string,
+    payload: {
+      courseName?: string;
+      courseDescription?: string;
+      difficulty?: string;
+      skills?: string[];
+      questions?: AdminQuizQuestion[];
+    },
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: AdminQuizBankItem;
+  }> {
+    const response = await authApi.patch(
+      `/api/admin/quizzes/${quizId}`,
+      payload,
+    );
+    return response.data;
+  },
+
+  async adminDeleteQuiz(
+    quizId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await authApi.delete(`/api/admin/quizzes/${quizId}`);
     return response.data;
   },
 
@@ -431,17 +517,30 @@ export const authService = {
    * Create or replace academic profile (onboarding submission)
    */
   async saveAcademicProfile(
-    data: Omit<AcademicProfile, "_id" | "user" | "onboardingCompleted" | "createdAt" | "updatedAt">
+    data: Omit<
+      AcademicProfile,
+      "_id" | "user" | "onboardingCompleted" | "createdAt" | "updatedAt"
+    >,
   ): Promise<AcademicProfileResponse> {
-    const response = await authApi.post<AcademicProfileResponse>("/api/profile", data);
+    const response = await authApi.post<AcademicProfileResponse>(
+      "/api/profile",
+      data,
+    );
     return response.data;
   },
 
   /**
    * Partially update an existing academic profile
    */
-  async updateAcademicProfile(data: Partial<Omit<AcademicProfile, "_id" | "user" | "createdAt" | "updatedAt">>): Promise<AcademicProfileResponse> {
-    const response = await authApi.patch<AcademicProfileResponse>("/api/profile", data);
+  async updateAcademicProfile(
+    data: Partial<
+      Omit<AcademicProfile, "_id" | "user" | "createdAt" | "updatedAt">
+    >,
+  ): Promise<AcademicProfileResponse> {
+    const response = await authApi.patch<AcademicProfileResponse>(
+      "/api/profile",
+      data,
+    );
     return response.data;
   },
 
@@ -450,7 +549,7 @@ export const authService = {
    */
   async getStudyMaterial(subjectName: string): Promise<StudyMaterialResponse> {
     const response = await authApi.get<StudyMaterialResponse>(
-      `/api/study-material?subject=${encodeURIComponent(subjectName)}`
+      `/api/study-material?subject=${encodeURIComponent(subjectName)}`,
     );
     return response.data;
   },
@@ -464,12 +563,15 @@ export const authService = {
     grade?: string,
     forceRegenerate = false,
   ): Promise<StudyMaterialResponse> {
-    const response = await authApi.post<StudyMaterialResponse>("/api/study-material/generate", {
-      subjectName,
-      marks,
-      grade,
-      forceRegenerate,
-    });
+    const response = await authApi.post<StudyMaterialResponse>(
+      "/api/study-material/generate",
+      {
+        subjectName,
+        marks,
+        grade,
+        forceRegenerate,
+      },
+    );
     return response.data;
   },
 };

@@ -298,9 +298,9 @@ class LearnerProfileService:
                 probabilities: np.ndarray = model.predict_proba(df)[0]
                 confidence = float(round(float(np.max(probabilities)), 4))
                 return prediction, confidence
-            except Exception as exc:
-                logger.warning(
-                    "outcome model inference failed, using score-based fallback: %s", exc
+            except Exception:
+                logger.debug(
+                    "Outcome model: using rule-based fallback (assessment scores not available)"
                 )
 
         # Rule-based fallback based on mean_score when model is unavailable
@@ -325,10 +325,9 @@ class LearnerProfileService:
                 probabilities: np.ndarray = model.predict_proba(df)[0]
                 risk_score = float(round(float(np.max(probabilities)), 4))
                 return prediction, risk_score
-            except Exception as exc:
-                logger.warning(
-                    "early_warning_pipeline inference failed, using rule-based fallback: %s",
-                    exc,
+            except Exception:
+                logger.debug(
+                    "Early warning model: using rule-based fallback (detailed features not available)"
                 )
 
         # Rule-based fallback

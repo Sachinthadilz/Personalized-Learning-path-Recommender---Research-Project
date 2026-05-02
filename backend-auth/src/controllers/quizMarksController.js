@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const LearningPath = require("../models/LearningPath");
 const AdaptiveSession = require("../models/AdaptiveSession");
 const AcademicProfile = require("../models/AcademicProfile");
 const StudyMaterial = require("../models/StudyMaterial");
@@ -9,7 +10,7 @@ const { asyncHandler } = require("../middleware/errorHandler");
  *
  * Returns quiz/assessment marks for the authenticated user from 4 sources:
  *
- * 1. courseQuizMarks   – User.savedLearningPaths enrollment quiz results
+ * 1. courseQuizMarks   – LearningPath model enrollment quiz results
  * 2. progressQuizMarks – AdaptiveSession.quizHistory (adaptive quiz game)
  * 3. subjectMarks      – StudyMaterial.marks (marks entered when generating study material)
  *                        + AcademicProfile.weakSubjects (onboarding assessment scores)
@@ -19,33 +20,31 @@ const { asyncHandler } = require("../middleware/errorHandler");
 exports.getQuizMarks = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
-  // ── 1. Course quiz marks (User model) ──────────────────────────────────
-  const user = await User.findById(userId).select("savedLearningPaths");
+  // ── 1. Course quiz marks (LearningPath model) ──────────────────────────
+  const learningPaths = await LearningPath.findByUser(userId, { enrolled: true });
 
   const courseQuizMarks = [];
 
-  if (user) {
-    for (const path of user.savedLearningPaths) {
-      const enrollment = path.enrollment;
-      if (!enrollment || !enrollment.isEnrolled) continue;
+  for (const path of learningPaths) {
+    const enrollment = path.enrollment;
+    if (!enrollment || !enrollment.isEnrolled) continue;
 
-      for (const cp of enrollment.courseProgress) {
-        if (!cp.quizResult || cp.quizResult.score == null) continue;
+    for (const cp of enrollment.courseProgress) {
+      if (!cp.quizResult || cp.quizResult.score == null) continue;
 
-        // Resolve course name from the courses array
-        const course = path.courses.find((c) => c.id === cp.courseId);
+      // Resolve course name from the courses array
+      const course = path.courses.find((c) => c.id === cp.courseId);
 
-        courseQuizMarks.push({
-          pathId: path.pathId,
-          pathName: path.pathName,
-          courseId: cp.courseId,
-          courseName: course ? course.name : cp.courseId,
-          score: cp.quizResult.score,
-          totalQuestions: cp.quizResult.totalQuestions,
-          percentage: cp.quizResult.percentage,
-          completedAt: cp.quizResult.completedAt,
-        });
-      }
+      courseQuizMarks.push({
+        pathId: path.pathId,
+        pathName: path.pathName,
+        courseId: cp.courseId,
+        courseName: course ? course.name : cp.courseId,
+        score: cp.quizResult.score,
+        totalQuestions: cp.quizResult.totalQuestions,
+        percentage: cp.quizResult.percentage,
+        completedAt: cp.quizResult.completedAt,
+      });
     }
   }
 

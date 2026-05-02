@@ -12,6 +12,7 @@ const adaptiveRoutes = require("./routes/adaptiveRoutes");
 const studyMaterialRoutes = require("./routes/studyMaterialRoutes");
 const quizMarksRoutes = require("./routes/quizMarksRoutes");
 const logsRoutes = require("./routes/logsRoutes");
+const predictRoutes = require("./routes/predictRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const { errorHandler, notFound } = require("./middleware/errorHandler");
 
@@ -89,6 +90,8 @@ app.use("/api/quiz-marks", quizMarksRoutes);
 app.use("/api/admin", adminRoutes);
 // Activity logging — unauthenticated, called server-to-server from FastAPI
 app.use("/logs", logsRoutes);
+// Prediction proxy — calls Python ML backend with pre-computed features
+app.use("/predict", predictRoutes);
 
 /**
  * Root Route

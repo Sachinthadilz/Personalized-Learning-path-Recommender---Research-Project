@@ -57,10 +57,10 @@ export default function LearningPathGraph({
       course: CourseNode,
       level: string,
       index: number,
-      xPos: number
+      xPos: number,
     ) => {
       const colors = {
-        Beginner: { bg: "#d1fae5", border: "#10b981", text: "#065f46" },
+        Beginner: { bg: "#dbeafe", border: "#3b82f6", text: "#1e3a8a" },
         Intermediate: { bg: "#fef3c7", border: "#f59e0b", text: "#92400e" },
         Advanced: { bg: "#fee2e2", border: "#ef4444", text: "#991b1b" },
       };
@@ -255,7 +255,7 @@ export default function LearningPathGraph({
       ].find((c) => c.id === courseId);
 
       const crossCourse = crossDomainCourses.find(
-        (c) => `cd-${c.id}` === node.id
+        (c) => `cd-${c.id}` === node.id,
       );
 
       const url = course?.url || crossCourse?.url;
@@ -263,7 +263,7 @@ export default function LearningPathGraph({
         window.open(url, "_blank");
       }
     },
-    [learningPath, crossDomainCourses]
+    [learningPath, crossDomainCourses],
   );
 
   return (

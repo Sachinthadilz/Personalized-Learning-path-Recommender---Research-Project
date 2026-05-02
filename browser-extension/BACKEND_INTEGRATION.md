@@ -1,126 +1,131 @@
 # Backend Integration Example
 
-This document shows how to integrate the browser extension with your existing FastAPI backend.
+This document shows how to integrate the browser extension with your existing Node.js backend-auth.
 
-## Update your FastAPI Backend
+## Update your Node.js Backend
 
 ### 1. Add CORS Middleware
 
-Update your `backend/main.py` to include CORS support:
+Update your `backend-auth/src/app.js` to include CORS support:
 
-```python
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+```javascript
+const express = require('express');
+const cors = require('cors');
 
-app = FastAPI()
+const app = express();
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify chrome-extension://[your-extension-id]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+// Add CORS middleware
+app.use(cors({
+  origin: '*', // In production, specify chrome-extension://[your-extension-id]
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json());
 ```
 
-### 2. Verify the /log-event Endpoint
+### 2. Verify the /logs Endpoint
 
 Make sure your existing endpoint matches this structure:
 
-```python
-from pydantic import BaseModel
-from typing import Optional, Dict
-from datetime import datetime
+```javascript
+const express = require('express');
+const router = express.Router();
+const ActivityLog = require('../models/ActivityLog');
 
-class ActivityEvent(BaseModel):
-    student_id: str
-    course_id: str
-    event_type: str
-    timestamp: str
-    duration: int
-    page_url: str
-    session_id: Optional[str] = None
-    metadata: Optional[Dict] = None
+router.post('/', async (req, res) => {
+  /**
+   * Log a student activity event
+   */
+  try {
+    const { student_id, course_id, event_type, timestamp, duration, page_url, session_id, metadata } = req.body;
+    
+    console.log(`Received event: ${event_type} from student ${student_id}`);
+    
+    // Store in MongoDB
+    const doc = await ActivityLog.create({
+      student_id,
+      course_id,
+      event_type,
+      timestamp: timestamp ? new Date(timestamp) : new Date(),
+      duration: duration ?? null,
+      page_url,
+      session_id,
+      metadata: metadata || {},
+    });
+    
+    return res.status(201).json({
+      status: 'success',
+      message: 'Event logged successfully',
+      event_id: doc.log_id
+    });
+  } catch (error) {
+    console.error('Error logging event:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
 
-@app.post("/log-event")
-async def log_event(event: ActivityEvent):
-    """
-    Log a student activity event
-    """
-    try:
-        # Your existing logging logic here
-        print(f"Received event: {event.event_type} from student {event.student_id}")
-        
-        # Store in your database (MongoDB, PostgreSQL, etc.)
-        # await store_event_in_db(event)
-        
-        return {
-            "status": "success",
-            "message": "Event logged successfully",
-            "event_id": f"evt_{datetime.now().timestamp()}"
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+module.exports = router;
 ```
 
-### 3. MongoDB Integration (Optional)
+### 3. MongoDB Integration
 
-If you're using MongoDB (as indicated by your mongo_activity.py):
+Your ActivityLog model should look like this:
 
-```python
-from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import datetime
+```javascript
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-# MongoDB connection (add to your config)
-mongo_client = AsyncIOMotorClient("mongodb://localhost:27017")
-db = mongo_client.learning_analytics
-activity_collection = db.activity_logs
-
-@app.post("/log-event")
-async def log_event(event: ActivityEvent):
-    """
-    Log activity event to MongoDB
-    """
-    try:
-        # Prepare document
-        document = {
-            "student_id": event.student_id,
-            "course_id": event.course_id,
-            "event_type": event.event_type,
-            "timestamp": datetime.fromisoformat(event.timestamp.replace('Z', '+00:00')),
-            "duration": event.duration,
-            "page_url": event.page_url,
-            "session_id": event.session_id,
-            "metadata": event.metadata or {},
-            "created_at": datetime.utcnow()
-        }
-        
-        # Insert into MongoDB
-        result = await activity_collection.insert_one(document)
-        
-        return {
-            "status": "success",
-            "event_id": str(result.inserted_id)
-        }
-    except Exception as e:
-        print(f"Error logging event: {e}")
-        return {
-            "status": "error",
-            "message": str(e)
-        }
-```
-
-## Testing the Integration
-
-### 1. Start Your Backend
-
-```bash
-cd backend
-uvicorn main:app --reload --port 8000
+const activityLogSchema = new mongoose.Schema({
+  log_id: {
+    type: String,
+    default: () => uuidv4(),
+    unique: true,
+  },
+  student_id: {
+    type: String,
+    required: true,
+    index: true,
+  },
+  course_id: {
+    type: String,
+    required: true,
+    index: true,
+  },
+  event_type: {
+    type: String,
+    required: true,
+    enum: ['page_visit', 'video_play', 'video_pause', 'video_complete', 'quiz_start', 'quiz_submit', 'resource_click'],
+  },
+  timestamp: {
+    type: Date,
+    required: true,
+    default: Date.now,
+    index: true,
+  },
+  duration: {
+    type: Number,
+    default: null,
+  },
+  page_url: {
+    type: String,
+  },
+  session_id: {
+    type: String,
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {},
+  },
+}, {
+  timestamps: true,
+  collection: 'activity_logs',
+});-auth
+npm run dev
 ```
 
 ### 2. Test the Endpoint
@@ -128,7 +133,7 @@ uvicorn main:app --reload --port 8000
 Use curl or Postman to test:
 
 ```bash
-curl -X POST http://localhost:8000/log-event \
+curl -X POST http://localhost:5001/logs \
   -H "Content-Type: application/json" \
   -d '{
     "student_id": "test_student",
@@ -146,7 +151,7 @@ Expected response:
 ```json
 {
   "status": "success",
-  "event_id": "evt_1234567890"
+  "event_id": "generated-uuid"
 }
 ```
 
@@ -161,65 +166,84 @@ Expected response:
 
 ### Query Recent Events
 
-```python
-@app.get("/events/{student_id}")
-async def get_student_events(student_id: str, limit: int = 100):
-    """
-    Get recent events for a student
-    """
-    events = await activity_collection.find(
-        {"student_id": student_id}
-    ).sort("timestamp", -1).limit(limit).to_list(limit)
+```javascript
+router.get('/:student_id', async (req, res) => {
+  /**
+   * Get recent events for a student
+   */
+  try {
+    const { student_id } = req.params;
+    const limit = parseInt(req.query.limit) || 100;
     
-    return {"events": events}
+    const events = await ActivityLog.find({ student_id })
+      .sort({ timestamp: -1 })
+      .limit(limit);
+    
+    return res.json({ events });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 ```
 
 ### Calculate Time Spent
 
-```python
-@app.get("/analytics/time-spent/{student_id}")
-async def get_time_spent(student_id: str, course_id: str = None):
-    """
-    Calculate total time spent by student
-    """
-    query = {"student_id": student_id}
-    if course_id:
-        query["course_id"] = course_id
+```javascript
+router.get('/analytics/time-spent/:student_id', async (req, res) => {
+  /**
+   * Calculate total time spent by student
+   */
+  try {
+    const { student_id } = req.params;
+    const { course_id } = req.query;
     
-    pipeline = [
-        {"$match": query},
-        {"$group": {
-            "_id": "$course_id",
-            "total_duration": {"$sum": "$duration"}
-        }}
-    ]
+    const matchStage = { student_id };
+    if (course_id) {
+      matchStage.course_id = course_id;
+    }
     
-    results = await activity_collection.aggregate(pipeline).to_list(None)
-    return {"results": results}
+    const results = await ActivityLog.aggregate([
+      { $match: matchStage },
+      { $group: {
+        _id: '$course_id',
+        total_duration: { $sum: '$duration' }
+      }}
+    ]);
+    
+    return res.json({ results });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 ```
 
 ### Video Engagement Analytics
 
-```python
-@app.get("/analytics/video-engagement/{student_id}")
-async def get_video_engagement(student_id: str):
-    """
-    Analyze video engagement
-    """
-    pipeline = [
-        {"$match": {
-            "student_id": student_id,
-            "event_type": {"$in": ["video_play", "video_pause", "video_complete"]}
-        }},
-        {"$group": {
-            "_id": "$metadata.video_id",
-            "plays": {"$sum": 1},
-            "total_watch_time": {"$sum": "$metadata.watch_duration"}
-        }}
-    ]
+```javascript
+router.get('/analytics/video-engagement/:student_id', async (req, res) => {
+  /**
+   * Analyze video engagement
+   */
+  try {
+    const { student_id } = req.params;
     
-    results = await activity_collection.aggregate(pipeline).to_list(None)
-    return {"video_engagement": results}
+    const results = await ActivityLog.aggregate([
+      { $match: {
+        student_id,
+        event_type: { $in: ['video_play', 'video_pause', 'video_complete'] }
+      }},
+      { $group: {
+        _id: '$metadata.video_id',
+        plays: { $sum: 1 },
+        total_watch_time: { $sum: '$metadata.watch_duration' }
+      }}
+    ]);
+    
+    return res.json({ video_engagement: results });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 ```
 
 ## Production Considerations
@@ -228,56 +252,52 @@ async def get_video_engagement(student_id: str):
 
 In production, update CORS to use your extension ID:
 
-```python
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "chrome-extension://your-extension-id-here",
-        "https://yourdomain.com"
-    ],
-    allow_credentials=True,
-    allow_methods=["POST", "GET"],
-    allow_headers=["Content-Type"],
-)
+```javascript
+app.use(cors({
+  origin: [
+    'chrome-extension://your-extension-id-here',
+    'https://yourdomain.com'
+  ],
+  credentials: true,
+  methods: ['POST', 'GET'],
+  allowedHeaders: ['Content-Type']
+}));
 ```
 
 ### 2. Rate Limiting
 
 Add rate limiting to prevent abuse:
 
-```python
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+```javascript
+const rateLimit = require('express-rate-limit');
 
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute
+  message: 'Too many requests from this IP'
+});
 
-@app.post("/log-event")
-@limiter.limit("100/minute")
-async def log_event(request: Request, event: ActivityEvent):
-    # Your logic here
-    pass
+router.post('/', apiLimiter, async (req, res) => {
+  // Your logic here
+});
 ```
 
 ### 3. Authentication (Optional)
 
 Add API key authentication:
 
-```python
-from fastapi import Header, HTTPException
+```javascript
+const verifyApiKey = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey !== process.env.API_KEY) {
+    return res.status(401).json({ error: 'Invalid API Key' });
+  }
+  next();
+};
 
-async def verify_api_key(x_api_key: str = Header(...)):
-    if x_api_key != "your-secret-api-key":
-        raise HTTPException(status_code=401, detail="Invalid API Key")
-    return x_api_key
-
-@app.post("/log-event")
-async def log_event(
-    event: ActivityEvent,
-    api_key: str = Depends(verify_api_key)
-):
-    # Your logic here
-    pass
+router.post('/', verifyApiKey, async (req, res) => {
+  // Your logic here
+});
 ```
 
 Then update the extension's `api_client.js`:
@@ -300,14 +320,14 @@ async sendEvent(eventData) {
 ### CORS Errors
 
 If you see CORS errors in the browser console:
-1. Verify CORS middleware is added
-2. Check the allow_origins includes "*" or your extension ID
-3. Restart your FastAPI server
+1. Verify CORS middleware is added to app.js
+2. Check the origin includes "*" or your extension ID
+3. Restart your Node.js server
 
 ### Events Not Appearing in Database
 
 1. Check backend logs for errors
-2. Verify MongoDB connection
+2. Verify MongoDB connection in config
 3. Test endpoint directly with curl
 4. Check extension console for network errors
 
@@ -316,4 +336,4 @@ If you see CORS errors in the browser console:
 If you're receiving too many events:
 1. Increase the time tracking interval in event_tracker.js
 2. Implement event aggregation on the backend
-3. Add database indexes on frequently queried fields
+3. Add database indexes on frequently queried fields (student_id, timestamp, event_type)

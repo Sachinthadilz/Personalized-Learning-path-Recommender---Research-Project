@@ -49,16 +49,16 @@ chrome.runtime.onInstalled.addListener((details) => {
     // First-time install: set all defaults
     chrome.storage.local.set({
       studentId: 'anonymous',
-      courseId: 'unknown',
-      apiBaseURL: 'http://localhost:5000',
+      courseId: 'not-set',
+      apiBaseURL: 'http://localhost:5001',
       trackingEnabled: true
     });
   } else {
     // Extension update: only migrate stale port, preserve user settings
     chrome.storage.local.get(['apiBaseURL'], (result) => {
       if (!result.apiBaseURL || result.apiBaseURL.includes('localhost:8000') || result.apiBaseURL.includes('localhost:8080')) {
-        console.log('Migrating apiBaseURL to port 5000');
-        chrome.storage.local.set({ apiBaseURL: 'http://localhost:5000' });
+        console.log('Migrating apiBaseURL to port 5001');
+        chrome.storage.local.set({ apiBaseURL: 'http://localhost:5001' });
       }
     });
   }
@@ -72,13 +72,18 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // Sync user and migrate stale port on every browser startup
 chrome.runtime.onStartup.addListener(() => {
+  console.log('Learning Activity Tracker started');
+  
   chrome.storage.local.get(['apiBaseURL'], (result) => {
     if (!result.apiBaseURL || result.apiBaseURL.includes('localhost:8000') || result.apiBaseURL.includes('localhost:8080')) {
-      console.log('Startup migration: apiBaseURL → 5000');
-      chrome.storage.local.set({ apiBaseURL: 'http://localhost:5000' });
+      console.log('Startup migration: apiBaseURL → 5001');
+      chrome.storage.local.set({ apiBaseURL: 'http://localhost:5001' });
     }
   });
+  
+  // Sync user ID and retry failed events on startup
   syncUserFromFrontend();
+  retryFailedEvents();
 });
 
 // Handle alarms
@@ -166,7 +171,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 async function handleLogEvent(eventData) {
   try {
     const config = await getConfig();
-    const url = `${config.apiBaseURL}/activity/log-event`;
+    const url = `${config.apiBaseURL}/logs`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -209,8 +214,8 @@ async function getConfig() {
   
   return {
     studentId: result.studentId || 'anonymous',
-    courseId: result.courseId || 'unknown',
-    apiBaseURL: result.apiBaseURL || 'http://localhost:5000',
+    courseId: result.courseId || 'not-set',
+    apiBaseURL: result.apiBaseURL || 'http://localhost:5001',
     trackingEnabled: result.trackingEnabled !== false
   };
 }
@@ -268,7 +273,7 @@ async function retryFailedEvents() {
 
   console.log(`Retrying ${failedEvents.length} failed events`);
   const config = await getConfig();
-  const url = `${config.apiBaseURL}/activity/log-event`;
+  const url = `${config.apiBaseURL}/logs`;
   const remainingEvents = [];
 
   for (const event of failedEvents) {
@@ -323,13 +328,5 @@ async function getStats() {
     failedEventsCount: failedEvents.length
   };
 }
-
-// Handle extension startup
-chrome.runtime.onStartup.addListener(() => {
-  console.log('Learning Activity Tracker started');
-  
-  // Retry failed events on startup
-  retryFailedEvents();
-});
 
 console.log('Background service worker loaded');

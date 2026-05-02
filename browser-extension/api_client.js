@@ -1,11 +1,11 @@
 /**
- * API Client for communicating with the FastAPI backend
+ * API Client for communicating with the Node.js backend
  */
 
 class APIClient {
   constructor() {
-    this.baseURL = 'http://localhost:5000';
-    this.endpoint = '/activity/log-event';
+    this.baseURL = 'http://localhost:5001';
+    this.endpoint = '/logs';
     this.retryAttempts = 3;
     this.retryDelay = 1000; // ms
   }
@@ -64,19 +64,55 @@ class APIClient {
   }
 
   /**
-   * Store failed events in local storage for retry
+   * Store failed events in chrome storage or localStorage as fallback
    * @param {Object} eventData - The event data that failed to send
    */
   async storeFailedEvent(eventData) {
+    // Check if extension context is still valid
+    const isExtensionValid = typeof chrome !== 'undefined' && 
+                            chrome.runtime && 
+                            chrome.runtime.id;
+    
+    if (isExtensionValid) {
+      try {
+        const result = await chrome.storage.local.get(['failedEvents']);
+        const failedEvents = result.failedEvents || [];
+        failedEvents.push({
+          ...eventData,
+          failedAt: new Date().toISOString()
+        });
+        
+        // Keep only last 100 events
+        if (failedEvents.length > 100) {
+          failedEvents.splice(0, failedEvents.length - 100);
+        }
+        
+        await chrome.storage.local.set({ failedEvents });
+        console.log('Failed event stored in chrome.storage for later retry');
+        return;
+      } catch (error) {
+        console.warn('Chrome storage unavailable, using localStorage:', error.message);
+      }
+    }
+    
+    // Fallback to localStorage when extension context is invalidated
     try {
-      const result = await chrome.storage.local.get(['failedEvents']);
-      const failedEvents = result.failedEvents || [];
+      const key = 'learningTracker_failedEvents';
+      const stored = localStorage.getItem(key);
+      const failedEvents = stored ? JSON.parse(stored) : [];
+      
       failedEvents.push({
         ...eventData,
         failedAt: new Date().toISOString()
       });
-      await chrome.storage.local.set({ failedEvents });
-      console.log('Failed event stored for later retry');
+      
+      // Keep only last 50 events in localStorage
+      if (failedEvents.length > 50) {
+        failedEvents.splice(0, failedEvents.length - 50);
+      }
+      
+      localStorage.setItem(key, JSON.stringify(failedEvents));
+      console.log('Failed event stored in localStorage for later retry');
     } catch (error) {
       console.error('Error storing failed event:', error);
     }

@@ -13,6 +13,55 @@ class QuizService {
   }
 
   /**
+   * Build a stable course key so quizzes can be reused across users.
+   * Priority: course.id, else normalized course name.
+   * @param {Object} course
+   * @returns {String}
+   */
+  getCourseKey(course) {
+    const rawId = (course?.id || "").toString().trim();
+    if (rawId) {
+      return `id:${rawId}`;
+    }
+
+    const rawName = (course?.name || "").toString().trim().toLowerCase();
+    const normalizedName = rawName
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 160);
+
+    if (!normalizedName) {
+      throw new Error("Unable to create course key: missing course id/name");
+    }
+
+    return `name:${normalizedName}`;
+  }
+
+  /**
+   * Validate question payload shape for persistence/updates.
+   * @param {Array} questions
+   */
+  validateQuestions(questions) {
+    if (!Array.isArray(questions) || questions.length !== 5) {
+      throw new Error("Invalid quiz format: expected 5 questions");
+    }
+
+    for (const q of questions) {
+      if (
+        !q.question ||
+        !Array.isArray(q.options) ||
+        q.options.length !== 4 ||
+        typeof q.correctAnswer !== "number" ||
+        q.correctAnswer < 0 ||
+        q.correctAnswer > 3
+      ) {
+        throw new Error("Invalid question format");
+      }
+    }
+  }
+
+  /**
    * Generate 5 quiz questions for a completed course using Groq AI
    * @param {Object} course - Course object with name, description, skills
    * @returns {Promise<Array>} Array of 5 quiz questions
@@ -80,22 +129,7 @@ Where correctAnswer is the 0-based index of the correct option (0=A, 1=B, 2=C, 3
       const questions = JSON.parse(cleanText);
 
       // Validate the structure
-      if (!Array.isArray(questions) || questions.length !== 5) {
-        throw new Error("Invalid quiz format: expected 5 questions");
-      }
-
-      for (const q of questions) {
-        if (
-          !q.question ||
-          !Array.isArray(q.options) ||
-          q.options.length !== 4 ||
-          typeof q.correctAnswer !== "number" ||
-          q.correctAnswer < 0 ||
-          q.correctAnswer > 3
-        ) {
-          throw new Error("Invalid question format");
-        }
-      }
+      this.validateQuestions(questions);
 
       return questions;
     } catch (error) {

@@ -171,6 +171,20 @@ class AutoLearnerProfileRequest(BaseModel):
        Provide `code_module` and `code_presentation` directly
     
     At least one mode must be specified.
+    
+    **Pre-computed engagement features:**
+    
+    If the Node.js proxy has already computed engagement features from MongoDB,
+    they can be passed directly via these optional fields (all default to 0):
+    - total_clicks
+    - days_active
+    - max_daily_clicks
+    - mean_daily_clicks
+    - early_clicks
+    - num_assessments
+    
+    When these are provided (non-zero), the endpoint skips MongoDB query and uses
+    the pre-computed values directly.
     """
     
     student_id: str = Field(
@@ -191,6 +205,38 @@ class AutoLearnerProfileRequest(BaseModel):
         None,
         description="Direct OULAD presentation code (e.g., '2013J', '2014B'). "
                     "Used when course_id is not provided."
+    )
+    
+    # Pre-computed engagement features (optional)
+    total_clicks: int = Field(
+        default=0,
+        ge=0,
+        description="Pre-computed total VLE clicks (skip MongoDB query if provided)"
+    )
+    days_active: int = Field(
+        default=0,
+        ge=0,
+        description="Pre-computed distinct active days (skip MongoDB query if provided)"
+    )
+    max_daily_clicks: int = Field(
+        default=0,
+        ge=0,
+        description="Pre-computed max single-day click count (skip MongoDB query if provided)"
+    )
+    mean_daily_clicks: float = Field(
+        default=0.0,
+        ge=0.0,
+        description="Pre-computed mean daily clicks (skip MongoDB query if provided)"
+    )
+    early_clicks: int = Field(
+        default=0,
+        ge=0,
+        description="Pre-computed clicks in first 14 days (skip MongoDB query if provided)"
+    )
+    num_assessments: int = Field(
+        default=0,
+        ge=0,
+        description="Pre-computed assessment count (skip MongoDB query if provided)"
     )
 
 

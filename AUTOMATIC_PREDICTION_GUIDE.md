@@ -271,7 +271,8 @@ If multiple registrations exist for a student, the service returns the first mat
 | `backend/services/student_data_service.py` | **New** — OULAD data loader |
 | `backend/models.py` | Added `AutoLearnerProfileRequest` |
 | `backend/main.py` | Added `POST /predict-learner-profile/auto` route |
-| `backend/services/activity_log_service.py` | Existing — already had `generate_engagement_features()` |
+| `backend-auth/src/routes/logsRoutes.js` | **New** — Node.js engagement features endpoint |
+| `backend-auth/src/routes/predictRoutes.js` | **New** — Proxy to Python ML backend |
 
 ### Frontend
 

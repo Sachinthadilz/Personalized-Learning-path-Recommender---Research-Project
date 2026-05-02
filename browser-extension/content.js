@@ -44,7 +44,21 @@ if (window.location.hostname === 'localhost' && window.location.port === '3000')
 
   // Push immediately on page load, then poll every 3 s to catch login
   pushUserIdToBackground();
-  setInterval(pushUserIdToBackground, 3000);
+  
+  // Store interval ID and add validation check
+  const userIdInterval = setInterval(() => {
+    const isExtensionValid = typeof chrome !== 'undefined' && 
+                            chrome.runtime && 
+                            chrome.runtime.id;
+    
+    if (!isExtensionValid) {
+      console.log('Extension context invalidated, stopping user ID sync');
+      clearInterval(userIdInterval);
+      return;
+    }
+    
+    pushUserIdToBackground();
+  }, 3000);
 }
 // ─────────────────────────────────────────────────────────────────────────────
 

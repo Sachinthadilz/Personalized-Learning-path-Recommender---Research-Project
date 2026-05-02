@@ -1,6 +1,12 @@
 # Engagement Features Usage Guide
 
-## 📋 Overview
+> **⚠️ DEPRECATED**: This document describes the old Python-based engagement feature service.  
+> **Current Architecture**: Engagement features are now computed in Node.js backend-auth (port 5001).  
+> **See**: [backend-auth/src/routes/logsRoutes.js](backend-auth/src/routes/logsRoutes.js) for current implementation.
+
+---
+
+## 📋 Overview (Historical)
 
 The **Engagement Feature Service** computes 6 ML-ready features from MongoDB activity logs using high-performance server-side aggregation pipelines.
 

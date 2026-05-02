@@ -121,7 +121,7 @@ export default function UserProfile() {
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Saving..." : "Save Changes"}
             </button>
@@ -162,7 +162,7 @@ export default function UserProfile() {
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Role
             </label>
-            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
               {user.role}
             </span>
           </div>
@@ -180,7 +180,7 @@ export default function UserProfile() {
 
           <button
             onClick={() => setIsEditing(true)}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800"
           >
             Edit Profile
           </button>
