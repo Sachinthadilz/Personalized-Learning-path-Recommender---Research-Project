@@ -21,10 +21,13 @@ const register = asyncHandler(async (req, res) => {
     password,
   });
 
+  // Don't return tokens on registration - user must login separately
   res.status(201).json({
     success: true,
-    message: "User registered successfully",
-    data: result,
+    message: "Account created successfully. Please log in to continue.",
+    data: {
+      user: result.user,
+    },
   });
 });
 

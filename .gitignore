@@ -90,3 +90,10 @@ Desktop.ini
 *.swp
 *.swo
 *~
+
+# Heavy data files - OULAD dataset
+backend/data/oulad/
+
+# Artifacts - Ignore large/unnecessary pipelines
+backend/artifacts/profile_classifier.joblib
+backend/artifacts/final_result_classifier.joblib

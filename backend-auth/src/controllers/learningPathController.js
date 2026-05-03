@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const LearningPath = require("../models/LearningPath");
 const { v4: uuidv4 } = require("uuid");
 
 /**
@@ -31,7 +32,7 @@ exports.saveLearningPath = async (req, res, next) => {
       });
     }
 
-    // Find user
+    // Verify user exists
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
@@ -43,20 +44,16 @@ exports.saveLearningPath = async (req, res, next) => {
     // Generate unique path ID
     const pathId = uuidv4();
 
-    // Create new learning path
-    const newPath = {
+    // Create new learning path document
+    const newPath = await LearningPath.create({
+      userId,
       pathId,
       pathName,
       pathType,
       targetSkill,
       courses,
       metadata: metadata || {},
-      createdAt: new Date(),
-    };
-
-    // Add to user's saved paths
-    user.savedLearningPaths.push(newPath);
-    await user.save();
+    });
 
     res.status(201).json({
       success: true,
@@ -78,19 +75,13 @@ exports.getSavedLearningPaths = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).select("savedLearningPaths");
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    const learningPaths = await LearningPath.findByUser(userId);
 
     res.json({
       success: true,
       data: {
-        learningPaths: user.savedLearningPaths || [],
-        count: user.savedLearningPaths?.length || 0,
+        learningPaths: learningPaths || [],
+        count: learningPaths?.length || 0,
       },
     });
   } catch (error) {
@@ -106,17 +97,7 @@ exports.getSavedLearningPath = async (req, res, next) => {
     const userId = req.user.id;
     const { pathId } = req.params;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    const learningPath = user.savedLearningPaths.find(
-      (path) => path.pathId === pathId,
-    );
+    const learningPath = await LearningPath.findByUserAndPath(userId, pathId);
 
     if (!learningPath) {
       return res.status(404).json({
@@ -142,28 +123,14 @@ exports.deleteLearningPath = async (req, res, next) => {
     const userId = req.user.id;
     const { pathId } = req.params;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    const result = await LearningPath.findOneAndDelete({ userId, pathId });
 
-    const pathIndex = user.savedLearningPaths.findIndex(
-      (path) => path.pathId === pathId,
-    );
-
-    if (pathIndex === -1) {
+    if (!result) {
       return res.status(404).json({
         success: false,
         message: "Learning path not found",
       });
     }
-
-    // Remove the path
-    user.savedLearningPaths.splice(pathIndex, 1);
-    await user.save();
 
     res.json({
       success: true,
@@ -190,16 +157,10 @@ exports.updateLearningPathName = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    const learningPath = user.savedLearningPaths.find(
-      (path) => path.pathId === pathId,
+    const learningPath = await LearningPath.findOneAndUpdate(
+      { userId, pathId },
+      { pathName },
+      { new: true, runValidators: true },
     );
 
     if (!learningPath) {
@@ -208,9 +169,6 @@ exports.updateLearningPathName = async (req, res, next) => {
         message: "Learning path not found",
       });
     }
-
-    learningPath.pathName = pathName;
-    await user.save();
 
     res.json({
       success: true,

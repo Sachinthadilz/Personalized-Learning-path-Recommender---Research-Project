@@ -68,7 +68,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (data: RegisterData) => {
     try {
       const response = await authService.register(data);
-      setUser(response.data.user);
+      // Don't auto-authenticate on registration
+      // User must login separately after account creation
+      // Return success without setting user
+      return response;
     } catch (error: any) {
       console.error("Registration failed:", error);
       throw error;
@@ -78,10 +81,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       await authService.logout();
-      setUser(null);
     } catch (error) {
       console.error("Logout failed:", error);
-      // Still clear user state even if API call fails
+    } finally {
+      // Always clear user state, even if API call fails
       setUser(null);
     }
   };

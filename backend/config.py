@@ -29,7 +29,7 @@ class Settings:
     Provides recommendations, skill mapping, and learning path discovery.
     """
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
-    API_PORT: int = int(os.getenv("API_PORT", "8080"))
+    API_PORT: int = int(os.getenv("API_PORT", "5000"))
     API_RELOAD: bool = os.getenv("API_RELOAD", "True").lower() == "true"
     
     # Data Configuration
