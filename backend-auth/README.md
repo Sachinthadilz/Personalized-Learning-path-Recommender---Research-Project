@@ -466,7 +466,7 @@ All endpoints may return error responses in the following format:
 1. **Password Hashing**: Uses bcryptjs with salt rounds
 2. **JWT Authentication**: Secure token-based authentication
 3. **Refresh Tokens**: Long-lived tokens stored in database
-4. **Rate Limiting**: Prevents brute force attacks
+4. **Rate Limiting**: Protects public auth endpoints against brute force attacks
 5. **Helmet**: Sets secure HTTP headers
 6. **CORS**: Configured cross-origin resource sharing
 7. **Input Validation**: Using express-validator
@@ -518,7 +518,7 @@ curl -X GET http://localhost:5001/api/auth/profile \
 | `JWT_REFRESH_SECRET`      | Secret key for refresh tokens        | Required                |
 | `JWT_REFRESH_EXPIRE`      | Refresh token expiration             | `30d`                   |
 | `CORS_ORIGIN`             | Allowed CORS origin                  | `http://localhost:5173` |
-| `RATE_LIMIT_WINDOW_MS`    | Rate limit window (ms)               | `900000`                |
+| `RATE_LIMIT_WINDOW_MS`    | Auth rate limit window (ms)          | `900000`                |
 | `RATE_LIMIT_MAX_REQUESTS` | Max requests per window              | `100`                   |
 
 ## Production Deployment

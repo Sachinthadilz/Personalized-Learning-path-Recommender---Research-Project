@@ -1,23 +1,12 @@
-import { useState, useEffect } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import { useAuth } from "./contexts/AuthContext";
-import LandingPage from "./components/LandingPage";
-import Login from "./components/Login";
-import Signup from "./components/Signup";
-import Header from "./components/Header";
-import UserProfile from "./components/UserProfile";
-import Dashboard from "./components/Dashboard";
-import CoursesTab from "./components/CoursesTab";
-import SkillsTab from "./components/SkillsTab";
-import UniversitiesTab from "./components/UniversitiesTab";
-import AISearchTab from "./components/AISearchTab";
-import LearningPathTab from "./components/LearningPathTab";
-import SavedPathsTab from "./components/SavedPathsTab";
-import TeamComponentSelection from "./components/TeamComponentSelection";
-import AutoLearnerProfileTab from "./components/AutoLearnerProfileTab";
-import AdminDashboard from "./components/AdminDashboard";
-import TimetablePlanner from "./components/TimetablePlanner";
-import OnboardingForm from "./components/OnboardingForm";
-import AdaptiveVisualizerTab from "./components/AdaptiveVisualizerTab";
 import { authService } from "./services/authService";
 import {
   LayoutDashboard,
@@ -34,6 +23,34 @@ import {
   X,
   Brain,
 } from "lucide-react";
+
+const LandingPage = lazy(() => import("./components/LandingPage"));
+const Login = lazy(() => import("./components/Login"));
+const Signup = lazy(() => import("./components/Signup"));
+const Header = lazy(() => import("./components/Header"));
+const UserProfile = lazy(() => import("./components/UserProfile"));
+const Dashboard = lazy(() => import("./components/Dashboard"));
+const CoursesTab = lazy(() => import("./components/CoursesTab"));
+const SkillsTab = lazy(() => import("./components/SkillsTab"));
+const UniversitiesTab = lazy(() => import("./components/UniversitiesTab"));
+const AISearchTab = lazy(() => import("./components/AISearchTab"));
+const LearningPathTab = lazy(() => import("./components/LearningPathTab"));
+const SavedPathsTab = lazy(() => import("./components/SavedPathsTab"));
+const TeamComponentSelection = lazy(
+  () => import("./components/TeamComponentSelection"),
+);
+const AutoLearnerProfileTab = lazy(
+  () => import("./components/AutoLearnerProfileTab"),
+);
+const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
+const TimetablePlanner = lazy(() => import("./components/TimetablePlanner"));
+const OnboardingForm = lazy(() => import("./components/OnboardingForm"));
+const AdaptiveVisualizerTab = lazy(
+  () => import("./components/AdaptiveVisualizerTab"),
+);
+const EmailVerification = lazy(() => import("./components/EmailVerification"));
+const ForgotPassword = lazy(() => import("./components/ForgotPassword"));
+const ResetPassword = lazy(() => import("./components/ResetPassword"));
 
 type Tab =
   | "dashboard"
@@ -88,6 +105,17 @@ function getStoredValue(key: string): string | null {
   return localStorage.getItem(key);
 }
 
+function AppLoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-700 mx-auto" />
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -122,6 +150,10 @@ function App() {
   const [hasAcademicProfile, setHasAcademicProfile] = useState(false);
   const [isAcademicProfileOpen, setIsAcademicProfileOpen] = useState(false);
   const [profileVersion, setProfileVersion] = useState(0);
+
+  const withSuspense = (content: ReactNode) => (
+    <Suspense fallback={<AppLoadingScreen />}>{content}</Suspense>
+  );
 
   // Reset all state when the user logs out (only after auth finishes initializing)
   useEffect(() => {
@@ -188,45 +220,58 @@ function App() {
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-700 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <AppLoadingScreen />;
+  }
+
+  // ── URL-based public routes (for email links) ───────────────────────────────
+  const pathname = window.location.pathname;
+
+  // /verify-email/<token>
+  const verifyMatch = pathname.match(/^\/verify-email\/(.+)$/);
+  if (verifyMatch) {
+    return withSuspense(<EmailVerification token={verifyMatch[1]} />);
+  }
+
+  // /forgot-password
+  if (pathname === "/forgot-password") {
+    return withSuspense(<ForgotPassword />);
+  }
+
+  // /reset-password/<token>
+  const resetMatch = pathname.match(/^\/reset-password\/(.+)$/);
+  if (resetMatch) {
+    return withSuspense(<ResetPassword token={resetMatch[1]} />);
   }
 
   // Show auth screens if not authenticated
   if (!isAuthenticated) {
     if (authView === "landing") {
-      return (
+      return withSuspense(
         <LandingPage
           onGetStarted={() => setAuthView("signup")}
           onLogin={() => setAuthView("login")}
-        />
+        />,
       );
     }
     if (authView === "signup") {
-      return (
+      return withSuspense(
         <Signup
           onSwitchToLogin={() => setAuthView("login")}
           onBackToLanding={() => setAuthView("landing")}
-        />
+        />,
       );
     }
-    return (
+    return withSuspense(
       <Login
         onSwitchToSignup={() => setAuthView("signup")}
         onBackToLanding={() => setAuthView("landing")}
-      />
+      />,
     );
   }
 
   // Show landing page when logo is clicked (checked before component selection)
   if (showLanding) {
-    return (
+    return withSuspense(
       <LandingPage
         onGetStarted={() => setShowLanding(false)}
         onLogin={() => setShowLanding(false)}
@@ -234,13 +279,13 @@ function App() {
           setShowLanding(false);
           setHasSelectedComponent(false);
         }}
-      />
+      />,
     );
   }
 
   // Show component selection page after login
   if (!hasSelectedComponent) {
-    return (
+    return withSuspense(
       <TeamComponentSelection
         onSelectComponent={() => {
           setHasSelectedComponent(true);
@@ -268,7 +313,7 @@ function App() {
           setHasSelectedComponent(true);
           setActiveTab("admin");
         }}
-      />
+      />,
     );
   }
 
@@ -324,7 +369,7 @@ function App() {
   const allTabs: {
     id: Tab;
     label: string;
-    Icon: React.ComponentType<{ className?: string }>;
+    Icon: ComponentType<{ className?: string }>;
   }[] = [
     { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
     { id: "ai-search", label: "AI Search", Icon: Sparkles },
@@ -357,17 +402,19 @@ function App() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <Header
-        onOpenProfile={() => setIsProfileOpen(true)}
-        onOpenAcademicProfile={() => setIsAcademicProfileOpen(true)}
-        hasUnfilledProfile={!hasAcademicProfile}
-        onLogoClick={() => setShowLanding(true)}
-        onOpenAdmin={() => {
-          setSelectedComponent("explore-courses");
-          setHasSelectedComponent(true);
-          setActiveTab("admin");
-        }}
-      />
+      <Suspense fallback={<AppLoadingScreen />}>
+        <Header
+          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenAcademicProfile={() => setIsAcademicProfileOpen(true)}
+          hasUnfilledProfile={!hasAcademicProfile}
+          onLogoClick={() => setShowLanding(true)}
+          onOpenAdmin={() => {
+            setSelectedComponent("explore-courses");
+            setHasSelectedComponent(true);
+            setActiveTab("admin");
+          }}
+        />
+      </Suspense>
 
       {/* Profile Modal */}
       {isProfileOpen && (
@@ -383,7 +430,9 @@ function App() {
               </button>
             </div>
             <div className="p-6">
-              <UserProfile />
+              <Suspense fallback={<AppLoadingScreen />}>
+                <UserProfile />
+              </Suspense>
             </div>
           </div>
         </div>
@@ -405,13 +454,15 @@ function App() {
               </button>
             </div>
             <div className="p-6">
-              <OnboardingForm
-                onComplete={() => {
-                  setHasAcademicProfile(true);
-                  setIsAcademicProfileOpen(false);
-                  setProfileVersion((v) => v + 1);
-                }}
-              />
+              <Suspense fallback={<AppLoadingScreen />}>
+                <OnboardingForm
+                  onComplete={() => {
+                    setHasAcademicProfile(true);
+                    setIsAcademicProfileOpen(false);
+                    setProfileVersion((v) => v + 1);
+                  }}
+                />
+              </Suspense>
             </div>
           </div>
         </div>
@@ -459,9 +510,13 @@ function App() {
                     {isActive && (
                       <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-blue-700 rounded-r-full" />
                     )}
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-                      isActive ? "bg-blue-700 text-white" : "bg-transparent text-gray-400"
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                        isActive
+                          ? "bg-blue-700 text-white"
+                          : "bg-transparent text-gray-400"
+                      }`}
+                    >
                       <Icon className="w-4 h-4" />
                     </div>
                     {!isSidebarCollapsed && (
@@ -482,9 +537,7 @@ function App() {
                     <ArrowLeft className="w-4 h-4" />
                   </div>
                   {!isSidebarCollapsed && (
-                    <span className="text-sm font-medium">
-                      Back
-                    </span>
+                    <span className="text-sm font-medium">Back</span>
                   )}
                 </button>
               </div>
@@ -494,7 +547,9 @@ function App() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50/50">
-          <div className="max-w-7xl mx-auto px-6 py-8">{renderTab()}</div>
+          <div className="max-w-7xl mx-auto px-6 py-8">
+            <Suspense fallback={<AppLoadingScreen />}>{renderTab()}</Suspense>
+          </div>
         </main>
       </div>
     </div>

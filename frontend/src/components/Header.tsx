@@ -1,12 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import {
-  ChevronDown,
-  User,
-  LogOut,
-  Shield,
-  BookOpen,
-} from "lucide-react";
+import { ChevronDown, User, LogOut, Shield, BookOpen } from "lucide-react";
 
 interface HeaderProps {
   onOpenProfile: () => void;
@@ -16,7 +10,13 @@ interface HeaderProps {
   onOpenAdmin?: () => void;
 }
 
-export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfilledProfile = false, onLogoClick, onOpenAdmin }: HeaderProps) {
+function Header({
+  onOpenProfile,
+  onOpenAcademicProfile,
+  hasUnfilledProfile = false,
+  onLogoClick,
+  onOpenAdmin,
+}: HeaderProps) {
   const { user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -36,13 +36,13 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await logout();
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  };
+  }, [logout]);
 
   const getInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.charAt(0) || "";
@@ -55,10 +55,16 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
       <div className="max-w-full mx-auto px-5 h-16 flex items-center justify-between">
         {/* Logo and Title */}
         <button
+          type="button"
           onClick={onLogoClick}
+          aria-label="Go to home"
           className="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-blue-50/60 transition-colors cursor-pointer"
         >
-          <img src="/images/logo.png" alt="LearnPath AI" className="w-11 h-11 object-contain" />
+          <img
+            src="/images/logo.png"
+            alt="LearnPath AI"
+            className="w-11 h-11 object-contain"
+          />
           <div className="text-left hidden sm:block">
             <h1 className="text-lg font-bold leading-tight">
               <span className="text-blue-700">LearnPath</span>{" "}
@@ -74,7 +80,11 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
         {user && (
           <div className="relative" ref={dropdownRef}>
             <button
+              type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              aria-haspopup="menu"
+              aria-expanded={isDropdownOpen}
+              aria-label="Open user menu"
               className="flex items-center gap-3 hover:bg-gray-50 rounded-xl px-3 py-2 transition-colors"
             >
               {/* Avatar */}
@@ -124,6 +134,7 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
                 {/* Menu Items */}
                 <div className="py-1.5">
                   <button
+                    type="button"
                     onClick={() => {
                       setIsDropdownOpen(false);
                       onOpenProfile();
@@ -136,6 +147,7 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
 
                   {user.role === "admin" && onOpenAdmin && (
                     <button
+                      type="button"
                       onClick={() => {
                         setIsDropdownOpen(false);
                         onOpenAdmin();
@@ -148,6 +160,7 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
                   )}
 
                   <button
+                    type="button"
                     onClick={() => {
                       setIsDropdownOpen(false);
                       onOpenAcademicProfile?.();
@@ -163,12 +176,12 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
                       </span>
                     )}
                   </button>
-
                 </div>
 
                 {/* Logout */}
                 <div className="border-t border-gray-50 pt-1.5 mx-2">
                   <button
+                    type="button"
                     onClick={handleLogout}
                     className="flex items-center w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors rounded-lg"
                   >
@@ -184,3 +197,5 @@ export default function Header({ onOpenProfile, onOpenAcademicProfile, hasUnfill
     </header>
   );
 }
+
+export default memo(Header);
