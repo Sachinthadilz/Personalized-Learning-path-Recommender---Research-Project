@@ -1,4 +1,4 @@
-import { FaFire, FaTrophy, FaChartLine } from 'react-icons/fa';
+import { Flame, Trophy, TrendingUp, Lightbulb } from 'lucide-react';
 import type { DailyTimetable } from '../../services/timetableApi';
 
 interface Props {
@@ -17,85 +17,80 @@ function TimetableProgressOverview({ weekTimetables }: Props) {
   return (
     <div className="space-y-4">
       {/* Weekly Stats */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl blur-xl opacity-30 animate-pulse-soft" />
-        <div className="relative ttm-card bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600 text-white shadow-glow-purple">
+      <div className="relative bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 rounded-2xl p-5 text-white overflow-hidden shadow-sm">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full -translate-y-1/2 translate-x-1/4" />
+        <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold">Weekly Stats</h3>
-            <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
-              <FaChartLine className="text-xl" />
+            <h3 className="text-sm font-bold text-blue-100">Weekly Stats</h3>
+            <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-4 h-4" />
             </div>
           </div>
 
           <div className="space-y-3">
             <div>
-              <p className="text-xs text-purple-100 font-semibold mb-1">Total Hours</p>
-              <p className="text-2xl font-bold drop-shadow-lg">
+              <p className="text-xs text-blue-200 font-medium mb-1">Total Hours</p>
+              <p className="text-2xl font-extrabold">
                 {totalCompleted.toFixed(1)}{' '}
-                <span className="text-lg opacity-75">/ {totalPlanned.toFixed(1)}h</span>
+                <span className="text-base text-blue-300">/ {totalPlanned.toFixed(1)}h</span>
               </p>
             </div>
 
-            <div className="relative w-full bg-purple-700/50 rounded-full h-2 overflow-hidden shadow-inner">
+            <div className="relative w-full bg-blue-900/40 rounded-full h-2 overflow-hidden">
               <div
-                className="h-full bg-white rounded-full transition-all duration-700 shadow-lg relative overflow-hidden"
+                className="h-full bg-white rounded-full transition-all duration-700"
                 style={{ width: `${Math.min(completionRate, 100)}%` }}
-              >
-                <div className="absolute inset-0 ttm-shimmer" />
-              </div>
+              />
             </div>
 
             <div className="flex justify-between items-center">
-              <p className="text-xs text-purple-100 font-semibold">Completion Rate</p>
-              <p className="text-lg font-bold">{completionRate.toFixed(0)}%</p>
+              <p className="text-xs text-blue-200 font-medium">Completion Rate</p>
+              <p className="text-base font-bold">{completionRate.toFixed(0)}%</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Days Completed */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-red-600 rounded-xl blur-xl opacity-30 animate-pulse-soft" />
-        <div className="relative ttm-card bg-gradient-to-br from-orange-600 via-orange-500 to-red-600 text-white shadow-glow-orange">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-orange-100 font-semibold mb-1 uppercase tracking-wide">
-                Days Completed
-              </p>
-              <p className="text-3xl font-bold drop-shadow-lg">{daysCompleted}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
-              <FaFire className="text-3xl animate-pulse-soft" />
-            </div>
+      <div className="relative bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-5 text-white overflow-hidden shadow-sm">
+        <div className="absolute bottom-0 right-0 w-24 h-24 bg-amber-400/20 rounded-full translate-y-1/3 translate-x-1/4" />
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-xs text-amber-100 font-semibold mb-1 uppercase tracking-wide">
+              Days Completed
+            </p>
+            <p className="text-3xl font-extrabold">{daysCompleted}</p>
+          </div>
+          <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+            <Flame className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Achievement badge */}
       {completionRate >= 80 && (
-        <div className="relative overflow-hidden animate-scale-in">
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl blur-xl opacity-40 animate-pulse-soft" />
-          <div className="relative ttm-card bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 text-white shadow-hard">
-            <div className="flex items-center space-x-3">
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
-                <FaTrophy className="text-2xl animate-bounce-gentle" />
-              </div>
-              <div>
-                <p className="font-bold text-sm mb-0.5">Great Progress!</p>
-                <p className="text-xs opacity-95">You're crushing it! 🎉</p>
-              </div>
+        <div className="relative bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-5 text-white overflow-hidden shadow-sm animate-scale-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm mb-0.5">Great Progress!</p>
+              <p className="text-xs text-amber-100">You're crushing it! 🎉</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Quick Tip */}
-      <div className="ttm-card bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200/50">
-        <div className="flex items-start space-x-2">
-          <div className="text-2xl">💡</div>
+      <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Lightbulb className="w-4 h-4 text-blue-700" />
+          </div>
           <div>
             <h4 className="font-bold text-blue-800 mb-1 text-sm">Quick Tip</h4>
-            <p className="text-xs text-blue-700 leading-relaxed">
+            <p className="text-xs text-blue-600 leading-relaxed">
               Update completion hours daily to help the AI adapt your schedule!
             </p>
           </div>

@@ -260,11 +260,22 @@
     <div class="form-group">
       <label for="courseId">Course ID</label>
       <input type="text" id="courseId" placeholder="Auto-detected or enter manually">
+      <small style="font-size: 11px; color: #666; margin-top: 4px; display: block;">
+        ℹ️ Auto-detected on Coursera, Udemy, edX. Set manually for other sites.
+      </small>
     </div>
 
     <div class="form-group">
       <label for="apiBaseURL">API URL</label>
-      <input type="text" id="apiBaseURL" placeholder="http://localhost:5000">
+      <input type="text" id="apiBaseURL" placeholder="http://localhost:5001">
+    </div>
+
+    <div class="form-group">
+      <label for="frontendBaseURL">Frontend URL</label>
+      <input type="text" id="frontendBaseURL" placeholder="http://localhost:3000">
+      <small style="font-size: 11px; color: #666; margin-top: 4px; display: block;">
+        ℹ️ Used to sync the logged-in student ID from your learning platform frontend.
+      </small>
     </div>
 
     <div class="form-group">

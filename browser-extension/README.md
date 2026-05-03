@@ -1,6 +1,6 @@
 # Learning Activity Tracker - Browser Extension
 
-A Chrome/Edge browser extension (Manifest V3) that tracks student learning activities on course platforms and sends them to a FastAPI backend for learning analytics.
+A Chrome/Edge browser extension (Manifest V3) that tracks student learning activities on course platforms and sends them to a Node.js backend for learning analytics.
 
 ## Features
 
@@ -52,7 +52,7 @@ browser-extension/
 ### 1. Prerequisites
 
 - Chrome, Edge, or any Chromium-based browser
-- Running FastAPI backend with `/log-event` endpoint
+- Running Node.js backend-auth with `/logs` endpoint (port 5001)
 
 ### 2. Load Extension in Development Mode
 
@@ -102,53 +102,55 @@ python generate_icons.py
 2. Configure the following settings:
    - **Student ID**: Your unique student identifier
    - **Course ID**: Leave empty for auto-detection or enter manually
-   - **API URL**: Your backend URL (default: `http://localhost:8000`)
+   - **API URL**: Your backend URL (default: `http://localhost:5001`)
    - **Enable Tracking**: Toggle to start/stop tracking
 
 3. Click "Save Configuration"
 
 ### Backend Configuration
 
-Ensure your FastAPI backend has the `/log-event` endpoint:
+Ensure your Node.js backend-auth has the `/logs` endpoint:
 
-```python
-from fastapi import FastAPI
-from pydantic import BaseModel
-from datetime import datetime
+```javascript
+const express = require('express');
+const ActivityLog = require('../models/ActivityLog');
+const router = express.Router();
 
-app = FastAPI()
+router.post('/', async (req, res) => {
+  try {
+    const { student_id, course_id, event_type, timestamp, duration, metadata } = req.body;
+    
+    const doc = await ActivityLog.create({
+      student_id,
+      course_id,
+      event_type,
+      timestamp: timestamp ? new Date(timestamp) : new Date(),
+      duration: duration ?? null,
+      metadata: metadata || {},
+    });
 
-class ActivityEvent(BaseModel):
-    student_id: str
-    course_id: str
-    event_type: str
-    timestamp: str
-    duration: int
-    page_url: str
-    session_id: str = None
-    metadata: dict = None
+    return res.status(201).json({ success: true, log_id: doc.log_id });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 
-@app.post("/log-event")
-async def log_event(event: ActivityEvent):
-    # Process and store the event
-    print(f"Received event: {event.event_type} from {event.student_id}")
-    return {"status": "success", "event_id": "generated_id"}
+module.exports = router;
 ```
 
 ### CORS Configuration
 
-Add CORS middleware to your FastAPI backend to allow extension requests:
+Add CORS middleware to your Node.js backend-auth to allow extension requests:
 
-```python
-from fastapi.middleware.cors import CORSMiddleware
+```javascript
+const cors = require('cors');
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your extension ID
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.use(cors({
+  origin: '*', // In production, specify your extension ID
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 ```
 
 ## Event Types

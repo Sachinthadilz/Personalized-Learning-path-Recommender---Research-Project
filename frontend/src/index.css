@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Global Font ── */
+* {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
 @layer utilities {
   .animate-fade-in {
     animation: fadeIn 0.2s ease-in-out;
@@ -15,15 +20,15 @@
   }
 
   .ttm-btn-primary {
-    @apply relative bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 active:scale-95 overflow-hidden;
+    @apply relative bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 active:scale-95 overflow-hidden;
   }
 
   .ttm-btn-secondary {
-    @apply relative bg-white/90 backdrop-blur-sm text-blue-600 border-2 border-blue-500/30 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-500 hover:shadow-lg transform hover:scale-105 active:scale-95;
+    @apply relative bg-white/90 backdrop-blur-sm text-blue-700 border-2 border-blue-500/30 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-amber-50 hover:border-blue-500 hover:shadow-lg transform hover:scale-105 active:scale-95;
   }
 
   .ttm-input-field {
-    @apply w-full px-3 py-2 bg-white/70 backdrop-blur-sm border-2 border-gray-300/50 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 outline-none hover:bg-white/90 hover:border-gray-400/50 text-sm;
+    @apply w-full px-3 py-2 bg-white/70 backdrop-blur-sm border-2 border-gray-300/50 rounded-lg focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 outline-none hover:bg-white/90 hover:border-gray-400/50 text-sm;
   }
 
   .ttm-subject-card {
@@ -33,6 +38,36 @@
   .ttm-glass-card {
     @apply bg-white/60 backdrop-blur-2xl rounded-xl shadow-xl border border-white/40 transition-all duration-500 hover:bg-white/70;
   }
+}
+
+/* ── Hero slider crossfade ── */
+.slider-slide {
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Floating stats bar ── */
+.stats-float {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Entrance Animations ── */
+.animate-slide-up {
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-up-delay {
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+.animate-slide-up-delay-2 {
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+/* ── Timeline connector ── */
+.timeline-line {
+  height: 3px;
+  background: linear-gradient(90deg, #1d4ed8 0%, #f59e0b 100%);
 }
 
 /* Timetable shimmer animation */
@@ -57,14 +92,13 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Smooth scrolling */
@@ -72,21 +106,21 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar – blue theme */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+  background: #93c5fd;
+  border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #3b82f6;
 }

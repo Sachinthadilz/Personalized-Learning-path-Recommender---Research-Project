@@ -18,12 +18,33 @@ async function loadConfig() {
       'studentId',
       'courseId',
       'apiBaseURL',
+      'frontendBaseURL',
       'trackingEnabled'
     ]);
 
+    // Get current tab info to show context
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const isCoursera = tab?.url?.includes('coursera.org');
+    const isUdemy = tab?.url?.includes('udemy.com');
+    const isEdX = tab?.url?.includes('edx.org');
+    const currentFrontendURL = result.frontendBaseURL || 'http://localhost:3000';
+    const isFrontendTab = tab?.url?.startsWith(currentFrontendURL);
+
+    const courseIdInput = document.getElementById('courseId');
+    courseIdInput.value = result.courseId || '';
+    
+    // Show helpful placeholder based on detected site
+    if (isCoursera || isUdemy || isEdX) {
+      courseIdInput.placeholder = 'Auto-detected from URL';
+    } else if (isFrontendTab) {
+      courseIdInput.placeholder = 'learning-platform (detected)';
+    } else if (!result.courseId || result.courseId === 'unknown') {
+      courseIdInput.placeholder = 'Enter course ID manually';
+    }
+
     document.getElementById('studentId').value = result.studentId || '';
-    document.getElementById('courseId').value = result.courseId || '';
-    document.getElementById('apiBaseURL').value = result.apiBaseURL || 'http://localhost:5000';
+    document.getElementById('apiBaseURL').value = result.apiBaseURL || 'http://localhost:5001';
+    document.getElementById('frontendBaseURL').value = currentFrontendURL;
     document.getElementById('trackingEnabled').checked = result.trackingEnabled !== false;
 
     updateStatus(result.trackingEnabled !== false);
@@ -70,10 +91,13 @@ function setupEventListeners() {
  */
 async function saveConfig() {
   try {
+    const courseIdValue = document.getElementById('courseId').value.trim();
+    
     const config = {
       studentId: document.getElementById('studentId').value.trim() || 'anonymous',
-      courseId: document.getElementById('courseId').value.trim() || 'unknown',
-      apiBaseURL: document.getElementById('apiBaseURL').value.trim() || 'http://localhost:5000',
+      courseId: courseIdValue || 'not-set',
+      apiBaseURL: document.getElementById('apiBaseURL').value.trim() || 'http://localhost:5001',
+      frontendBaseURL: document.getElementById('frontendBaseURL').value.trim() || 'http://localhost:3000',
       trackingEnabled: document.getElementById('trackingEnabled').checked
     };
 
@@ -82,6 +106,13 @@ async function saveConfig() {
       new URL(config.apiBaseURL);
     } catch (error) {
       showMessage('Invalid API URL', 'error');
+      return;
+    }
+
+    try {
+      new URL(config.frontendBaseURL);
+    } catch (error) {
+      showMessage('Invalid Frontend URL', 'error');
       return;
     }
 
@@ -128,12 +159,12 @@ async function retryFailedEvents() {
 
     // Send each failed event
     const config = await chrome.storage.local.get(['apiBaseURL']);
-    const apiURL = config.apiBaseURL || 'http://localhost:5000';
+    const apiURL = config.apiBaseURL || 'http://localhost:5001';
     let successCount = 0;
 
     for (const event of failedEvents) {
       try {
-        const response = await fetch(`${apiURL}/activity/log-event`, {
+        const response = await fetch(`${apiURL}/logs`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

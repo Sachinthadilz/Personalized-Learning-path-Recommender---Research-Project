@@ -257,11 +257,11 @@ export default function SavedPathsTab() {
 
   if (!user) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
         <div className="flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mx-auto mb-4">
           <Lock className="w-8 h-8 text-yellow-600" />
         </div>
-        <h3 className="text-2xl font-bold text-gray-800 mb-2">
+        <h3 className="text-xl font-bold text-gray-900 mb-2">
           Login Required
         </h3>
         <p className="text-gray-600">
@@ -275,13 +275,13 @@ export default function SavedPathsTab() {
     return (
       <div className="space-y-6">
         {/* Header skeleton */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-8">
+        <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 rounded-2xl p-8">
           <div className="h-8 w-64 bg-white/20 rounded-lg animate-pulse mb-3" />
           <div className="h-4 w-48 bg-white/15 rounded animate-pulse" />
         </div>
         {/* Card skeletons */}
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white border-2 border-gray-100 rounded-lg shadow p-6 animate-pulse">
+          <div key={i} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 animate-pulse">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-3">
                 <div className="h-5 bg-gray-200 rounded w-3/5" />
@@ -306,7 +306,7 @@ export default function SavedPathsTab() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
         <div>
           <p className="text-red-700 font-medium">{error}</p>
@@ -325,15 +325,15 @@ export default function SavedPathsTab() {
     return (
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-8">
-          <h2 className="text-3xl font-bold mb-3">Saved Learning Paths</h2>
-          <p className="text-indigo-100">
+        <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 text-white rounded-2xl p-8">
+          <h2 className="text-2xl font-extrabold mb-3">Saved Learning Paths</h2>
+          <p className="text-blue-100">
             View and manage your saved learning paths from AI Search and
             Learning Path Generator.
           </p>
         </div>
 
-        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center">
           <div className="text-gray-400 text-6xl font-bold mb-4">○</div>
           <h3 className="text-2xl font-bold text-gray-800 mb-3">
             No Saved Learning Paths Yet
@@ -343,7 +343,7 @@ export default function SavedPathsTab() {
             personalized learning paths, then save them for easy access later.
           </p>
           <div className="flex gap-4 justify-center">
-            <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg">
+            <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg">
               Use "Save Learning Path" buttons in other tabs
             </span>
           </div>
@@ -412,9 +412,9 @@ export default function SavedPathsTab() {
         </div>
       )}
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-8">
-        <h2 className="text-3xl font-bold mb-3">Saved Learning Paths</h2>
-        <p className="text-indigo-100 mb-4">
+      <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 text-white rounded-2xl p-8">
+        <h2 className="text-2xl font-extrabold mb-3">Saved Learning Paths</h2>
+        <p className="text-blue-100 mb-4">
           You have {savedPaths.length} saved learning path
           {savedPaths.length !== 1 ? "s" : ""}.
         </p>
@@ -431,7 +431,7 @@ export default function SavedPathsTab() {
         {savedPaths.map((path) => (
           <div
             key={path.pathId}
-            className="bg-white border-2 border-gray-200 rounded-lg shadow hover:shadow-lg transition-all"
+            className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg transition-all"
           >
             {/* Path Header */}
             <div className="p-6">
@@ -443,24 +443,24 @@ export default function SavedPathsTab() {
                         type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"
                         autoFocus
                       />
                       <button
                         onClick={() => handleSaveEdit(path.pathId)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
                       >
                         Save
                       </button>
                       <button
                         onClick={handleCancelEdit}
-                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200"
                       >
                         Cancel
                       </button>
                     </div>
                   ) : (
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    <h3 className="text-base font-bold text-gray-900 mb-2">
                       {path.pathName}
                     </h3>
                   )}
@@ -469,9 +469,9 @@ export default function SavedPathsTab() {
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
                         path.pathType === "ai_search"
-                          ? "bg-purple-100 text-purple-700"
+                          ? "bg-blue-100 text-blue-700"
                           : path.pathType === "ai_generator"
-                          ? "bg-indigo-100 text-indigo-700"
+                          ? "bg-blue-100 text-blue-700"
                           : "bg-green-100 text-green-700"
                       }`}
                     >
@@ -516,21 +516,21 @@ export default function SavedPathsTab() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleStartEdit(path)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors text-sm font-medium"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     Rename
                   </button>
                   <button
                     onClick={() => handleDeleteRequest(path)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-colors text-sm font-medium"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Delete
                   </button>
                   <button
                     onClick={() => toggleExpanded(path.pathId)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors text-sm font-medium"
                   >
                     {expandedPathId === path.pathId ? (
                       <><ChevronUp className="w-4 h-4" /> Collapse</>
@@ -573,7 +573,7 @@ export default function SavedPathsTab() {
                     <button
                       onClick={() => handleEnroll(path.pathId)}
                       disabled={enrollingPathId === path.pathId}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all text-sm font-medium shadow disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all text-sm font-medium shadow disabled:opacity-50"
                     >
                       {enrollingPathId === path.pathId ? (
                         <>
@@ -630,7 +630,7 @@ export default function SavedPathsTab() {
                           ? "bg-gray-100 border-gray-300 opacity-60"
                           : isCompleted
                             ? "bg-green-50 border-green-300"
-                            : "bg-white border-gray-200 hover:shadow-md"
+                            : "bg-white border-gray-200 hover:shadow-sm"
                       }`}
                     >
                       <div className="flex gap-3">
@@ -640,7 +640,7 @@ export default function SavedPathsTab() {
                               ? "bg-green-600 text-white"
                               : isLocked
                                 ? "bg-gray-400 text-white"
-                                : "bg-indigo-600 text-white"
+                                : "bg-blue-700 text-white"
                           }`}
                         >
                           {isCompleted ? (
@@ -709,7 +709,7 @@ export default function SavedPathsTab() {
                                 </span>
                               )}
                               {(course as AISearchResult).similarity_score && (
-                                <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                                <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
                                   {(
                                     (course as AISearchResult).similarity_score *
                                     100
@@ -725,7 +725,7 @@ export default function SavedPathsTab() {
                               {course.skills.slice(0, 5).map((skill, sidx) => (
                                 <span
                                   key={sidx}
-                                  className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded"
+                                  className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded"
                                 >
                                   {skill}
                                 </span>
@@ -756,7 +756,7 @@ export default function SavedPathsTab() {
                                 href={course.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-block px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all text-sm font-medium"
+                                className="inline-block px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all text-sm font-medium"
                               >
                                 Enroll
                               </a>
@@ -764,7 +764,7 @@ export default function SavedPathsTab() {
                             {isUnlocked && isEnrolled && (
                               <button
                                 onClick={() => handleMarkComplete(path.pathId, course.id, course.name)}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all text-sm font-medium shadow"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all text-sm font-medium shadow"
                               >
                                 <BookOpen className="w-4 h-4" />
                                 Mark as Completed
@@ -798,8 +798,8 @@ export default function SavedPathsTab() {
             {/* Loading state */}
             {quizModal.loading && (
               <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="w-12 h-12 text-purple-600 animate-spin mb-4" />
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Generating Quiz...</h3>
+                <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+                <h3 className="text-base font-bold text-gray-900 mb-2">Generating Quiz...</h3>
                 <p className="text-gray-500 text-sm text-center">
                   AI is creating 5 questions for <strong>{quizModal.courseName}</strong>
                 </p>
@@ -810,8 +810,8 @@ export default function SavedPathsTab() {
             {!quizModal.loading && quizModal.quizData && !quizModal.result && (
               <div>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-gray-800">Course Quiz</h3>
@@ -823,7 +823,7 @@ export default function SavedPathsTab() {
                   {quizModal.quizData.questions.map((q, qIdx) => (
                     <div key={qIdx} className="border border-gray-200 rounded-lg p-4">
                       <p className="font-medium text-gray-800 mb-3">
-                        <span className="text-purple-600 font-bold mr-2">Q{qIdx + 1}.</span>
+                        <span className="text-blue-600 font-bold mr-2">Q{qIdx + 1}.</span>
                         {q.question}
                       </p>
                       <div className="space-y-2">
@@ -832,7 +832,7 @@ export default function SavedPathsTab() {
                             key={oIdx}
                             className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                               quizModal.answers[qIdx] === oIdx
-                                ? "border-purple-500 bg-purple-50"
+                                ? "border-blue-500 bg-blue-50"
                                 : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                             }`}
                           >
@@ -841,7 +841,7 @@ export default function SavedPathsTab() {
                               name={`question-${qIdx}`}
                               checked={quizModal.answers[qIdx] === oIdx}
                               onChange={() => handleQuizAnswer(qIdx, oIdx)}
-                              className="w-4 h-4 text-purple-600"
+                              className="w-4 h-4 text-blue-600"
                             />
                             <span className="text-sm text-gray-700">{option}</span>
                           </label>
@@ -855,7 +855,7 @@ export default function SavedPathsTab() {
                   <button
                     onClick={handleSubmitQuiz}
                     disabled={quizModal.submitting || quizModal.answers.some((a) => a === -1)}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-medium shadow disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {quizModal.submitting ? (
                       <>
@@ -940,7 +940,7 @@ export default function SavedPathsTab() {
 
                 <button
                   onClick={closeQuizModal}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow"
+                  className="px-6 py-3 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-medium shadow"
                 >
                   Continue Learning
                 </button>

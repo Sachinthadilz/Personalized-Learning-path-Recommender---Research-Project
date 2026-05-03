@@ -160,10 +160,11 @@ export interface QuizResult {
 }
 
 export interface QuizData {
+  quizId?: string;
   courseId: string;
   courseName: string;
   questions: { question: string; options: string[] }[];
-  _quizKey: string;
+  _quizKey?: string;
 }
 
 // Course endpoints
@@ -358,7 +359,11 @@ export const deleteLearningPath = async (
 // Enrollment & Quiz endpoints (Auth API)
 export const enrollInPath = async (
   pathId: string,
-): Promise<{ success: boolean; message: string; data: { enrollment: EnrollmentData } }> => {
+): Promise<{
+  success: boolean;
+  message: string;
+  data: { enrollment: EnrollmentData };
+}> => {
   const response = await authApi.post(`/api/learning-paths/${pathId}/enroll`);
   return response.data;
 };
@@ -366,7 +371,9 @@ export const enrollInPath = async (
 export const getEnrollmentStatus = async (
   pathId: string,
 ): Promise<{ success: boolean; data: { enrollment: EnrollmentData } }> => {
-  const response = await authApi.get(`/api/learning-paths/${pathId}/enrollment`);
+  const response = await authApi.get(
+    `/api/learning-paths/${pathId}/enrollment`,
+  );
   return response.data;
 };
 
@@ -411,7 +418,7 @@ export const unenrollFromPath = async (
 // ── Activity Timeline ─────────────────────────────────────────────────────────
 
 export interface TimelineDataPoint {
-  date: string;           // "YYYY-MM-DD"
+  date: string; // "YYYY-MM-DD"
   events: number;
   total_duration: number; // seconds
 }
@@ -426,7 +433,7 @@ export const fetchActivityTimeline = async (
   if (courseId) params.course_id = courseId;
   if (startDate) params.start_date = startDate;
   if (endDate) params.end_date = endDate;
-  const response = await api.get(`/activity/timeline/${studentId}`, { params });
+  const response = await authApi.get(`/logs/timeline/${studentId}`, { params });
   return response.data;
 };
 
@@ -451,9 +458,15 @@ export const fetchVideoActivityLogs = async (
   // Fetch play events (for session counts) + pause/complete events (for watch durations)
   // in parallel, then combine.
   const [playRes, pauseRes, completeRes] = await Promise.all([
-    api.get(`/activity/logs/${studentId}`, { params: { ...baseParams, event_type: "video_play" } }),
-    api.get(`/activity/logs/${studentId}`, { params: { ...baseParams, event_type: "video_pause" } }),
-    api.get(`/activity/logs/${studentId}`, { params: { ...baseParams, event_type: "video_complete" } }),
+    authApi.get(`/logs/${studentId}`, {
+      params: { ...baseParams, event_type: "video_play" },
+    }),
+    authApi.get(`/logs/${studentId}`, {
+      params: { ...baseParams, event_type: "video_pause" },
+    }),
+    authApi.get(`/logs/${studentId}`, {
+      params: { ...baseParams, event_type: "video_complete" },
+    }),
   ]);
 
   return [...playRes.data, ...pauseRes.data, ...completeRes.data];
@@ -561,7 +574,12 @@ export const predictLearnerProfile = async (
 export const predictLearnerProfileAuto = async (
   input: AutoLearnerProfileInput,
 ): Promise<LearnerProfileResult> => {
-  const response = await api.post("/predict-learner-profile/auto", input);
+  const response = await authApi.post("/predict/auto", input, {
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+  });
   return response.data;
 };
 

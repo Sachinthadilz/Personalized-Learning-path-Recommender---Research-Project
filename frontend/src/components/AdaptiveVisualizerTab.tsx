@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AdaptiveVisualizerTab
  *
  * Self-contained entry point for the Adaptive Progress Tracker.
@@ -201,7 +201,7 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
           <div className="flex flex-col gap-2">
             <button
               onClick={() => setView("diagnosis")}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold hover:from-blue-700 hover:to-indigo-700 transition"
+              className="w-full py-3 rounded-xl bg-blue-700 text-white font-bold hover:bg-blue-800 transition"
             >
               Continue to Next Subject
             </button>
@@ -307,12 +307,12 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
       <div className="rounded-2xl bg-white border border-blue-100 shadow-sm px-5 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <h2 className="text-lg font-extrabold text-blue-700">
               Progress Tracking Adaptive Visualizer
             </h2>
             {user && (
-              <p className="text-xs text-slate-500 mt-0.5">
-                Logged in as <span className="font-semibold text-slate-700">{user.firstName ?? user.email}</span>
+              <p className="text-xs text-gray-500 mt-0.5">
+                <span className="font-semibold text-gray-700">{user.firstName}</span>
                 {masteredSubjects.length > 0 && (
                   <span className="ml-2 text-emerald-600 font-semibold">
                     {`\u00B7 ${masteredSubjects.length} mastered \u2713`}
@@ -327,10 +327,10 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
               <button
                 key={n.view}
                 onClick={() => setView(n.view)}
-                className={`text-xs px-4 py-1.5 rounded-full font-semibold transition-all duration-200 ${
+                className={`text-xs px-4 py-1.5 rounded-xl font-semibold transition-all duration-200 ${
                   view === n.view
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm"
-                    : "bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600"
+                    ? "bg-blue-700 text-white shadow-sm"
+                    : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-700"
                 }`}
               >
                 {n.label}
@@ -338,7 +338,7 @@ const AdaptiveVisualizerTab: React.FC<Props> = ({ profileVersion = 0 }) => {
             ))}
             <button
               onClick={handleReset}
-              className="text-xs px-4 py-1.5 rounded-full bg-white border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all duration-200 font-semibold"
+              className="text-xs px-4 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200 font-semibold"
               title="Reset session and start over"
             >
               Reset

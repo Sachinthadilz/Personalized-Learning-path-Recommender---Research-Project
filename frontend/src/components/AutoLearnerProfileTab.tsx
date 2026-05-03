@@ -19,7 +19,6 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  Legend,
   ReferenceLine,
   Dot,
 } from "recharts";
@@ -98,6 +97,9 @@ const ALERT_LEVEL_STYLES: Record<string, string> = {
   Critical: "bg-red-100 text-red-700",
 };
 
+const FIRST_QUIZ_MESSAGE =
+  "Your learner profile will appear after your first quiz mark is recorded.";
+
 // ── Main component ──────────────────────────────────────────────────────────
 
 export default function AutoLearnerProfileTab() {
@@ -107,6 +109,14 @@ export default function AutoLearnerProfileTab() {
   const [error, setError] = useState<string | null>(null);
   const [quizMarks, setQuizMarks] = useState<QuizMarksResponse | null>(null);
   const [videoLogs, setVideoLogs] = useState<VideoActivityLog[]>([]);
+
+  const hasQuizMarks = useMemo(() => {
+    return Boolean(
+      (quizMarks?.courseQuizMarks?.length ?? 0) > 0 ||
+        (quizMarks?.progressQuizMarks?.length ?? 0) > 0 ||
+        (quizMarks?.subjectMarks?.length ?? 0) > 0,
+    );
+  }, [quizMarks]);
 
   const handleAnalyze = async () => {
     if (!user) {
@@ -126,22 +136,44 @@ export default function AutoLearnerProfileTab() {
       const data = await predictLearnerProfileAuto(input);
       setResult(data);
     } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.detail ||
-        err?.message ||
-        "Analysis failed. Make sure your student data is available in the system.";
-      setError(errorMsg);
+      // Friendly error handling: avoid showing raw HTTP status codes to users.
+      const resp = err?.response;
+      const errorDetail = resp?.data?.detail;
+      const status = resp?.status;
+
+      if (typeof errorDetail === 'object' && errorDetail?.error === 'insufficient_data') {
+        setError(
+          errorDetail.message ||
+            "No learning activity found. Start learning to unlock your profile analysis!",
+        );
+      } else {
+        // For common client-side validation / insufficient data statuses, show a friendly prompt.
+        if (status === 400 || status === 422) {
+          setError(
+            "No learning activity found. Start browsing courses and interacting with content to unlock profile analysis.",
+          );
+        } else if (typeof errorDetail === 'string') {
+          setError(errorDetail);
+        } else if (errorDetail?.message) {
+          setError(errorDetail.message);
+        } else {
+          // Generic fallback without exposing HTTP status or raw exception text
+          setError(
+            "Analysis failed. Make sure your student data is available in the system and try again.",
+          );
+        }
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto-run analysis when the component mounts and user is available
+  // Auto-run analysis only after the user has at least one quiz mark.
   useEffect(() => {
-    if (user) {
+    if (user && hasQuizMarks && !loading && !result) {
       handleAnalyze();
     }
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.id, hasQuizMarks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch quiz marks and video logs when user is available
   useEffect(() => {
@@ -150,10 +182,27 @@ export default function AutoLearnerProfileTab() {
     fetchVideoActivityLogs(user.id).then(setVideoLogs).catch(() => {});
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Show a friendly idle state before the first quiz mark exists.
+  useEffect(() => {
+    if (user && quizMarks && !hasQuizMarks && !loading && !result) {
+      setError(FIRST_QUIZ_MESSAGE);
+    }
+  }, [user, quizMarks, hasQuizMarks, loading, result]);
+
   const handleReanalyze = () => {
+    if (!hasQuizMarks) {
+      setError(FIRST_QUIZ_MESSAGE);
+      return;
+    }
+
+    // Clear all state completely before reanalyzing
     setResult(null);
     setError(null);
-    handleAnalyze();
+    setLoading(false);
+    // Small delay to ensure UI updates before fetching new data
+    setTimeout(() => {
+      handleAnalyze();
+    }, 50);
   };
 
   // ── Derived outcome styles ──────────────────────────────────────────────
@@ -180,11 +229,11 @@ export default function AutoLearnerProfileTab() {
   return (
     <div className="space-y-5">
       {/* ── Page header ────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <Brain className="w-6 h-6 text-indigo-600" />
+            <h2 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
+              <Brain className="w-6 h-6 text-blue-700" />
               Automatic Learner Profile Analysis
             </h2>
             <p className="text-gray-500 text-sm mt-1">
@@ -195,20 +244,17 @@ export default function AutoLearnerProfileTab() {
           </div>
 
           {user && (
-            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl">
               <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-indigo-600" />
-                <div>
-                  <p className="text-sm font-semibold text-indigo-900">
-                    {user.fullName}
-                  </p>
-                  <p className="text-xs text-indigo-500">ID: {user.id}</p>
-                </div>
+                <User className="w-5 h-5 text-blue-700" />
+                <p className="text-sm font-semibold text-gray-900">
+                  {user.fullName}
+                </p>
               </div>
               <button
                 onClick={handleReanalyze}
                 disabled={loading}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
               >
                 {loading ? (
                   <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Analyzing…</>
@@ -232,16 +278,52 @@ export default function AutoLearnerProfileTab() {
 
       {/* ── Error banner ───────────────────────────────────────────────── */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-red-700 text-sm">{error}</p>
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-amber-900 font-semibold mb-2">
+                {error === FIRST_QUIZ_MESSAGE
+                  ? "Learner Profile Locked"
+                  : "No Learning Activity Found"}
+              </h3>
+              <p className="text-amber-800 text-sm leading-relaxed">{error}</p>
+            </div>
+          </div>
+          <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium text-gray-700">Get started with these activities:</p>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <span>Browse and enroll in courses</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <span>Watch video lectures</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <span>Complete quizzes and assessments</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <span>Download learning resources</span>
+              </li>
+            </ul>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="mt-3 w-full px-4 py-2.5 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-colors text-sm font-semibold"
+            >
+              Start Learning Now
+            </button>
+          </div>
         </div>
       )}
 
       {/* ── Loading skeleton ─────────────────────────────────────────── */}
       {loading && !result && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center gap-3">
-          <RefreshCw className="w-8 h-8 text-indigo-400 animate-spin" />
+          <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
           <p className="text-sm text-gray-500">Analyzing your learner profile…</p>
         </div>
       )}
@@ -249,7 +331,7 @@ export default function AutoLearnerProfileTab() {
       {/* ══════════════════════════════════════════════════════════════════
           RESULTS
       ══════════════════════════════════════════════════════════════════ */}
-      {result && (
+      {result && !error && !loading && (
         <div id="auto-results" className="space-y-4 pt-1">
           <h3 className="text-base font-semibold text-gray-700">
             Your Learner Analysis
@@ -258,10 +340,10 @@ export default function AutoLearnerProfileTab() {
           {/* KPI cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Learner Profile */}
-            <div className="bg-white rounded-xl border border-indigo-100 shadow-sm p-5">
+            <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
-                  <Brain className="w-4 h-4 text-indigo-600" />
+                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Brain className="w-4 h-4 text-blue-700" />
                 </div>
                 <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Learner Profile
@@ -273,7 +355,7 @@ export default function AutoLearnerProfileTab() {
               <div className="text-xs text-gray-400 mb-1">Confidence</div>
               <ConfidenceBar
                 value={result.profile_confidence}
-                color="bg-indigo-500"
+                color="bg-blue-600"
               />
             </div>
 
@@ -368,18 +450,18 @@ export default function AutoLearnerProfileTab() {
           {/* Learning Track panel */}
           {result.learning_path_recommendation &&
             Object.keys(result.learning_path_recommendation).length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <h4 className="text-base font-semibold text-gray-800">
                       Recommended Learning Track
                     </h4>
-                    <p className="text-sm text-indigo-600 font-medium mt-0.5">
+                    <p className="text-sm text-blue-700 font-medium mt-0.5">
                       {result.learning_path_recommendation.learning_path}
                     </p>
                   </div>
                   {result.learning_path_recommendation.profile && (
-                    <span className="flex-shrink-0 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-semibold">
+                    <span className="flex-shrink-0 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
                       {result.learning_path_recommendation.profile}
                     </span>
                   )}
@@ -402,7 +484,7 @@ export default function AutoLearnerProfileTab() {
                               key={idx}
                               className="flex items-start gap-2 text-sm text-gray-700"
                             >
-                              <ChevronRight className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+                              <ChevronRight className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                               {action}
                             </li>
                           ),
@@ -417,7 +499,7 @@ export default function AutoLearnerProfileTab() {
 
       {/* ── Engagement Timeline ──────────────────────────────────────────── */}
       {user && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5 text-sky-600" />
             My Engagement Timeline
@@ -518,7 +600,7 @@ function QuizMarksChart({ quizMarks }: { quizMarks: QuizMarksResponse | null }) 
                 unit="%"
               />
               <RechartsTooltip
-                formatter={(value: number) => [`${value}%`, "Score"]}
+                formatter={(value) => [`${value ?? 0}%`, "Score"]}
               />
               {/* Pass threshold */}
               <ReferenceLine y={60} stroke="#6366f1" strokeDasharray="4 3" strokeWidth={1.5}
@@ -543,7 +625,7 @@ function QuizMarksChart({ quizMarks }: { quizMarks: QuizMarksResponse | null }) 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <h3 className="text-base font-semibold text-gray-800 mb-1 flex items-center gap-2">
-        <Award className="w-5 h-5 text-indigo-600" />
+        <Award className="w-5 h-5 text-blue-700" />
         Quiz Marks
       </h3>
       <p className="text-xs text-gray-400 mb-4">
@@ -711,7 +793,7 @@ function VideoWatchChart({ videoLogs }: { videoLogs: VideoActivityLog[] }) {
                   unit="m"
                 />
                 <RechartsTooltip
-                  formatter={(value: number) => [`${value} min`, "Watch Time"]}
+                  formatter={(value) => [`${value ?? 0} min`, "Watch Time"]}
                   labelFormatter={(label) => formatDate(label)}
                 />
                 <Bar
@@ -745,7 +827,7 @@ function VideoWatchChart({ videoLogs }: { videoLogs: VideoActivityLog[] }) {
                   allowDecimals={false}
                 />
                 <RechartsTooltip
-                  formatter={(value: number) => [`${value} sessions`, "Video Plays"]}
+                  formatter={(value) => [`${value ?? 0} sessions`, "Video Plays"]}
                   labelFormatter={(label) => formatDate(label)}
                 />
                 <Bar

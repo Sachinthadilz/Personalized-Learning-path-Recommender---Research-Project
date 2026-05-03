@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const rateLimit = require("express-rate-limit");
 const authController = require("../controllers/authController");
 const { authenticate } = require("../middleware/auth");
 const {
@@ -10,6 +11,14 @@ const {
 } = require("../middleware/validation");
 const { body } = require("express-validator");
 
+const authLimiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message: "Too many requests from this IP, please try again later",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * Authentication Routes
  */
@@ -19,14 +28,63 @@ const { body } = require("express-validator");
  * @desc    Register a new user
  * @access  Public
  */
-router.post("/register", registerValidation, validate, authController.register);
+router.post(
+  "/register",
+  authLimiter,
+  registerValidation,
+  validate,
+  authController.register,
+);
 
 /**
  * @route   POST /api/auth/login
  * @desc    Login user and return tokens
  * @access  Public
  */
-router.post("/login", loginValidation, validate, authController.login);
+router.post(
+  "/login",
+  authLimiter,
+  loginValidation,
+  validate,
+  authController.login,
+);
+
+/**
+ * @route   GET /api/auth/verify-email/:token
+ * @desc    Verify email address via token
+ * @access  Public
+ */
+router.get("/verify-email/:token", authLimiter, authController.verifyEmail);
+
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Request password reset email
+ * @access  Public
+ */
+router.post(
+  "/forgot-password",
+  authLimiter,
+  [body("email").isEmail().withMessage("Valid email is required")],
+  validate,
+  authController.forgotPassword,
+);
+
+/**
+ * @route   POST /api/auth/reset-password/:token
+ * @desc    Reset password using token from email
+ * @access  Public
+ */
+router.post(
+  "/reset-password/:token",
+  authLimiter,
+  [
+    body("password")
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters"),
+  ],
+  validate,
+  authController.resetPassword,
+);
 
 /**
  * @route   POST /api/auth/refresh-token
@@ -35,6 +93,7 @@ router.post("/login", loginValidation, validate, authController.login);
  */
 router.post(
   "/refresh-token",
+  authLimiter,
   [body("refreshToken").notEmpty().withMessage("Refresh token is required")],
   validate,
   authController.refreshToken,
@@ -103,5 +162,17 @@ router.get("/verify", authenticate, (req, res) => {
     user: req.user,
   });
 });
+
+/**
+ * @route   POST /api/auth/request-verification
+ * @desc    Request a new email verification link
+ * @access  Private
+ */
+router.post(
+  "/request-verification",
+  authLimiter,
+  authenticate,
+  authController.requestVerification,
+);
 
 module.exports = router;

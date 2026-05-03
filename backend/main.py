@@ -23,11 +23,6 @@ from services.cross_domain_service import CrossDomainService
 from services.ai_learning_path_service import ai_learning_path_service
 from services.learner_profile_service import LearnerProfileService
 from services.student_data_service import StudentDataService
-from services.activity_log_service import ActivityLogService
-from services.engagement_feature_service import EngagementFeatureService
-from activity_log_routes import activity_log_router
-from mongo_activity import ensure_indexes, close_client
-from services.redis_queue import connect_redis, close_redis
 from services.timetable_service import timetable_service
 
 logger = logging.getLogger(__name__)
@@ -36,11 +31,8 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle handler."""
-    await ensure_indexes()   # create MongoDB indexes once at startup
-    await connect_redis()    # open Redis connection for the event queue
+    # No MongoDB or Redis connections needed — ML only
     yield
-    await close_redis()              # close Redis connection
-    close_client()                   # clean up Motor connection on shutdown
 
 # Create FastAPI app
 app = FastAPI(
@@ -65,9 +57,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Register routers
-app.include_router(activity_log_router)
 
 
 @app.get("/")
@@ -332,6 +321,11 @@ def predict_learner_profile(request: LearnerProfileRequest):
         features = request.model_dump()
         result = LearnerProfileService.predict(features)
         return LearnerProfileResponse(**result.to_dict())
+    except ValueError as e:
+        logger.warning("Invalid learner profile request: %s", e)
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error in learner profile prediction: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -344,7 +338,7 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
 
     This endpoint automatically fetches:
     - Student demographics from OULAD CSV files
-    - Engagement features from activity log database
+    - Engagement features from activity log database (or uses pre-computed values)
     - Assessment scores from OULAD data
     - Registration information
 
@@ -367,6 +361,21 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
          "code_presentation": "2014J"
        }
        ```
+       
+    3. **Pre-computed Features Mode** (from Node.js proxy):
+       ```json
+       {
+         "student_id": "student_123",
+         "course_id": "ml-fundamentals",
+         "total_clicks": 450,
+         "days_active": 24,
+         "max_daily_clicks": 63,
+         "mean_daily_clicks": 18.75,
+         "early_clicks": 120,
+         "num_assessments": 5
+       }
+       ```
+       When engagement features are provided (non-zero), skips MongoDB query.
 
     The system builds the full 19-feature input internally and runs the
     same 3-stage ML pipeline as the manual endpoint.
@@ -390,15 +399,14 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
                     request.course_id, code_module, code_presentation
                 )
             except CourseMappingError as e:
-                logger.warning(
-                    "Could not map course_id '%s': %s — proceeding without module filter",
-                    request.course_id, e
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Could not map course_id '{request.course_id}': {e}",
                 )
         elif request.code_module and request.code_presentation:
             # Direct OULAD mode
             code_module = request.code_module
             code_presentation = request.code_presentation
-        # else: no course identifiers — fetch student-level data across all modules
 
         # 1. Fetch student background data (11 fields)
         student_features = StudentDataService.build_student_features(
@@ -407,12 +415,48 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
             code_presentation=code_presentation,
         )
 
-        # 2. Fetch engagement features from activity logs (course_id optional)
-        # When course_id is None, aggregates all activity logs for the student
-        engagement_features = await EngagementFeatureService.generate_engagement_features_as_model(
-            student_id=student_id,
-            course_id=request.course_id,
-        )
+        # 2. Fetch OR use pre-computed engagement features
+        # Check if engagement features are pre-computed (at least one non-zero value)
+        has_precomputed = any([
+            request.total_clicks,
+            request.days_active,
+            request.max_daily_clicks,
+            request.mean_daily_clicks,
+            request.early_clicks,
+            request.num_assessments,
+        ])
+        
+        if has_precomputed:
+            # Use pre-computed engagement features from Node.js proxy
+            logger.info(
+                "Using pre-computed engagement features for student_id=%s",
+                student_id
+            )
+            engagement_features = {
+                "total_clicks": request.total_clicks,
+                "days_active": request.days_active,
+                "max_daily_clicks": request.max_daily_clicks,
+                "mean_daily_clicks": request.mean_daily_clicks,
+                "early_clicks": request.early_clicks,
+                "num_assessments": request.num_assessments,
+            }
+        else:
+            # No pre-computed features and no MongoDB access
+            # This endpoint should be called via Node.js proxy which provides pre-computed features
+            logger.info(
+                "No pre-computed engagement features provided for student_id=%s. "
+                "Using default values (all zeros). "
+                "For accurate predictions, call this endpoint via Node.js proxy at /predict/auto",
+                student_id
+            )
+            engagement_features = {
+                "total_clicks": 0,
+                "days_active": 0,
+                "max_daily_clicks": 0,
+                "mean_daily_clicks": 0.0,
+                "early_clicks": 0,
+                "num_assessments": 0,
+            }
 
         # 3. Merge into full 19-feature dict
         features = {
@@ -426,12 +470,12 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
             "code_module": student_features["code_module"],
             "code_presentation": student_features["code_presentation"],
             # Engagement (7)
-            "total_clicks": engagement_features.total_clicks,
-            "days_active": engagement_features.days_active,
-            "max_daily_clicks": engagement_features.max_daily_clicks,
-            "mean_daily_clicks": engagement_features.mean_daily_clicks,
-            "early_clicks": engagement_features.early_clicks,
-            "num_assessments": engagement_features.num_assessments,
+            "total_clicks": engagement_features["total_clicks"],
+            "days_active": engagement_features["days_active"],
+            "max_daily_clicks": engagement_features["max_daily_clicks"],
+            "mean_daily_clicks": engagement_features["mean_daily_clicks"],
+            "early_clicks": engagement_features["early_clicks"],
+            "num_assessments": engagement_features["num_assessments"],
             "first_reg_before_start": student_features["first_reg_before_start"],
             # Academic (4)
             "mean_score": student_features["mean_score"],
@@ -440,7 +484,26 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
             "studied_credits": student_features["studied_credits"],
         }
 
-        # 4. Run ML prediction pipeline
+        # 4. Validate sufficient activity data before prediction
+        has_activity = (
+            engagement_features["total_clicks"] > 0 
+            or engagement_features["days_active"] > 0 
+            or engagement_features["num_assessments"] > 0
+        )
+        
+        if not has_activity:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "insufficient_data",
+                    "message": "Cannot generate learner profile prediction: no learning activity data found for this student. "
+                               "Please complete at least one learning activity (watch a video, click a resource, or submit an assessment) to enable predictions.",
+                    "student_id": student_id,
+                    "suggestion": "Start learning to unlock your personalized profile analysis!"
+                }
+            )
+
+        # 5. Run ML prediction pipeline
         result = LearnerProfileService.predict(features)
         return LearnerProfileResponse(**result.to_dict())
 
@@ -450,6 +513,8 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
             status_code=404,
             detail=f"Student not found: {e}"
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error in automatic learner profile prediction: %s", e)
         raise HTTPException(status_code=500, detail=str(e))

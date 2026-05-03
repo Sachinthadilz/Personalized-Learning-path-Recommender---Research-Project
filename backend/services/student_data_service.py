@@ -126,8 +126,8 @@ class StudentDataService:
         try:
             oulad_id = int(student_id)
         except (ValueError, TypeError):
-            logger.info(
-                "student_id '%s' is not an OULAD integer ID — returning default demographics",
+            logger.debug(
+                "student_id '%s' is not an OULAD integer ID (using default demographics)",
                 student_id,
             )
             return {
@@ -351,7 +351,7 @@ class StudentDataService:
         # Merge all
         features = {**demographics, **assessment_metrics, **registration_info}
 
-        logger.info(
+        logger.debug(
             "Built student features for student_id=%s (module=%s, presentation=%s)",
             student_id,
             features.get("code_module"),

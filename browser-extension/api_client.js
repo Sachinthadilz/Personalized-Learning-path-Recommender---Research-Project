@@ -1,13 +1,64 @@
 /**
- * API Client for communicating with the FastAPI backend
+ * API Client for communicating with the Node.js backend
  */
 
 class APIClient {
   constructor() {
-    this.baseURL = 'http://localhost:5000';
-    this.endpoint = '/activity/log-event';
+    this.baseURL = 'http://localhost:5001';
+    this.endpoint = '/logs';
     this.retryAttempts = 3;
     this.retryDelay = 1000; // ms
+    this.duplicateWindowMs = 5000;
+  }
+
+  /**
+   * Build a stable hash for an event to deduplicate retries.
+   */
+  getEventHash(eventData) {
+    const payload = [
+      eventData.student_id || '',
+      eventData.event_type || '',
+      eventData.timestamp || '',
+      eventData.course_id || ''
+    ].join('|');
+
+    let hash = 0;
+    for (let i = 0; i < payload.length; i++) {
+      hash = (hash << 5) - hash + payload.charCodeAt(i);
+      hash |= 0;
+    }
+    return `evt_${Math.abs(hash)}`;
+  }
+
+  addOrMergeFailedEvent(events, eventData) {
+    const nowIso = new Date().toISOString();
+    const eventHash = this.getEventHash(eventData);
+    const nowMs = Date.now();
+
+    const duplicateIndex = events.findIndex((candidate) => {
+      if (!candidate || candidate.eventHash !== eventHash) {
+        return false;
+      }
+      const previousMs = Date.parse(candidate.failedAt || '');
+      return Number.isFinite(previousMs) && (nowMs - previousMs) <= this.duplicateWindowMs;
+    });
+
+    if (duplicateIndex >= 0) {
+      events[duplicateIndex] = {
+        ...events[duplicateIndex],
+        ...eventData,
+        eventHash,
+        failedAt: nowIso,
+      };
+      return events;
+    }
+
+    events.push({
+      ...eventData,
+      eventHash,
+      failedAt: nowIso,
+    });
+    return events;
   }
 
   /**
@@ -37,7 +88,7 @@ class APIClient {
     } catch (error) {
       console.error('Error sending event:', error);
       // Store failed events for later retry
-      this.storeFailedEvent(eventData);
+      await this.storeFailedEvent(eventData);
       throw error;
     }
   }
@@ -64,19 +115,49 @@ class APIClient {
   }
 
   /**
-   * Store failed events in local storage for retry
+   * Store failed events in chrome storage or localStorage as fallback
    * @param {Object} eventData - The event data that failed to send
    */
   async storeFailedEvent(eventData) {
+    // Check if extension context is still valid
+    const isExtensionValid = typeof chrome !== 'undefined' && 
+                            chrome.runtime && 
+                            chrome.runtime.id;
+    
+    if (isExtensionValid) {
+      try {
+        const result = await chrome.storage.local.get(['failedEvents']);
+        const failedEvents = result.failedEvents || [];
+        this.addOrMergeFailedEvent(failedEvents, eventData);
+        
+        // Keep only last 100 events
+        if (failedEvents.length > 100) {
+          failedEvents.splice(0, failedEvents.length - 100);
+        }
+        
+        await chrome.storage.local.set({ failedEvents });
+        console.log('Failed event stored in chrome.storage for later retry');
+        return;
+      } catch (error) {
+        console.warn('Chrome storage unavailable, using localStorage:', error.message);
+      }
+    }
+    
+    // Fallback to localStorage when extension context is invalidated
     try {
-      const result = await chrome.storage.local.get(['failedEvents']);
-      const failedEvents = result.failedEvents || [];
-      failedEvents.push({
-        ...eventData,
-        failedAt: new Date().toISOString()
-      });
-      await chrome.storage.local.set({ failedEvents });
-      console.log('Failed event stored for later retry');
+      const key = 'learningTracker_failedEvents';
+      const stored = localStorage.getItem(key);
+      const failedEvents = stored ? JSON.parse(stored) : [];
+      
+      this.addOrMergeFailedEvent(failedEvents, eventData);
+      
+      // Keep only last 50 events in localStorage
+      if (failedEvents.length > 50) {
+        failedEvents.splice(0, failedEvents.length - 50);
+      }
+      
+      localStorage.setItem(key, JSON.stringify(failedEvents));
+      console.log('Failed event stored in localStorage for later retry');
     } catch (error) {
       console.error('Error storing failed event:', error);
     }

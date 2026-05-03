@@ -3,14 +3,121 @@
  * Handles extension lifecycle, manages storage, and coordinates with content scripts
  */
 
+const DEFAULT_API_BASE_URL = 'http://localhost:5001';
+const DEFAULT_FRONTEND_BASE_URL = 'http://localhost:3000';
+const SYNC_DEBOUNCE_MS = 2000;
+const FAILED_EVENT_DEDUP_MS = 5000;
+const TRACKABLE_HOSTS = [
+  'coursera.org',
+  'udemy.com',
+  'edx.org',
+  'khanacademy.org',
+  'udacity.com',
+  'localhost',
+  '127.0.0.1'
+];
+
+let _syncInFlight = null;
+let _lastSyncAt = 0;
+
+function normalizeBaseURL(value, fallback) {
+  try {
+    const parsed = new URL((value || '').trim() || fallback);
+    return parsed.origin;
+  } catch {
+    return fallback;
+  }
+}
+
+async function getFrontendBaseURL() {
+  const result = await chrome.storage.local.get(['frontendBaseURL']);
+  return normalizeBaseURL(result.frontendBaseURL, DEFAULT_FRONTEND_BASE_URL);
+}
+
+async function isFrontendTabURL(url) {
+  if (!url) return false;
+  try {
+    const frontendBaseURL = await getFrontendBaseURL();
+    return new URL(url).origin === new URL(frontendBaseURL).origin;
+  } catch {
+    return false;
+  }
+}
+
+function isTrackableTabURL(url) {
+  if (!url) return false;
+  try {
+    const hostname = new URL(url).hostname;
+    return TRACKABLE_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+}
+
+function getEventHash(eventData) {
+  const payload = [
+    eventData.student_id || '',
+    eventData.event_type || '',
+    eventData.timestamp || '',
+    eventData.course_id || ''
+  ].join('|');
+
+  let hash = 0;
+  for (let i = 0; i < payload.length; i++) {
+    hash = (hash << 5) - hash + payload.charCodeAt(i);
+    hash |= 0;
+  }
+  return `evt_${Math.abs(hash)}`;
+}
+
+function addOrMergeFailedEvent(events, eventData) {
+  const nowIso = new Date().toISOString();
+  const nowMs = Date.now();
+  const eventHash = getEventHash(eventData);
+
+  const duplicateIndex = events.findIndex((candidate) => {
+    if (!candidate || candidate.eventHash !== eventHash) {
+      return false;
+    }
+    const previousMs = Date.parse(candidate.failedAt || '');
+    return Number.isFinite(previousMs) && (nowMs - previousMs) <= FAILED_EVENT_DEDUP_MS;
+  });
+
+  if (duplicateIndex >= 0) {
+    events[duplicateIndex] = {
+      ...events[duplicateIndex],
+      ...eventData,
+      eventHash,
+      failedAt: nowIso,
+    };
+    return;
+  }
+
+  events.push({
+    ...eventData,
+    eventHash,
+    failedAt: nowIso,
+  });
+}
+
 /**
  * Read the logged-in user from the frontend's localStorage and save
  * their ID to chrome.storage so content scripts on Coursera/etc can use it.
  * The frontend stores user as JSON under the key "user" on localhost:5173.
  */
-async function syncUserFromFrontend() {
+async function _syncUserFromFrontendCore() {
   try {
-    const [tab] = await chrome.tabs.query({ url: 'http://localhost:3000/*' });
+    const tabs = await chrome.tabs.query({});
+    const frontendBaseURL = await getFrontendBaseURL();
+    const frontendOrigin = new URL(frontendBaseURL).origin;
+    const tab = tabs.find((candidate) => {
+      try {
+        return new URL(candidate.url).origin === frontendOrigin;
+      } catch {
+        return false;
+      }
+    });
+
     if (!tab) return; // frontend not open
 
     const [{ result }] = await chrome.scripting.executeScript({
@@ -41,6 +148,25 @@ async function syncUserFromFrontend() {
   }
 }
 
+function syncUserFromFrontend(options = {}) {
+  const force = options.force === true;
+  const now = Date.now();
+
+  if (_syncInFlight) {
+    return _syncInFlight;
+  }
+
+  if (!force && now - _lastSyncAt < SYNC_DEBOUNCE_MS) {
+    return Promise.resolve();
+  }
+
+  _lastSyncAt = now;
+  _syncInFlight = _syncUserFromFrontendCore().finally(() => {
+    _syncInFlight = null;
+  });
+  return _syncInFlight;
+}
+
 // Extension installation
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('Learning Activity Tracker installed', details);
@@ -49,16 +175,20 @@ chrome.runtime.onInstalled.addListener((details) => {
     // First-time install: set all defaults
     chrome.storage.local.set({
       studentId: 'anonymous',
-      courseId: 'unknown',
-      apiBaseURL: 'http://localhost:5000',
+      courseId: 'not-set',
+      apiBaseURL: DEFAULT_API_BASE_URL,
+      frontendBaseURL: DEFAULT_FRONTEND_BASE_URL,
       trackingEnabled: true
     });
   } else {
     // Extension update: only migrate stale port, preserve user settings
-    chrome.storage.local.get(['apiBaseURL'], (result) => {
+    chrome.storage.local.get(['apiBaseURL', 'frontendBaseURL'], (result) => {
       if (!result.apiBaseURL || result.apiBaseURL.includes('localhost:8000') || result.apiBaseURL.includes('localhost:8080')) {
-        console.log('Migrating apiBaseURL to port 5000');
-        chrome.storage.local.set({ apiBaseURL: 'http://localhost:5000' });
+        console.log('Migrating apiBaseURL to port 5001');
+        chrome.storage.local.set({ apiBaseURL: DEFAULT_API_BASE_URL });
+      }
+      if (!result.frontendBaseURL) {
+        chrome.storage.local.set({ frontendBaseURL: DEFAULT_FRONTEND_BASE_URL });
       }
     });
   }
@@ -67,18 +197,23 @@ chrome.runtime.onInstalled.addListener((details) => {
   chrome.alarms.create('retryFailedEvents', { periodInMinutes: 5 });
   // Periodically sync the logged-in user ID from the frontend
   chrome.alarms.create('syncStudentIdAlarm', { periodInMinutes: 1 });
-  syncUserFromFrontend();
+  syncUserFromFrontend({ force: true });
 });
 
 // Sync user and migrate stale port on every browser startup
 chrome.runtime.onStartup.addListener(() => {
+  console.log('Learning Activity Tracker started');
+  
   chrome.storage.local.get(['apiBaseURL'], (result) => {
     if (!result.apiBaseURL || result.apiBaseURL.includes('localhost:8000') || result.apiBaseURL.includes('localhost:8080')) {
-      console.log('Startup migration: apiBaseURL → 5000');
-      chrome.storage.local.set({ apiBaseURL: 'http://localhost:5000' });
+      console.log('Startup migration: apiBaseURL → 5001');
+      chrome.storage.local.set({ apiBaseURL: DEFAULT_API_BASE_URL });
     }
   });
-  syncUserFromFrontend();
+  
+  // Sync user ID and retry failed events on startup
+  syncUserFromFrontend({ force: true });
+  retryFailedEvents();
 });
 
 // Handle alarms
@@ -155,9 +290,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Sync user when the frontend tab finishes loading (e.g. after login)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url && tab.url.startsWith('http://localhost:3000')) {
-    syncUserFromFrontend();
+  if (changeInfo.status !== 'complete' || !tab.url) {
+    return;
   }
+
+  isFrontendTabURL(tab.url)
+    .then((isFrontendTab) => {
+      if (isFrontendTab) {
+        return syncUserFromFrontend({ force: true });
+      }
+      return undefined;
+    })
+    .catch(() => {});
 });
 
 /**
@@ -166,7 +310,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 async function handleLogEvent(eventData) {
   try {
     const config = await getConfig();
-    const url = `${config.apiBaseURL}/activity/log-event`;
+    const url = `${config.apiBaseURL}/logs`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -204,13 +348,15 @@ async function getConfig() {
     'studentId',
     'courseId',
     'apiBaseURL',
+    'frontendBaseURL',
     'trackingEnabled'
   ]);
   
   return {
     studentId: result.studentId || 'anonymous',
-    courseId: result.courseId || 'unknown',
-    apiBaseURL: result.apiBaseURL || 'http://localhost:5000',
+    courseId: result.courseId || 'not-set',
+    apiBaseURL: normalizeBaseURL(result.apiBaseURL, DEFAULT_API_BASE_URL),
+    frontendBaseURL: normalizeBaseURL(result.frontendBaseURL, DEFAULT_FRONTEND_BASE_URL),
     trackingEnabled: result.trackingEnabled !== false
   };
 }
@@ -219,15 +365,21 @@ async function getConfig() {
  * Update configuration in storage
  */
 async function updateConfig(config) {
-  await chrome.storage.local.set(config);
+  const normalizedConfig = {
+    ...config,
+    apiBaseURL: normalizeBaseURL(config.apiBaseURL, DEFAULT_API_BASE_URL),
+    frontendBaseURL: normalizeBaseURL(config.frontendBaseURL, DEFAULT_FRONTEND_BASE_URL),
+  };
+
+  await chrome.storage.local.set(normalizedConfig);
   console.log('Configuration updated:', config);
   
-  // Notify all content scripts of config change
+  // Notify only trackable tabs to reduce noisy sendMessage failures.
   const tabs = await chrome.tabs.query({});
-  tabs.forEach(tab => {
+  tabs.filter((tab) => isTrackableTabURL(tab.url)).forEach(tab => {
     chrome.tabs.sendMessage(tab.id, {
       action: 'configUpdated',
-      config
+      config: normalizedConfig
     }).catch(() => {
       // Ignore errors for tabs without content scripts
     });
@@ -241,10 +393,7 @@ async function storeFailedEvent(eventData) {
   const result = await chrome.storage.local.get(['failedEvents']);
   const failedEvents = result.failedEvents || [];
   
-  failedEvents.push({
-    ...eventData,
-    failedAt: new Date().toISOString()
-  });
+  addOrMergeFailedEvent(failedEvents, eventData);
   
   // Keep only last 100 failed events
   if (failedEvents.length > 100) {
@@ -268,7 +417,7 @@ async function retryFailedEvents() {
 
   console.log(`Retrying ${failedEvents.length} failed events`);
   const config = await getConfig();
-  const url = `${config.apiBaseURL}/activity/log-event`;
+  const url = `${config.apiBaseURL}/logs`;
   const remainingEvents = [];
 
   for (const event of failedEvents) {
@@ -323,13 +472,5 @@ async function getStats() {
     failedEventsCount: failedEvents.length
   };
 }
-
-// Handle extension startup
-chrome.runtime.onStartup.addListener(() => {
-  console.log('Learning Activity Tracker started');
-  
-  // Retry failed events on startup
-  retryFailedEvents();
-});
 
 console.log('Background service worker loaded');

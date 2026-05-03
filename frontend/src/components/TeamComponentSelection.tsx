@@ -5,6 +5,7 @@ import Header from "./Header";
 import UserProfile from "./UserProfile";
 import OnboardingForm from "./OnboardingForm";
 import { Network, Code2, Layers, PenTool, X, ArrowRight } from "lucide-react";
+import ProgressTrackerBanner from "./ProgressTrackerBanner";
 
 interface TeamComponentSelectionProps {
   onSelectComponent: () => void;
@@ -49,7 +50,9 @@ const TeamComponentSelection = ({
     {
       id: 1,
       name: "Explore Courses",
-      color: "from-blue-500 to-indigo-600",
+      desc: "Browse 3K+ courses from top universities worldwide",
+      color: "border-blue-500",
+      iconBg: "bg-blue-700",
       Icon: Network,
       available: true,
       onClick: onSelectComponent,
@@ -57,7 +60,9 @@ const TeamComponentSelection = ({
     {
       id: 2,
       name: "Timetable Planner",
-      color: "from-purple-500 to-pink-600",
+      desc: "Organise your weekly study schedule efficiently",
+      color: "border-sky-400",
+      iconBg: "bg-sky-600",
       Icon: Code2,
       available: true,
       onClick: onSelectTimetable ?? onSelectComponent,
@@ -65,7 +70,9 @@ const TeamComponentSelection = ({
     {
       id: 3,
       name: "Learner Status",
-      color: "from-green-500 to-teal-600",
+      desc: "Track your learning progress and engagement",
+      color: "border-teal-400",
+      iconBg: "bg-teal-500",
       Icon: Layers,
       available: true,
       onClick: onSelectLearnerStatus ?? onSelectComponent,
@@ -73,7 +80,9 @@ const TeamComponentSelection = ({
     {
       id: 4,
       name: "Progress Tracker",
-      color: "from-orange-500 to-red-600",
+      desc: "Visualise your adaptive learning journey",
+      color: "border-amber-400",
+      iconBg: "bg-amber-500",
       Icon: PenTool,
       available: true,
       onClick: onSelectAdaptive ?? onSelectComponent,
@@ -81,7 +90,7 @@ const TeamComponentSelection = ({
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <Header
         onOpenProfile={() => setIsProfileOpen(true)}
@@ -93,15 +102,15 @@ const TeamComponentSelection = ({
 
       {/* Profile Modal */}
       {isProfileOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-xl font-bold text-gray-900">My Profile</h2>
               <button
                 onClick={() => setIsProfileOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
@@ -113,76 +122,82 @@ const TeamComponentSelection = ({
 
       {/* Academic Profile Modal */}
       {isAcademicProfileOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Academic Profile</h2>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-xl font-bold text-gray-900">Academic Profile</h2>
               <button
                 onClick={() => setIsAcademicProfileOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
-              <OnboardingForm 
+              <OnboardingForm
                 onComplete={() => {
                   setHasAcademicProfile(true);
                   setIsAcademicProfileOpen(false);
-                }} 
+                }}
               />
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            What would you like to explore today?
+      {/* Main Content — fits on one screen */}
+      <main className="max-w-6xl mx-auto px-6 flex flex-col justify-center" style={{ minHeight: 'calc(100vh - 64px)' }}>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2">
+            What would you like to explore?
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Pick a module below to get started. More features are on the way.
+          <p className="text-gray-400 text-sm">
+            Select a module to get started
           </p>
         </div>
 
-        {/* Component Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        {/* Component Grid — 4 in a row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {components.map((component) => (
             <div
               key={component.id}
-              className={`relative bg-white rounded-2xl shadow-lg overflow-hidden transform transition-all duration-300 ${
-                component.available
-                  ? "hover:scale-105 hover:shadow-2xl cursor-pointer"
-                  : "opacity-75 cursor-not-allowed"
-              }`}
+              className={`group relative bg-white rounded-2xl border-2 border-gray-100 overflow-hidden transition-all duration-300 ${component.available
+                ? "hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-blue-200"
+                : "opacity-60 cursor-not-allowed"
+                }`}
               onClick={component.available ? component.onClick : undefined}
             >
-              {/* Gradient Header */}
-              <div
-                className={`h-32 bg-gradient-to-r ${component.color} flex items-center justify-center`}
-              >
-                <component.Icon className="w-14 h-14 text-white opacity-90" />
-              </div>
-
-              {/* Content */}
               <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900">
+                {/* Icon */}
+                <div className={`w-12 h-12 ${component.iconBg} rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  <component.Icon className="w-5 h-5" />
+                </div>
+
+                {/* Content */}
+                <h3 className="text-base font-bold text-gray-900 mb-1.5 group-hover:text-blue-700 transition-colors">
                   {component.name}
                 </h3>
+                <p className="text-xs text-gray-400 leading-relaxed mb-4">
+                  {component.desc}
+                </p>
+
+                {/* CTA link */}
+                {component.available && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    Explore <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                )}
               </div>
 
-              {/* Hover Effect Overlay */}
-              {component.available && (
-                <div className="absolute inset-0 bg-indigo-600 bg-opacity-0 hover:bg-opacity-5 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
-                  <span className="flex items-center gap-2 text-white font-semibold text-base bg-indigo-600 px-5 py-2.5 rounded-lg shadow">
-                    Explore Now <ArrowRight className="w-4 h-4" />
-                  </span>
-                </div>
-              )}
+              {/* Bottom accent line */}
+              <div className={`h-1 w-0 group-hover:w-full transition-all duration-500 ${component.iconBg}`} />
             </div>
           ))}
+        </div>
+
+        {/* ── Browser Extension: Progress Tracker ── */}
+        <div className="mt-8 mb-6">
+          <ProgressTrackerBanner />
         </div>
       </main>
     </div>

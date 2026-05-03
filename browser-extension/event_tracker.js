@@ -4,6 +4,7 @@
 
 class EventTracker {
   constructor() {
+    this.defaultFrontendBaseURL = 'http://localhost:3000';
     this.pageLoadTime = Date.now();
     this.lastActivityTime = Date.now();
     this.isActive = true;
@@ -12,14 +13,15 @@ class EventTracker {
     this.activeTime = 0;
     this.sessionId = this.generateSessionId();
     this.videoElements = new Map();
-    this.isLocalhost = (window.location.hostname === 'localhost' && window.location.port === '3000');
+    this.frontendBaseURL = this.defaultFrontendBaseURL;
+    this.isFrontendPage = false;
     
     this.init();
   }
 
   /**
    * Read the logged-in user's ID from the page's localStorage.
-   * Works on localhost:3000 where authService writes both the flat
+    * Works on the configured frontend where authService writes both the flat
    * "student_id" key and the "user" JSON object.
    * Returns null if nothing is found.
    */
@@ -38,20 +40,30 @@ class EventTracker {
 
   /**
    * Get the most reliable student ID available right now.
-   * On localhost:3000 we can read localStorage directly (instant, no async).
+   * On the configured frontend URL we can read localStorage directly.
    * On external sites (Coursera etc.) we rely on chrome.storage that was
    * synced earlier by content.js / background.js.
    */
   async _resolveStudentId() {
     // On our own frontend, localStorage is the source of truth
-    if (this.isLocalhost) {
+    if (this.isFrontendPage) {
       const id = this._readStudentIdFromLocalStorage();
       if (id) {
         this.studentId = id;
         return id;
       }
     }
+    
     // On external sites, read from chrome.storage (set by background sync)
+    // Check if extension context is still valid first
+    const isExtensionValid = typeof chrome !== 'undefined' && 
+                            chrome.runtime && 
+                            chrome.runtime.id;
+    
+    if (!isExtensionValid) {
+      return this.studentId || 'anonymous';
+    }
+    
     try {
       const { studentId } = await chrome.storage.local.get(['studentId']);
       if (studentId && studentId !== 'anonymous') {
@@ -73,7 +85,18 @@ class EventTracker {
     this.trackPageVisit();
 
     // Poll every 5 s to pick up the real user ID once synced
-    setInterval(async () => {
+    // Stop polling if extension context becomes invalid
+    this.pollingInterval = setInterval(async () => {
+      const isExtensionValid = typeof chrome !== 'undefined' && 
+                              chrome.runtime && 
+                              chrome.runtime.id;
+      
+      if (!isExtensionValid) {
+        console.log('Extension context invalidated, stopping ID polling');
+        clearInterval(this.pollingInterval);
+        return;
+      }
+      
       const id = await this._resolveStudentId();
       if (id && id !== 'anonymous' && id !== this.studentId) {
         this.studentId = id;
@@ -86,10 +109,31 @@ class EventTracker {
    */
   async loadConfig() {
     try {
-      const result = await chrome.storage.local.get(['studentId', 'courseId', 'apiBaseURL']);
+      // Check if extension context is still valid
+      const isExtensionValid = typeof chrome !== 'undefined' && 
+                              chrome.runtime && 
+                              chrome.runtime.id;
+      
+      if (!isExtensionValid) {
+        console.warn('Extension context invalidated, using defaults');
+        this.studentId = 'anonymous';
+        this.frontendBaseURL = this.defaultFrontendBaseURL;
+        this.isFrontendPage = window.location.origin === new URL(this.defaultFrontendBaseURL).origin;
+        this.courseId = this.extractCourseId();
+        return;
+      }
 
-      // On localhost:3000, read student ID directly from localStorage
-      if (this.isLocalhost) {
+      const result = await chrome.storage.local.get(['studentId', 'courseId', 'apiBaseURL', 'frontendBaseURL']);
+
+      this.frontendBaseURL = result.frontendBaseURL || this.defaultFrontendBaseURL;
+      try {
+        this.isFrontendPage = window.location.origin === new URL(this.frontendBaseURL).origin;
+      } catch {
+        this.isFrontendPage = window.location.origin === new URL(this.defaultFrontendBaseURL).origin;
+      }
+
+      // On configured frontend, read student ID directly from localStorage
+      if (this.isFrontendPage) {
         const localId = this._readStudentIdFromLocalStorage();
         this.studentId = localId || result.studentId || 'anonymous';
       } else {
@@ -98,17 +142,21 @@ class EventTracker {
       this.courseId = result.courseId || this.extractCourseId();
 
       if (window.apiClient) {
-        // Migrate stale port 8000 → 8080 from Chrome storage
-        let apiBaseURL = result.apiBaseURL || 'http://localhost:5000';
+        // Migrate stale port 8000/8080 → 5001 from Chrome storage
+        let apiBaseURL = result.apiBaseURL || 'http://localhost:5001';
         if (apiBaseURL.includes('localhost:8000') || apiBaseURL.includes('localhost:8080')) {
-          apiBaseURL = 'http://localhost:5000';
-          chrome.storage.local.set({ apiBaseURL });
-          console.log('Migrated apiBaseURL in storage → 5000');
+          apiBaseURL = 'http://localhost:5001';
+          if (isExtensionValid) {
+            chrome.storage.local.set({ apiBaseURL });
+          }
+          console.log('Migrated apiBaseURL in storage → 5001');
         }
         window.apiClient.setBaseURL(apiBaseURL);
       }
     } catch (error) {
       console.error('Error loading config:', error);
+      this.frontendBaseURL = this.defaultFrontendBaseURL;
+      this.isFrontendPage = window.location.origin === new URL(this.defaultFrontendBaseURL).origin;
       this.studentId = 'anonymous';
       this.courseId = this.extractCourseId();
     }
@@ -128,19 +176,47 @@ class EventTracker {
     const url = window.location.href;
     const hostname = window.location.hostname;
     
-    // Extract course ID based on platform
-    if (hostname.includes('coursera.org')) {
-      const match = url.match(/learn\/([^\/]+)/);
-      return match ? match[1] : 'unknown';
-    } else if (hostname.includes('udemy.com')) {
-      const match = url.match(/course\/([^\/]+)/);
-      return match ? match[1] : 'unknown';
-    } else if (hostname.includes('edx.org')) {
-      const match = url.match(/course\/([^\/]+)/);
-      return match ? match[1] : 'unknown';
+    // For configured frontend - try to extract from page context
+    if (this.isFrontendPage) {
+      // Try to find course ID from page elements (e.g., viewing a specific course)
+      try {
+        // Check if we can find course info in the page
+        const courseElements = document.querySelectorAll('[data-course-id], [id*="course"]');
+        if (courseElements.length > 0) {
+          for (const el of courseElements) {
+            const courseId = el.getAttribute('data-course-id') || el.id;
+            if (courseId && courseId !== 'courses' && !courseId.includes('Tab')) {
+              return courseId;
+            }
+          }
+        }
+        
+        // Fallback: use 'learning-platform' for our own frontend
+        return 'learning-platform';
+      } catch (e) {
+        return 'learning-platform';
+      }
     }
     
-    return 'unknown';
+    // Extract course ID based on platform
+    if (hostname.includes('coursera.org')) {
+      const match = url.match(/learn\/([^\/\?#]+)/);
+      return match ? match[1] : 'not-set';
+    } else if (hostname.includes('udemy.com')) {
+      const match = url.match(/course\/([^\/\?#]+)/);
+      return match ? match[1] : 'not-set';
+    } else if (hostname.includes('edx.org')) {
+      const match = url.match(/course\/([^\/\?#]+)/);
+      return match ? match[1] : 'not-set';
+    } else if (hostname.includes('udacity.com')) {
+      const match = url.match(/course\/([^\/\?#]+)/);
+      return match ? match[1] : 'not-set';
+    } else if (hostname.includes('khanacademy.org')) {
+      const match = url.match(/\/([^\/\?#]+)$/);
+      return match ? match[1] : 'not-set';
+    }
+    
+    return 'not-set';
   }
 
   /**
@@ -246,7 +322,17 @@ class EventTracker {
    * Start time tracking
    */
   startTimeTracking() {
-    setInterval(() => {
+    this.timeTrackingInterval = setInterval(() => {
+      const isExtensionValid = typeof chrome !== 'undefined' && 
+                              chrome.runtime && 
+                              chrome.runtime.id;
+      
+      if (!isExtensionValid) {
+        console.log('Extension context invalidated, stopping time tracking');
+        clearInterval(this.timeTrackingInterval);
+        return;
+      }
+      
       this.checkIdleStatus();
       
       if (this.isActive && !document.hidden) {
@@ -465,9 +551,9 @@ class EventTracker {
    */
   handlePageUnload() {
     // Send final time tracking synchronously via sendBeacon (can't await)
-    // On localhost:3000 we can read localStorage synchronously for the real ID
+    // On configured frontend we can read localStorage synchronously for the real ID
     let studentId = this.studentId;
-    if (this.isLocalhost) {
+    if (this.isFrontendPage) {
       const localId = this._readStudentIdFromLocalStorage();
       if (localId) studentId = localId;
     }
@@ -519,33 +605,74 @@ class EventTracker {
    * from the frontend's localStorage before forwarding to the backend.
    * Falls back to direct fetch if the background message fails.
    */
+  /**
+   * Send event to backend via background script or direct fetch
+   */
   async sendEvent(event) {
-    try {
-      const response = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-          { action: 'logEvent', data: event },
-          (resp) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-            } else if (resp && resp.success) {
-              resolve(resp);
-            } else {
-              reject(new Error(resp?.error || 'logEvent failed'));
-            }
-          }
-        );
-      });
-      console.log('Event logged successfully:', response.data);
-    } catch (bgError) {
-      // Background unavailable — send directly as fallback
-      console.warn('Background send failed, using direct fetch:', bgError.message);
+    // Check if extension context is still valid
+    const isExtensionValid = typeof chrome !== 'undefined' && 
+                            chrome.runtime && 
+                            chrome.runtime.id;
+    
+    if (isExtensionValid) {
       try {
-        if (window.apiClient) {
-          await window.apiClient.sendEvent(event);
-        }
-      } catch (error) {
-        console.error('Error sending event:', error);
+        const response = await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage(
+            { action: 'logEvent', data: event },
+            (resp) => {
+              if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+              } else if (resp && resp.success) {
+                resolve(resp);
+              } else {
+                reject(new Error(resp?.error || 'logEvent failed'));
+              }
+            }
+          );
+        });
+        console.log('Event logged successfully:', response.data);
+        return;
+      } catch (bgError) {
+        console.warn('Background send failed, using direct fetch:', bgError.message);
       }
+    }
+    
+    // Fallback: send directly via apiClient
+    try {
+      if (window.apiClient) {
+        await window.apiClient.sendEvent(event);
+        console.log('Event sent via direct fetch');
+      }
+    } catch (error) {
+      console.error('Error sending event:', error);
+      // Store in localStorage as last resort when chrome.storage is unavailable
+      this.storeFailedEventLocally(event);
+    }
+  }
+
+  /**
+   * Store failed event in localStorage when extension context is invalidated
+   */
+  storeFailedEventLocally(event) {
+    try {
+      const key = 'learningTracker_failedEvents';
+      const stored = localStorage.getItem(key);
+      const failedEvents = stored ? JSON.parse(stored) : [];
+      
+      failedEvents.push({
+        ...event,
+        failedAt: new Date().toISOString()
+      });
+      
+      // Keep only last 50 events in localStorage
+      if (failedEvents.length > 50) {
+        failedEvents.splice(0, failedEvents.length - 50);
+      }
+      
+      localStorage.setItem(key, JSON.stringify(failedEvents));
+      console.log('Event stored in localStorage for later retry');
+    } catch (error) {
+      console.error('Failed to store event locally:', error);
     }
   }
 }

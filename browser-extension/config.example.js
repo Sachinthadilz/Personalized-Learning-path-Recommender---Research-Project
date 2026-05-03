@@ -15,8 +15,12 @@ const exampleConfig = {
   courseId: "ml-fundamentals",
   
   // Backend API URL (required)
-  // Point this to your FastAPI backend
-  apiBaseURL: "http://localhost:5000",
+  // Point this to your Node.js backend-auth service
+  apiBaseURL: "http://localhost:5001",
+
+  // Frontend URL used to sync the logged-in student ID
+  // Keep this aligned with your web app origin (any localhost port supported)
+  frontendBaseURL: "http://localhost:3000",
   
   // Enable/disable tracking (default: true)
   trackingEnabled: true
@@ -104,7 +108,7 @@ const supportedPlatforms = [
  * 1. Click the extension icon in the browser toolbar
  * 2. Fill in the Student ID
  * 3. Optionally set a Course ID (or leave blank for auto-detection)
- * 4. Set the API URL (default: http://localhost:5000)
+ * 4. Set the API URL (default: http://localhost:5001)
  * 5. Toggle tracking on/off
  * 6. Click "Save Configuration"
  */
@@ -119,7 +123,8 @@ const supportedPlatforms = [
 chrome.storage.local.set({
   studentId: "student_12345",
   courseId: "ml-fundamentals",
-  apiBaseURL: "http://localhost:5000",
+  apiBaseURL: "http://localhost:5001",
+  frontendBaseURL: "http://localhost:3000",
   trackingEnabled: true
 }, () => {
   console.log("Configuration saved");
@@ -130,6 +135,7 @@ chrome.storage.local.get([
   'studentId',
   'courseId',
   'apiBaseURL',
+  'frontendBaseURL',
   'trackingEnabled'
 ], (result) => {
   console.log("Current configuration:", result);
@@ -150,7 +156,7 @@ async function sendCustomEvent(eventType, metadata = {}) {
   
   const event = {
     student_id: config.studentId || 'anonymous',
-    course_id: config.courseId || 'unknown',
+    course_id: config.courseId || 'not-set',
     event_type: eventType,
     timestamp: new Date().toISOString(),
     duration: 0,

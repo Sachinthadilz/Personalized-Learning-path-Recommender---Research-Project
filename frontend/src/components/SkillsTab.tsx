@@ -43,8 +43,8 @@ export default function SkillsTab() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">
           Skills Catalog
         </h2>
         <p className="text-gray-600">
@@ -53,7 +53,7 @@ export default function SkillsTab() {
         <div className="mt-4 flex gap-3">
           <button
             onClick={loadSkills}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-colors"
           >
             Refresh Skills
           </button>
@@ -62,7 +62,7 @@ export default function SkillsTab() {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600">
           {error}
         </div>
       )}
@@ -70,14 +70,14 @@ export default function SkillsTab() {
       {/* Loading State */}
       {loading && (
         <div className="flex justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700"></div>
         </div>
       )}
 
       {/* Skills Grid */}
       {!loading && skills.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 className="text-base font-bold text-gray-900 mb-4">
             All Skills ({skills.length})
           </h3>
 
@@ -88,7 +88,7 @@ export default function SkillsTab() {
                 onClick={() => handleGetRelated(skill.name)}
                 className={`p-3 rounded-lg text-left transition-all ${
                   selectedSkill === skill.name
-                    ? "bg-indigo-600 text-white shadow-lg scale-105"
+                    ? "bg-blue-700 text-white shadow-lg scale-105"
                     : "bg-gray-50 hover:bg-gray-100 text-gray-800"
                 }`}
               >
@@ -96,7 +96,7 @@ export default function SkillsTab() {
                 <div
                   className={`text-sm mt-1 ${
                     selectedSkill === skill.name
-                      ? "text-indigo-100"
+                      ? "text-blue-100"
                       : "text-gray-600"
                   }`}
                 >
@@ -110,8 +110,8 @@ export default function SkillsTab() {
 
       {/* Related Skills */}
       {selectedSkill && relatedSkills.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 className="text-base font-bold text-gray-900 mb-2">
             Skills Related to "{selectedSkill}"
           </h3>
 
@@ -131,13 +131,13 @@ export default function SkillsTab() {
       )}
 
       {selectedSkill && relatedSkills.length === 0 && !loading && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-700">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-yellow-700">
           ℹ️ No related skills found for "{selectedSkill}"
         </div>
       )}
 
       {!loading && skills.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-600">
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center text-gray-600">
           No skills found. Click refresh to load skills from the database.
         </div>
       )}

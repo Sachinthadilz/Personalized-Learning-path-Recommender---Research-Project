@@ -5,12 +5,34 @@
 
 console.log('Learning Activity Tracker - Content script loaded');
 
+const DEFAULT_FRONTEND_BASE_URL = 'http://localhost:3000';
+
+async function getFrontendBaseURL() {
+  try {
+    const result = await chrome.storage.local.get(['frontendBaseURL']);
+    return result.frontendBaseURL || DEFAULT_FRONTEND_BASE_URL;
+  } catch {
+    return DEFAULT_FRONTEND_BASE_URL;
+  }
+}
+
 // ── Frontend user-ID sync ─────────────────────────────────────────────────
-// When this script runs on our own frontend (localhost:3000) it can read
-// localStorage directly.  Push the logged-in user ID to the background so
-// content scripts on Coursera/etc always have the real student ID.
-if (window.location.hostname === 'localhost' && window.location.port === '3000') {
-  let _lastSyncedId = null;
+// When this script runs on the configured frontend URL, it can read
+// localStorage directly and push the user ID to the background service worker.
+let _lastSyncedId = null;
+
+async function maybeSyncFrontendUserId() {
+  const frontendBaseURL = await getFrontendBaseURL();
+  let frontendOrigin;
+  try {
+    frontendOrigin = new URL(frontendBaseURL).origin;
+  } catch {
+    frontendOrigin = new URL(DEFAULT_FRONTEND_BASE_URL).origin;
+  }
+
+  if (window.location.origin !== frontendOrigin) {
+    return;
+  }
 
   function pushUserIdToBackground() {
     try {
@@ -44,8 +66,24 @@ if (window.location.hostname === 'localhost' && window.location.port === '3000')
 
   // Push immediately on page load, then poll every 3 s to catch login
   pushUserIdToBackground();
-  setInterval(pushUserIdToBackground, 3000);
+  
+  // Keep a single polling interval; stop when extension context is invalid.
+  const userIdInterval = setInterval(() => {
+    const isExtensionValid = typeof chrome !== 'undefined' && 
+                            chrome.runtime && 
+                            chrome.runtime.id;
+    
+    if (!isExtensionValid) {
+      console.log('Extension context invalidated, stopping user ID sync');
+      clearInterval(userIdInterval);
+      return;
+    }
+    
+    pushUserIdToBackground();
+  }, 5000);
 }
+
+maybeSyncFrontendUserId().catch(() => {});
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Check if tracking is enabled

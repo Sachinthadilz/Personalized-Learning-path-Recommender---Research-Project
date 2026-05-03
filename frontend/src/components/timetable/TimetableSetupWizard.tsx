@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FaRocket, FaCheck, FaPlus, FaTrash, FaStar, FaClock, FaBook } from 'react-icons/fa';
+import { User, CalendarDays, BookOpen, Clock3, BarChart3, Layers, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import timetableAPI from '../../services/timetableApi';
 import { getSavedLearningPaths, type SavedLearningPath } from '../../api';
@@ -258,109 +259,126 @@ function TimetableSetupWizard({ onComplete }: Props) {
       (1000 * 60 * 60 * 24)
   );
 
+  const stepIcons = [BookOpen, Layers, Clock3];
+
   return (
-    <div className="max-w-4xl mx-auto ttm-page-transition">
+    <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="inline-block mb-4">
-          <div className="text-5xl animate-bounce-gentle">🎓</div>
+      <div className="relative bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 rounded-2xl p-8 mb-8 overflow-hidden text-center">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-amber-400/10 rounded-full translate-y-1/2 -translate-x-1/4" />
+        <div className="relative z-10">
+          <div className="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20">
+            <CalendarDays className="w-7 h-7 text-white" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-white mb-2">
+            Adaptive Timetable Planner
+          </h1>
+          <p className="text-blue-200 text-sm">
+            Build a personalised study schedule that adapts to your progress
+          </p>
         </div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
-          Welcome to Your Adaptive Timetable
-        </h1>
-        <p className="text-gray-600 text-base">
-          Let's create a personalized study schedule that adapts to your progress
-        </p>
       </div>
 
       {/* Progress Steps */}
-      <div className="flex justify-center mb-8">
-        <div className="flex items-center space-x-4">
-          {[
-            { num: 1, label: 'Basic Info' },
-            { num: 2, label: 'Subjects' },
-            { num: 3, label: 'Schedule' },
-          ].map((s, idx) => (
+      <div className="flex items-center justify-center mb-8 gap-0">
+        {[
+          { num: 1, label: 'Basic Info' },
+          { num: 2, label: 'Subjects' },
+          { num: 3, label: 'Schedule' },
+        ].map((s, idx) => {
+          const Icon = stepIcons[idx];
+          const done = step > s.num;
+          const active = step === s.num;
+          return (
             <div key={s.num} className="flex items-center">
-              <div className="text-center">
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all duration-500 transform text-sm ${
-                    step >= s.num
-                      ? 'bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 text-white shadow-glow-blue scale-110'
-                      : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
-                  }`}
-                >
-                  {step > s.num ? '✓' : s.num}
+              <div className="flex flex-col items-center">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold transition-all duration-300 border-2 ${
+                  done ? 'bg-blue-700 border-blue-700 text-white shadow-md'
+                  : active ? 'bg-white border-blue-700 text-blue-700 shadow-lg scale-105'
+                  : 'bg-gray-50 border-gray-200 text-gray-400'
+                }`}>
+                  {done ? <FaCheck className="text-xs" /> : <Icon className="w-4 h-4" />}
                 </div>
-                <p
-                  className={`text-xs font-semibold mt-1.5 transition-colors duration-300 ${
-                    step >= s.num ? 'text-blue-600' : 'text-gray-500'
-                  }`}
-                >
-                  {s.label}
-                </p>
+                <p className={`text-xs font-semibold mt-1.5 ${
+                  done || active ? 'text-blue-700' : 'text-gray-400'
+                }`}>{s.label}</p>
               </div>
               {idx < 2 && (
-                <div className="relative w-16 h-1 mx-3 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ${
-                      step > s.num ? 'translate-x-0' : '-translate-x-full'
-                    }`}
-                  />
+                <div className="w-20 h-px mx-2 mb-4 bg-gray-200 relative overflow-hidden rounded-full">
+                  <div className={`absolute inset-0 bg-blue-600 transition-all duration-500 ${step > s.num ? 'translate-x-0' : '-translate-x-full'}`} />
                 </div>
               )}
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {/* Step Content */}
-      <div className="ttm-card">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         {/* Step 1 – Basic Info */}
         {step === 1 && (
-          <div className="space-y-5 animate-scale-in">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-1">Basic Information</h2>
+          <div className="space-y-6 animate-scale-in">
+            <div className="border-b border-gray-100 pb-4">
+              <h2 className="text-xl font-bold text-gray-900 mb-1">Basic Information</h2>
               <p className="text-gray-500 text-sm">Tell us about yourself and your study timeline</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                Your Name
+              <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                Full Name
               </label>
-              <input
-                type="text"
-                className="ttm-input-field"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter your name"
-              />
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition-all outline-none text-sm font-medium text-gray-800"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter your full name"
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                  Course Start Date
+                <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                  Start Date
                 </label>
-                <input
-                  type="date"
-                  className="ttm-input-field"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                />
+                <div className="relative">
+                  <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="date"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition-all outline-none text-sm text-gray-800"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                  Course End Date
+                <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                  End Date
                 </label>
-                <input
-                  type="date"
-                  className="ttm-input-field"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                />
+                <div className="relative">
+                  <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="date"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition-all outline-none text-sm text-gray-800"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
+
+            {formData.startDate && formData.endDate && (
+              <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl">
+                <Clock3 className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                <p className="text-sm text-blue-700 font-medium">
+                  Study period: <span className="font-bold">{durationDays} days</span>
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -628,28 +646,39 @@ function TimetableSetupWizard({ onComplete }: Props) {
             </div>
 
             {/* Summary */}
-            <div className="ttm-glass-card bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200/50 p-5">
-              <h3 className="text-lg font-bold text-blue-800 mb-4">📊 Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white/70 rounded-lg p-3 border border-blue-200/50">
-                  <p className="text-xs text-blue-600 font-bold mb-1 uppercase">Subjects</p>
-                  <p className="text-2xl font-bold text-blue-800">
+            <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-5 text-white">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base font-bold">Schedule Summary</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <BookOpen className="w-3.5 h-3.5 text-blue-300" />
+                    <p className="text-xs text-blue-200 font-semibold uppercase tracking-wide">Subjects</p>
+                  </div>
+                  <p className="text-2xl font-extrabold">
                     {formData.subjects.filter((s) => s.name).length}
-                    <span className="text-lg text-gray-500">/{formData.subjects.length || 10}</span>
+                    <span className="text-base font-normal text-white/50">/{formData.subjects.length || 10}</span>
                   </p>
                 </div>
-                <div className="bg-white/70 rounded-lg p-3 border border-blue-200/50">
-                  <p className="text-xs text-blue-600 font-bold mb-1 uppercase">Duration</p>
-                  <p className="text-2xl font-bold text-blue-800">
-                    {durationDays}
-                    <span className="text-sm text-gray-500"> days</span>
+                <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <CalendarDays className="w-3.5 h-3.5 text-blue-300" />
+                    <p className="text-xs text-blue-200 font-semibold uppercase tracking-wide">Duration</p>
+                  </div>
+                  <p className="text-2xl font-extrabold">
+                    {durationDays}<span className="text-sm font-normal text-white/50"> days</span>
                   </p>
                 </div>
-                <div className="bg-white/70 rounded-lg p-3 border border-blue-200/50">
-                  <p className="text-xs text-blue-600 font-bold mb-1 uppercase">Total Hours</p>
-                  <p className="text-2xl font-bold text-blue-800">
-                    {formData.subjects.reduce((sum, s) => sum + s.remaining_needed, 0).toFixed(1)}
-                    <span className="text-sm text-gray-500">h</span>
+                <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Clock3 className="w-3.5 h-3.5 text-blue-300" />
+                    <p className="text-xs text-blue-200 font-semibold uppercase tracking-wide">Total Hours</p>
+                  </div>
+                  <p className="text-2xl font-extrabold">
+                    {formData.subjects.reduce((sum, s) => sum + s.remaining_needed, 0).toFixed(0)}
+                    <span className="text-sm font-normal text-white/50">h</span>
                   </p>
                 </div>
               </div>
@@ -658,10 +687,13 @@ function TimetableSetupWizard({ onComplete }: Props) {
         )}
 
         {/* Navigation */}
-        <div className="flex justify-between mt-6 pt-5 border-t-2 border-gray-200">
+        <div className="flex justify-between mt-6 pt-5 border-t border-gray-100">
           {step > 1 ? (
-            <button onClick={() => setStep(step - 1)} className="ttm-btn-secondary">
-              ← Previous
+            <button
+              onClick={() => setStep(step - 1)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-600 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" /> Previous
             </button>
           ) : (
             <div />
@@ -670,27 +702,24 @@ function TimetableSetupWizard({ onComplete }: Props) {
           {step < 3 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="ttm-btn-primary"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-700 text-white rounded-xl font-semibold text-sm hover:bg-blue-800 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
                 (step === 1 && !formData.name) ||
                 (step === 2 && formData.subjects.filter((s) => s.name.trim()).length === 0)
               }
             >
-              Next →
+              Continue <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
             <button
               onClick={handleGenerate}
-              className="ttm-btn-primary flex items-center space-x-2"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-700 text-white rounded-xl font-semibold text-sm hover:bg-blue-800 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? (
                 <>
-                  <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 rounded-full border-2 border-white/30" />
-                    <div className="absolute inset-0 rounded-full border-2 border-t-white animate-spin" />
-                  </div>
-                  <span>Generating...</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Generating…</span>
                 </>
               ) : (
                 <>
