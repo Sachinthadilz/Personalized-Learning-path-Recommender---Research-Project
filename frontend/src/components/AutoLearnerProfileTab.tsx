@@ -97,6 +97,9 @@ const ALERT_LEVEL_STYLES: Record<string, string> = {
   Critical: "bg-red-100 text-red-700",
 };
 
+const FIRST_QUIZ_MESSAGE =
+  "Your learner profile will appear after your first quiz mark is recorded.";
+
 // ── Main component ──────────────────────────────────────────────────────────
 
 export default function AutoLearnerProfileTab() {
@@ -106,6 +109,14 @@ export default function AutoLearnerProfileTab() {
   const [error, setError] = useState<string | null>(null);
   const [quizMarks, setQuizMarks] = useState<QuizMarksResponse | null>(null);
   const [videoLogs, setVideoLogs] = useState<VideoActivityLog[]>([]);
+
+  const hasQuizMarks = useMemo(() => {
+    return Boolean(
+      (quizMarks?.courseQuizMarks?.length ?? 0) > 0 ||
+        (quizMarks?.progressQuizMarks?.length ?? 0) > 0 ||
+        (quizMarks?.subjectMarks?.length ?? 0) > 0,
+    );
+  }, [quizMarks]);
 
   const handleAnalyze = async () => {
     if (!user) {
@@ -125,29 +136,44 @@ export default function AutoLearnerProfileTab() {
       const data = await predictLearnerProfileAuto(input);
       setResult(data);
     } catch (err: any) {
-      // Check if this is an insufficient data error
-      const errorDetail = err?.response?.data?.detail;
+      // Friendly error handling: avoid showing raw HTTP status codes to users.
+      const resp = err?.response;
+      const errorDetail = resp?.data?.detail;
+      const status = resp?.status;
+
       if (typeof errorDetail === 'object' && errorDetail?.error === 'insufficient_data') {
-        setError(errorDetail.message || "No learning activity found. Start learning to unlock your profile analysis!");
+        setError(
+          errorDetail.message ||
+            "No learning activity found. Start learning to unlock your profile analysis!",
+        );
       } else {
-        const errorMsg =
-          typeof errorDetail === 'string' ? errorDetail :
-          errorDetail?.message ||
-          err?.message ||
-          "Analysis failed. Make sure your student data is available in the system.";
-        setError(errorMsg);
+        // For common client-side validation / insufficient data statuses, show a friendly prompt.
+        if (status === 400 || status === 422) {
+          setError(
+            "No learning activity found. Start browsing courses and interacting with content to unlock profile analysis.",
+          );
+        } else if (typeof errorDetail === 'string') {
+          setError(errorDetail);
+        } else if (errorDetail?.message) {
+          setError(errorDetail.message);
+        } else {
+          // Generic fallback without exposing HTTP status or raw exception text
+          setError(
+            "Analysis failed. Make sure your student data is available in the system and try again.",
+          );
+        }
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto-run analysis when the component mounts and user is available
+  // Auto-run analysis only after the user has at least one quiz mark.
   useEffect(() => {
-    if (user) {
+    if (user && hasQuizMarks && !loading && !result) {
       handleAnalyze();
     }
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.id, hasQuizMarks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch quiz marks and video logs when user is available
   useEffect(() => {
@@ -156,7 +182,19 @@ export default function AutoLearnerProfileTab() {
     fetchVideoActivityLogs(user.id).then(setVideoLogs).catch(() => {});
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Show a friendly idle state before the first quiz mark exists.
+  useEffect(() => {
+    if (user && quizMarks && !hasQuizMarks && !loading && !result) {
+      setError(FIRST_QUIZ_MESSAGE);
+    }
+  }, [user, quizMarks, hasQuizMarks, loading, result]);
+
   const handleReanalyze = () => {
+    if (!hasQuizMarks) {
+      setError(FIRST_QUIZ_MESSAGE);
+      return;
+    }
+
     // Clear all state completely before reanalyzing
     setResult(null);
     setError(null);
@@ -247,7 +285,11 @@ export default function AutoLearnerProfileTab() {
           <div className="flex items-start gap-3 mb-4">
             <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h3 className="text-amber-900 font-semibold mb-2">No Learning Activity Found</h3>
+              <h3 className="text-amber-900 font-semibold mb-2">
+                {error === FIRST_QUIZ_MESSAGE
+                  ? "Learner Profile Locked"
+                  : "No Learning Activity Found"}
+              </h3>
               <p className="text-amber-800 text-sm leading-relaxed">{error}</p>
             </div>
           </div>

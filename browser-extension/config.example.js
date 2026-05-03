@@ -17,6 +17,10 @@ const exampleConfig = {
   // Backend API URL (required)
   // Point this to your Node.js backend-auth service
   apiBaseURL: "http://localhost:5001",
+
+  // Frontend URL used to sync the logged-in student ID
+  // Keep this aligned with your web app origin (any localhost port supported)
+  frontendBaseURL: "http://localhost:3000",
   
   // Enable/disable tracking (default: true)
   trackingEnabled: true
@@ -120,6 +124,7 @@ chrome.storage.local.set({
   studentId: "student_12345",
   courseId: "ml-fundamentals",
   apiBaseURL: "http://localhost:5001",
+  frontendBaseURL: "http://localhost:3000",
   trackingEnabled: true
 }, () => {
   console.log("Configuration saved");
@@ -130,6 +135,7 @@ chrome.storage.local.get([
   'studentId',
   'courseId',
   'apiBaseURL',
+  'frontendBaseURL',
   'trackingEnabled'
 ], (result) => {
   console.log("Current configuration:", result);

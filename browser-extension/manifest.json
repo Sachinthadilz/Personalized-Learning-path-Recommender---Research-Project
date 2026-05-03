@@ -12,7 +12,8 @@
   ],
   "host_permissions": [
     "http://localhost:5001/*",
-    "http://localhost:3000/*",
+    "*://localhost/*",
+    "*://127.0.0.1/*",
     "<all_urls>"
   ],
   "background": {
@@ -26,7 +27,8 @@
         "*://*.edx.org/*",
         "*://*.khanacademy.org/*",
         "*://*.udacity.com/*",
-        "http://localhost:3000/*"
+        "*://localhost/*",
+        "*://127.0.0.1/*"
       ],
       "js": ["api_client.js", "event_tracker.js", "content.js"],
       "run_at": "document_idle"

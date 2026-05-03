@@ -18,6 +18,7 @@ async function loadConfig() {
       'studentId',
       'courseId',
       'apiBaseURL',
+      'frontendBaseURL',
       'trackingEnabled'
     ]);
 
@@ -26,7 +27,8 @@ async function loadConfig() {
     const isCoursera = tab?.url?.includes('coursera.org');
     const isUdemy = tab?.url?.includes('udemy.com');
     const isEdX = tab?.url?.includes('edx.org');
-    const isLocalhost = tab?.url?.includes('localhost:3000');
+    const currentFrontendURL = result.frontendBaseURL || 'http://localhost:3000';
+    const isFrontendTab = tab?.url?.startsWith(currentFrontendURL);
 
     const courseIdInput = document.getElementById('courseId');
     courseIdInput.value = result.courseId || '';
@@ -34,7 +36,7 @@ async function loadConfig() {
     // Show helpful placeholder based on detected site
     if (isCoursera || isUdemy || isEdX) {
       courseIdInput.placeholder = 'Auto-detected from URL';
-    } else if (isLocalhost) {
+    } else if (isFrontendTab) {
       courseIdInput.placeholder = 'learning-platform (detected)';
     } else if (!result.courseId || result.courseId === 'unknown') {
       courseIdInput.placeholder = 'Enter course ID manually';
@@ -42,6 +44,7 @@ async function loadConfig() {
 
     document.getElementById('studentId').value = result.studentId || '';
     document.getElementById('apiBaseURL').value = result.apiBaseURL || 'http://localhost:5001';
+    document.getElementById('frontendBaseURL').value = currentFrontendURL;
     document.getElementById('trackingEnabled').checked = result.trackingEnabled !== false;
 
     updateStatus(result.trackingEnabled !== false);
@@ -94,6 +97,7 @@ async function saveConfig() {
       studentId: document.getElementById('studentId').value.trim() || 'anonymous',
       courseId: courseIdValue || 'not-set',
       apiBaseURL: document.getElementById('apiBaseURL').value.trim() || 'http://localhost:5001',
+      frontendBaseURL: document.getElementById('frontendBaseURL').value.trim() || 'http://localhost:3000',
       trackingEnabled: document.getElementById('trackingEnabled').checked
     };
 
@@ -102,6 +106,13 @@ async function saveConfig() {
       new URL(config.apiBaseURL);
     } catch (error) {
       showMessage('Invalid API URL', 'error');
+      return;
+    }
+
+    try {
+      new URL(config.frontendBaseURL);
+    } catch (error) {
+      showMessage('Invalid Frontend URL', 'error');
       return;
     }
 

@@ -321,6 +321,11 @@ def predict_learner_profile(request: LearnerProfileRequest):
         features = request.model_dump()
         result = LearnerProfileService.predict(features)
         return LearnerProfileResponse(**result.to_dict())
+    except ValueError as e:
+        logger.warning("Invalid learner profile request: %s", e)
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error in learner profile prediction: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -394,15 +399,14 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
                     request.course_id, code_module, code_presentation
                 )
             except CourseMappingError as e:
-                logger.warning(
-                    "Could not map course_id '%s': %s — proceeding without module filter",
-                    request.course_id, e
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Could not map course_id '{request.course_id}': {e}",
                 )
         elif request.code_module and request.code_presentation:
             # Direct OULAD mode
             code_module = request.code_module
             code_presentation = request.code_presentation
-        # else: no course identifiers — fetch student-level data across all modules
 
         # 1. Fetch student background data (11 fields)
         student_features = StudentDataService.build_student_features(
@@ -424,7 +428,7 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
         
         if has_precomputed:
             # Use pre-computed engagement features from Node.js proxy
-            logger.debug(
+            logger.info(
                 "Using pre-computed engagement features for student_id=%s",
                 student_id
             )
@@ -509,6 +513,8 @@ async def predict_learner_profile_auto(request: AutoLearnerProfileRequest):
             status_code=404,
             detail=f"Student not found: {e}"
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error in automatic learner profile prediction: %s", e)
         raise HTTPException(status_code=500, detail=str(e))

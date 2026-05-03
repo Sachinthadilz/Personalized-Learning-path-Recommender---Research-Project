@@ -1,7 +1,7 @@
 """
 Pydantic models for API request/response schemas
 """
-from pydantic import BaseModel, Field, HttpUrl, ConfigDict
+from pydantic import BaseModel, Field, HttpUrl, ConfigDict, field_validator, model_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -162,15 +162,16 @@ class AutoLearnerProfileRequest(BaseModel):
     The system fetches student background data from OULAD CSV files and
     engagement features from activity logs automatically.
     
-    **Two input modes:**
+    **Input modes (all optional):**
     
-    1. **Browser extension mode** (recommended):
+    1. **Browser extension mode** (recommended when available):
        Provide `course_id` (e.g., "ml-fundamentals") — automatically maps to OULAD fields
     
-    2. **Direct OULAD mode**:
-       Provide `code_module` and `code_presentation` directly
+    2. **Direct OULAD mode** (when available):
+       Provide both `code_module` and `code_presentation` together
     
-    At least one mode must be specified.
+    3. **Student ID only** (minimal):
+       Just provide `student_id` — system uses default OULAD data if course not specified
     
     **Pre-computed engagement features:**
     
@@ -238,6 +239,36 @@ class AutoLearnerProfileRequest(BaseModel):
         ge=0,
         description="Pre-computed assessment count (skip MongoDB query if provided)"
     )
+
+    @field_validator("student_id")
+    @classmethod
+    def validate_student_id(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("student_id must be a non-empty string")
+        return value
+
+    @field_validator("course_id", "code_module", "code_presentation")
+    @classmethod
+    def trim_optional_identifiers(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        trimmed = value.strip()
+        return trimmed or None
+
+    @model_validator(mode="after")
+    def validate_course_mapping_mode(self):
+        # Course mapping is OPTIONAL — student_id alone is valid.
+        # However, if one of code_module/code_presentation is provided, both must be.
+        
+        if (self.code_module and not self.code_presentation) or (
+            self.code_presentation and not self.code_module
+        ):
+            raise ValueError(
+                "code_module and code_presentation must be provided together"
+            )
+
+        return self
 
 
 class LearnerProfileRequest(BaseModel):
@@ -316,6 +347,44 @@ class LearnerProfileRequest(BaseModel):
     ever_unregistered: int = Field(..., ge=0, le=1, description="1 if ever un-registered, else 0")
     num_of_prev_attempts: int = Field(..., ge=0, description="Previous module attempts")
     studied_credits: int = Field(..., ge=0, description="Credits studied concurrently")
+
+    @field_validator("gender")
+    @classmethod
+    def validate_gender(cls, value: str) -> str:
+        value = value.strip()
+        if value not in {"M", "F"}:
+            raise ValueError("gender must be one of: M, F")
+        return value
+
+    @field_validator("disability")
+    @classmethod
+    def validate_disability(cls, value: str) -> str:
+        value = value.strip()
+        if value not in {"Y", "N"}:
+            raise ValueError("disability must be one of: Y, N")
+        return value
+
+    @field_validator("age_band")
+    @classmethod
+    def validate_age_band(cls, value: str) -> str:
+        value = value.strip()
+        if value not in {"0-35", "35-55", "55<="}:
+            raise ValueError("age_band must be one of: 0-35, 35-55, 55<=")
+        return value
+
+    @field_validator(
+        "region",
+        "highest_education",
+        "imd_band",
+        "code_module",
+        "code_presentation",
+    )
+    @classmethod
+    def validate_non_empty_categorical(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("field must be a non-empty string")
+        return value
 
 
 class LearnerProfileResponse(BaseModel):

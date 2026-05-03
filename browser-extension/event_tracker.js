@@ -4,6 +4,7 @@
 
 class EventTracker {
   constructor() {
+    this.defaultFrontendBaseURL = 'http://localhost:3000';
     this.pageLoadTime = Date.now();
     this.lastActivityTime = Date.now();
     this.isActive = true;
@@ -12,14 +13,15 @@ class EventTracker {
     this.activeTime = 0;
     this.sessionId = this.generateSessionId();
     this.videoElements = new Map();
-    this.isLocalhost = (window.location.hostname === 'localhost' && window.location.port === '3000');
+    this.frontendBaseURL = this.defaultFrontendBaseURL;
+    this.isFrontendPage = false;
     
     this.init();
   }
 
   /**
    * Read the logged-in user's ID from the page's localStorage.
-   * Works on localhost:3000 where authService writes both the flat
+    * Works on the configured frontend where authService writes both the flat
    * "student_id" key and the "user" JSON object.
    * Returns null if nothing is found.
    */
@@ -38,13 +40,13 @@ class EventTracker {
 
   /**
    * Get the most reliable student ID available right now.
-   * On localhost:3000 we can read localStorage directly (instant, no async).
+   * On the configured frontend URL we can read localStorage directly.
    * On external sites (Coursera etc.) we rely on chrome.storage that was
    * synced earlier by content.js / background.js.
    */
   async _resolveStudentId() {
     // On our own frontend, localStorage is the source of truth
-    if (this.isLocalhost) {
+    if (this.isFrontendPage) {
       const id = this._readStudentIdFromLocalStorage();
       if (id) {
         this.studentId = id;
@@ -115,14 +117,23 @@ class EventTracker {
       if (!isExtensionValid) {
         console.warn('Extension context invalidated, using defaults');
         this.studentId = 'anonymous';
+        this.frontendBaseURL = this.defaultFrontendBaseURL;
+        this.isFrontendPage = window.location.origin === new URL(this.defaultFrontendBaseURL).origin;
         this.courseId = this.extractCourseId();
         return;
       }
 
-      const result = await chrome.storage.local.get(['studentId', 'courseId', 'apiBaseURL']);
+      const result = await chrome.storage.local.get(['studentId', 'courseId', 'apiBaseURL', 'frontendBaseURL']);
 
-      // On localhost:3000, read student ID directly from localStorage
-      if (this.isLocalhost) {
+      this.frontendBaseURL = result.frontendBaseURL || this.defaultFrontendBaseURL;
+      try {
+        this.isFrontendPage = window.location.origin === new URL(this.frontendBaseURL).origin;
+      } catch {
+        this.isFrontendPage = window.location.origin === new URL(this.defaultFrontendBaseURL).origin;
+      }
+
+      // On configured frontend, read student ID directly from localStorage
+      if (this.isFrontendPage) {
         const localId = this._readStudentIdFromLocalStorage();
         this.studentId = localId || result.studentId || 'anonymous';
       } else {
@@ -144,6 +155,8 @@ class EventTracker {
       }
     } catch (error) {
       console.error('Error loading config:', error);
+      this.frontendBaseURL = this.defaultFrontendBaseURL;
+      this.isFrontendPage = window.location.origin === new URL(this.defaultFrontendBaseURL).origin;
       this.studentId = 'anonymous';
       this.courseId = this.extractCourseId();
     }
@@ -163,8 +176,8 @@ class EventTracker {
     const url = window.location.href;
     const hostname = window.location.hostname;
     
-    // For localhost frontend - try to extract from page context
-    if (hostname === 'localhost' && window.location.port === '3000') {
+    // For configured frontend - try to extract from page context
+    if (this.isFrontendPage) {
       // Try to find course ID from page elements (e.g., viewing a specific course)
       try {
         // Check if we can find course info in the page
@@ -538,9 +551,9 @@ class EventTracker {
    */
   handlePageUnload() {
     // Send final time tracking synchronously via sendBeacon (can't await)
-    // On localhost:3000 we can read localStorage synchronously for the real ID
+    // On configured frontend we can read localStorage synchronously for the real ID
     let studentId = this.studentId;
-    if (this.isLocalhost) {
+    if (this.isFrontendPage) {
       const localId = this._readStudentIdFromLocalStorage();
       if (localId) studentId = localId;
     }

@@ -8,6 +8,57 @@ class APIClient {
     this.endpoint = '/logs';
     this.retryAttempts = 3;
     this.retryDelay = 1000; // ms
+    this.duplicateWindowMs = 5000;
+  }
+
+  /**
+   * Build a stable hash for an event to deduplicate retries.
+   */
+  getEventHash(eventData) {
+    const payload = [
+      eventData.student_id || '',
+      eventData.event_type || '',
+      eventData.timestamp || '',
+      eventData.course_id || ''
+    ].join('|');
+
+    let hash = 0;
+    for (let i = 0; i < payload.length; i++) {
+      hash = (hash << 5) - hash + payload.charCodeAt(i);
+      hash |= 0;
+    }
+    return `evt_${Math.abs(hash)}`;
+  }
+
+  addOrMergeFailedEvent(events, eventData) {
+    const nowIso = new Date().toISOString();
+    const eventHash = this.getEventHash(eventData);
+    const nowMs = Date.now();
+
+    const duplicateIndex = events.findIndex((candidate) => {
+      if (!candidate || candidate.eventHash !== eventHash) {
+        return false;
+      }
+      const previousMs = Date.parse(candidate.failedAt || '');
+      return Number.isFinite(previousMs) && (nowMs - previousMs) <= this.duplicateWindowMs;
+    });
+
+    if (duplicateIndex >= 0) {
+      events[duplicateIndex] = {
+        ...events[duplicateIndex],
+        ...eventData,
+        eventHash,
+        failedAt: nowIso,
+      };
+      return events;
+    }
+
+    events.push({
+      ...eventData,
+      eventHash,
+      failedAt: nowIso,
+    });
+    return events;
   }
 
   /**
@@ -37,7 +88,7 @@ class APIClient {
     } catch (error) {
       console.error('Error sending event:', error);
       // Store failed events for later retry
-      this.storeFailedEvent(eventData);
+      await this.storeFailedEvent(eventData);
       throw error;
     }
   }
@@ -77,10 +128,7 @@ class APIClient {
       try {
         const result = await chrome.storage.local.get(['failedEvents']);
         const failedEvents = result.failedEvents || [];
-        failedEvents.push({
-          ...eventData,
-          failedAt: new Date().toISOString()
-        });
+        this.addOrMergeFailedEvent(failedEvents, eventData);
         
         // Keep only last 100 events
         if (failedEvents.length > 100) {
@@ -101,10 +149,7 @@ class APIClient {
       const stored = localStorage.getItem(key);
       const failedEvents = stored ? JSON.parse(stored) : [];
       
-      failedEvents.push({
-        ...eventData,
-        failedAt: new Date().toISOString()
-      });
+      this.addOrMergeFailedEvent(failedEvents, eventData);
       
       // Keep only last 50 events in localStorage
       if (failedEvents.length > 50) {
