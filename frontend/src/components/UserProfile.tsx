@@ -1,18 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { authService } from "../services/authService";
+import { Mail, ShieldCheck } from "lucide-react";
 
 export default function UserProfile() {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, refreshUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  // Refresh user data on mount to get latest verification status
+  useEffect(() => {
+    refreshUser();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -55,6 +63,24 @@ export default function UserProfile() {
     });
     setIsEditing(false);
     setMessage(null);
+  };
+
+  const handleVerifyNow = async () => {
+    setIsVerifying(true);
+    setMessage(null);
+    try {
+      const res = await authService.requestVerification();
+      setMessage({ type: "success", text: res.message || "Verification email sent!" });
+      // Refresh user state in case they were already verified
+      await refreshUser();
+    } catch (error: any) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.message || "Failed to send verification email",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   if (!user) return null;
@@ -121,7 +147,7 @@ export default function UserProfile() {
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Saving..." : "Save Changes"}
             </button>
@@ -151,18 +177,47 @@ export default function UserProfile() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Email
-            </label>
-            <p className="text-lg text-gray-900">{user.email}</p>
+          <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <Mail className="w-5 h-5 text-gray-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                  Email Address
+                </label>
+                <p className="text-gray-900 font-medium">{user.email}</p>
+              </div>
+            </div>
+            
+            {user.isEmailVerified ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100 text-xs font-bold">
+                <ShieldCheck className="w-4 h-4" />
+                VERIFIED
+              </div>
+            ) : (
+              <button
+                onClick={handleVerifyNow}
+                disabled={isVerifying}
+                className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg border border-amber-200 text-xs font-bold transition-all disabled:opacity-50"
+              >
+                {isVerifying ? (
+                  "SENDING..."
+                ) : (
+                  <>
+                    <Mail className="w-3.5 h-3.5" />
+                    VERIFY NOW
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Role
             </label>
-            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
               {user.role}
             </span>
           </div>
@@ -180,7 +235,7 @@ export default function UserProfile() {
 
           <button
             onClick={() => setIsEditing(true)}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800"
           >
             Edit Profile
           </button>

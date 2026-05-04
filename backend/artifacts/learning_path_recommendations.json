@@ -1,0 +1,72 @@
+{
+  "Unknown": {
+    "profile": "Undetermined",
+    "description": "Insufficient data to make a prediction. Please ensure your activity logs and assessment records are up to date.",
+    "learning_path": "Standard Track",
+    "actions": [
+      "Complete the academic profile to enable personalised predictions",
+      "Engage with course materials to generate activity data",
+      "Submit at least one assessment to improve prediction accuracy"
+    ],
+    "alert_level": "Low",
+    "intervention": "Data Collection"
+  },
+  "Distinction": {
+    "profile": "High Achiever",
+    "description": "Consistently strong performer with high engagement and excellent assessment results.",
+    "learning_path": "Advanced Track",
+    "actions": [
+      "Unlock advanced/extension modules and challenge problems",
+      "Recommend peer mentoring or study group leadership roles",
+      "Suggest research projects or external certifications",
+      "Provide early access to next-level course materials",
+      "Offer enrichment seminars and guest lecture invitations"
+    ],
+    "alert_level": "None",
+    "intervention": "Enrichment"
+  },
+  "Pass": {
+    "profile": "Steady Progressor",
+    "description": "On track for successful completion. Consistent but may benefit from additional challenge.",
+    "learning_path": "Standard Track",
+    "actions": [
+      "Follow the standard course pathway with scheduled checkpoints",
+      "Encourage optional extension exercises to improve grade",
+      "Suggest study skills workshops to unlock higher performance",
+      "Pair with a High Achiever peer mentor when available",
+      "Set fortnightly self-assessment goals"
+    ],
+    "alert_level": "Low",
+    "intervention": "Encouragement"
+  },
+  "Fail": {
+    "profile": "At-Risk Learner",
+    "description": "Academic performance signals risk of failing. Targeted support required.",
+    "learning_path": "Supported Track",
+    "actions": [
+      "Trigger immediate personal tutor meeting request",
+      "Enrol in supplementary tutorial sessions or drop-in sessions",
+      "Assign structured study plan with weekly milestones",
+      "Provide formative feedback on all upcoming assessments",
+      "Flag to student support services for academic counselling",
+      "Recommend time management and exam preparation resources"
+    ],
+    "alert_level": "High",
+    "intervention": "Academic Support"
+  },
+  "Withdrawn": {
+    "profile": "Disengaged Learner",
+    "description": "Low LMS engagement and academic participation. High withdrawal risk.",
+    "learning_path": "Re-engagement Track",
+    "actions": [
+      "Initiate welfare check \u2014 contact student directly within 48 hours",
+      "Assign a dedicated personal tutor / advisor for regular contact",
+      "Offer flexible study options (recorded lectures, async materials)",
+      "Identify and address barriers (financial, health, personal)",
+      "Set minimum weekly engagement targets with progress nudges",
+      "Escalate to student retention office if no contact within 5 days"
+    ],
+    "alert_level": "Critical",
+    "intervention": "Retention & Welfare"
+  }
+}

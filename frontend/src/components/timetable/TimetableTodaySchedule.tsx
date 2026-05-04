@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaClock, FaCheck, FaEdit } from 'react-icons/fa';
+import { Clock, CheckCircle2, Pencil } from 'lucide-react';
 import type { DailyTimetable } from '../../services/timetableApi';
 
 interface Props {
@@ -13,12 +13,12 @@ function TimetableTodaySchedule({ timetable, onUpdateCompletion }: Props) {
 
   if (!timetable || timetable.allocations.length === 0) {
     return (
-      <div className="ttm-card text-center py-10 animate-scale-in">
-        <div className="text-6xl mb-4 animate-bounce-gentle">🎉</div>
-        <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+        <div className="text-5xl mb-4">🎉</div>
+        <h3 className="text-xl font-extrabold text-gray-900 mb-2">
           No classes today!
         </h3>
-        <p className="text-gray-600 text-sm">Enjoy your free day or catch up on other tasks</p>
+        <p className="text-gray-500 text-sm">Enjoy your free day or catch up on other tasks</p>
       </div>
     );
   }
@@ -29,15 +29,15 @@ function TimetableTodaySchedule({ timetable, onUpdateCompletion }: Props) {
       : 0;
 
   return (
-    <div className="ttm-card">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="mb-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">Today's Schedule</h2>
-            <p className="text-xs text-gray-500">Track your daily progress</p>
+            <h2 className="text-lg font-bold text-gray-900">Today's Schedule</h2>
+            <p className="text-xs text-gray-400">Track your daily progress</p>
           </div>
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg">
-            <p className="text-xs font-semibold opacity-90">Completion</p>
+          <div className="bg-blue-700 text-white px-4 py-2 rounded-xl shadow-sm">
+            <p className="text-xs font-semibold text-blue-200">Completion</p>
             <p className="text-2xl font-bold">{Math.round(progress)}%</p>
           </div>
         </div>
@@ -45,25 +45,23 @@ function TimetableTodaySchedule({ timetable, onUpdateCompletion }: Props) {
         {/* Overall Progress Bar */}
         <div className="relative">
           <div className="flex justify-between text-xs mb-2 font-semibold">
-            <span className="text-gray-600">Overall Progress</span>
-            <span className="text-blue-600">
+            <span className="text-gray-500">Overall Progress</span>
+            <span className="text-blue-700">
               {timetable.total_completed.toFixed(1)}h / {timetable.total_planned.toFixed(1)}h
             </span>
           </div>
-          <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+          <div className="relative w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
             <div
-              className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 transition-all duration-700 ease-out rounded-full shadow-lg"
+              className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 transition-all duration-700 ease-out rounded-full"
               style={{ width: `${Math.min(progress, 100)}%` }}
-            >
-              <div className="absolute inset-0 ttm-shimmer opacity-50" />
-            </div>
+            />
           </div>
         </div>
       </div>
 
       {/* Subject Allocations */}
       <div className="space-y-3">
-        {timetable.allocations.map((allocation, index) => {
+        {timetable.allocations.map((allocation) => {
           const isEditing = editingSubject === allocation.subject_id;
           const subjectProgress =
             allocation.planned_hours > 0
@@ -73,24 +71,21 @@ function TimetableTodaySchedule({ timetable, onUpdateCompletion }: Props) {
           return (
             <div
               key={allocation.subject_id}
-              className="relative bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200/50 rounded-xl p-4 hover:shadow-lg hover:border-blue-300/50 transition-all duration-300 hover:-translate-y-0.5 animate-slide-up"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="bg-gray-50 border border-gray-100 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition-all duration-300"
             >
-              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-xl" />
-
-              <div className="relative flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-bold text-gray-800 text-base mb-1.5">
+                  <h3 className="font-bold text-gray-900 text-sm mb-1.5">
                     {allocation.subject_name}
                   </h3>
-                  <div className="flex items-center space-x-3 text-xs text-gray-600">
-                    <span className="flex items-center bg-blue-50 px-2 py-1 rounded-md font-medium">
-                      <FaClock className="mr-1 text-blue-600" />
+                  <div className="flex items-center space-x-3 text-xs text-gray-500">
+                    <span className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-lg font-medium text-blue-700">
+                      <Clock className="w-3 h-3" />
                       {allocation.planned_hours.toFixed(1)}h
                     </span>
                     {allocation.status === 'completed' && (
-                      <span className="flex items-center bg-green-50 px-2 py-1 rounded-md text-green-600 font-semibold">
-                        <FaCheck className="mr-1" />
+                      <span className="flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-lg text-emerald-600 font-semibold">
+                        <CheckCircle2 className="w-3 h-3" />
                         Done
                       </span>
                     )}
@@ -103,10 +98,10 @@ function TimetableTodaySchedule({ timetable, onUpdateCompletion }: Props) {
                       setEditingSubject(allocation.subject_id);
                       setCompletedHours(allocation.completed_hours);
                     }}
-                    className="flex items-center space-x-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:shadow-glow-blue transition-all duration-300 font-semibold text-sm group transform hover:scale-105"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all text-xs font-semibold"
                   >
-                    <FaEdit className="group-hover:rotate-12 transition-transform duration-300" />
-                    <span>Update</span>
+                    <Pencil className="w-3 h-3" />
+                    Update
                   </button>
                 ) : (
                   <div className="flex items-center space-x-2">
@@ -117,20 +112,20 @@ function TimetableTodaySchedule({ timetable, onUpdateCompletion }: Props) {
                       step="0.5"
                       value={completedHours}
                       onChange={(e) => setCompletedHours(parseFloat(e.target.value) || 0)}
-                      className="w-16 px-2 py-1.5 border-2 border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-semibold text-center text-sm"
+                      className="w-16 px-2 py-1.5 border-2 border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-semibold text-center text-sm"
                     />
                     <button
                       onClick={() => {
                         onUpdateCompletion(allocation.subject_id, completedHours);
                         setEditingSubject(null);
                       }}
-                      className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold text-sm"
+                      className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl font-semibold text-xs hover:bg-emerald-700 transition-colors"
                     >
                       Save
                     </button>
                     <button
                       onClick={() => setEditingSubject(null)}
-                      className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold text-sm"
+                      className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 font-semibold text-xs transition-colors"
                     >
                       Cancel
                     </button>
@@ -139,20 +134,18 @@ function TimetableTodaySchedule({ timetable, onUpdateCompletion }: Props) {
               </div>
 
               {/* Subject Progress Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden shadow-inner">
+              <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-700 relative overflow-hidden ${
+                  className={`h-full transition-all duration-700 rounded-full ${
                     subjectProgress >= 100
-                      ? 'bg-gradient-to-r from-green-500 via-emerald-500 to-green-600'
-                      : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600'
+                      ? 'bg-emerald-500'
+                      : 'bg-blue-600'
                   }`}
                   style={{ width: `${Math.min(subjectProgress, 100)}%` }}
-                >
-                  <div className="absolute inset-0 ttm-shimmer opacity-40" />
-                </div>
+                />
               </div>
-              <p className="text-xs text-gray-600 font-medium mt-1.5">
-                <span className="font-bold text-blue-600">{Math.round(subjectProgress)}%</span>
+              <p className="text-xs text-gray-400 font-medium mt-1.5">
+                <span className="font-bold text-blue-700">{Math.round(subjectProgress)}%</span>
               </p>
             </div>
           );

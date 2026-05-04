@@ -47,21 +47,21 @@ function CourseCard({
   showCheckbox?: boolean;
 }) {
   const borderColors = {
-    green: "hover:border-green-400",
+    green: "hover:border-blue-400",
     yellow: "hover:border-yellow-400",
     red: "hover:border-red-400",
   };
 
   const scoreColors = {
-    green: "bg-green-100 text-green-600",
+    green: "bg-blue-100 text-blue-700",
     yellow: "bg-yellow-100 text-yellow-600",
     red: "bg-red-100 text-red-600",
   };
 
   return (
     <div
-      className={`bg-white border-2 rounded-lg p-6 hover:shadow-xl transition-all ${
-        isSelected ? "border-purple-500 bg-purple-50" : "border-gray-200"
+      className={`bg-white border rounded-2xl p-6 hover:shadow-xl transition-all ${
+        isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200"
       } ${borderColors[levelColor as keyof typeof borderColors]}`}
     >
       {showCheckbox && onToggleSelect && (
@@ -70,7 +70,7 @@ function CourseCard({
             type="checkbox"
             checked={isSelected || false}
             onChange={() => onToggleSelect(course.id)}
-            className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
           />
           <span className="text-sm font-medium text-gray-700">
             {isSelected ? "Selected" : "Select"}
@@ -117,7 +117,7 @@ function CourseCard({
               {course.skills.slice(0, 6).map((skill, skillIdx) => (
                 <span
                   key={skillIdx}
-                  className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded"
+                  className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded"
                 >
                   {skill}
                 </span>
@@ -136,7 +136,7 @@ function CourseCard({
             href={course.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md text-sm font-medium whitespace-nowrap"
+            className="px-6 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all shadow-md text-sm font-medium whitespace-nowrap"
           >
             View Course →
           </a>
@@ -148,7 +148,7 @@ function CourseCard({
         <div
           className={`h-full transition-all duration-500 ${
             levelColor === "green"
-              ? "bg-gradient-to-r from-green-400 to-emerald-500"
+              ? "bg-gradient-to-r from-blue-400 to-sky-500"
               : levelColor === "yellow"
                 ? "bg-gradient-to-r from-yellow-400 to-orange-500"
                 : "bg-gradient-to-r from-red-400 to-rose-500"
@@ -161,21 +161,22 @@ function CourseCard({
 }
 
 // Cross-Domain Card Component
-function CrossDomainCard({ 
+function CrossDomainCard({
   item,
   isSelected,
   onToggleSelect,
   showCheckbox = false,
-}: { 
+}: {
   item: CrossDomainCourse;
   isSelected?: boolean;
   onToggleSelect?: (courseId: string) => void;
   showCheckbox?: boolean;
 }) {
   return (
-    <div className={`bg-white border-2 rounded-lg p-6 hover:shadow-xl transition-all ${
-      isSelected ? "border-purple-500 bg-purple-50" : "border-purple-200"
-    } hover:border-purple-400`}
+    <div
+      className={`bg-white border rounded-2xl p-6 hover:shadow-xl transition-all ${
+        isSelected ? "border-blue-500 bg-blue-50" : "border-blue-200"
+      } hover:border-blue-400`}
     >
       {showCheckbox && onToggleSelect && (
         <div className="flex items-center gap-2 mb-3">
@@ -183,7 +184,7 @@ function CrossDomainCard({
             type="checkbox"
             checked={isSelected || false}
             onChange={() => onToggleSelect(item.id)}
-            className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
           />
           <span className="text-sm font-medium text-gray-700">
             {isSelected ? "Selected" : "Select"}
@@ -193,13 +194,13 @@ function CrossDomainCard({
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
               {item.domain}
             </span>
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${
                 item.difficulty === "Beginner"
-                  ? "bg-green-100 text-green-700"
+                  ? "bg-blue-100 text-blue-700"
                   : item.difficulty === "Intermediate"
                     ? "bg-yellow-100 text-yellow-700"
                     : "bg-red-100 text-red-700"
@@ -209,12 +210,12 @@ function CrossDomainCard({
             </span>
           </div>
 
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
+          <h3 className="text-base font-bold text-gray-900 mb-2">
             {item.course}
           </h3>
 
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
-            <p className="text-sm text-purple-900">
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4">
+            <p className="text-sm text-blue-900">
               <strong>Why this matters:</strong> {item.reason}
             </p>
           </div>
@@ -223,10 +224,10 @@ function CrossDomainCard({
             <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
               Rating: {item.rating?.toFixed(1) ?? "N/A"}
             </span>
-            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
               {(item.similarity_score * 100).toFixed(0)}% Match
             </span>
-            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
               {(item.skill_overlap * 100).toFixed(0)}% Skill Overlap
             </span>
           </div>
@@ -238,7 +239,7 @@ function CrossDomainCard({
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md text-sm font-medium whitespace-nowrap"
+              className="px-6 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all shadow-md text-sm font-medium whitespace-nowrap"
             >
               Explore →
             </a>
@@ -265,7 +266,9 @@ export default function AISearchTab() {
   const { user } = useAuth();
 
   // Manual selection state
-  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(new Set());
+  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(
+    new Set(),
+  );
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [customPathName, setCustomPathName] = useState("");
   const [saveMode, setSaveMode] = useState<"all" | "selected">("all");
@@ -335,18 +338,18 @@ export default function AISearchTab() {
 
   const handleSelectAll = () => {
     if (!results) return;
-    
+
     const allCourses = [
       ...results.learning_path.beginner,
       ...results.learning_path.intermediate,
       ...results.learning_path.advanced,
       ...results.cross_domain_courses,
     ];
-    
+
     if (selectedCourses.size > 0) {
       setSelectedCourses(new Set());
     } else {
-      setSelectedCourses(new Set(allCourses.map(c => c.id)));
+      setSelectedCourses(new Set(allCourses.map((c) => c.id)));
     }
   };
 
@@ -396,7 +399,7 @@ export default function AISearchTab() {
           ...results.learning_path.beginner,
           ...results.learning_path.intermediate,
           ...results.learning_path.advanced,
-          ...results.cross_domain_courses.map(cd => ({
+          ...results.cross_domain_courses.map((cd) => ({
             id: cd.id,
             name: cd.course,
             url: cd.url,
@@ -407,7 +410,7 @@ export default function AISearchTab() {
             similarity_score: cd.similarity_score,
           })),
         ];
-        coursesToSave = allCourses.filter(c => selectedCourses.has(c.id));
+        coursesToSave = allCourses.filter((c) => selectedCourses.has(c.id));
         pathType = "manual";
       }
 
@@ -467,25 +470,25 @@ export default function AISearchTab() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-lg p-8">
-        <h2 className="text-3xl font-bold mb-3">
+      <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-2xl p-8">
+        <h2 className="text-2xl font-extrabold mb-3">
           AI-Powered Learning Path Discovery
         </h2>
-        <p className="text-purple-100 mb-4">
+        <p className="text-blue-100 mb-4">
           Get personalized learning paths with courses organized from Beginner →
           Intermediate → Advanced, plus cross-domain discoveries!
         </p>
         <div className="bg-white/10 backdrop-blur rounded-lg p-4">
           <p className="text-sm">
-            <strong>New:</strong> Our AI now creates structured learning
-            paths and suggests relevant courses from other domains to broaden
-            your knowledge.
+            <strong>New:</strong> Our AI now creates structured learning paths
+            and suggests relevant courses from other domains to broaden your
+            knowledge.
           </p>
         </div>
       </div>
 
       {/* Search Box */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex gap-3">
           <input
             type="text"
@@ -493,12 +496,12 @@ export default function AISearchTab() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="flex-1 px-6 py-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <button
             onClick={handleSearch}
             disabled={loading || !query.trim()}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg"
+            className="px-8 py-4 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm"
           >
             {loading ? (
               <span className="flex items-center gap-2">
@@ -513,26 +516,26 @@ export default function AISearchTab() {
 
         {/* Example Queries */}
         <div className="mt-4">
-          <p className="text-sm text-gray-600 mb-2 font-medium">Try these examples:</p>
+          <p className="text-sm text-gray-600 mb-2 font-medium">
+            Try these examples:
+          </p>
           <div className="flex flex-wrap gap-2">
             {exampleQueries.map((example, idx) => (
               <button
                 key={idx}
                 onClick={() => setQuery(example)}
-                className="text-sm px-3 py-1 bg-purple-50 text-purple-600 rounded-full hover:bg-purple-100 transition-colors"
+                className="text-sm px-3 py-1 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
               >
                 {example}
               </button>
             ))}
           </div>
         </div>
-
-
       </div>
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="text-red-600 font-medium">{error}</p>
           {error.includes("AI search failed") && (
             <p className="text-sm text-red-500 mt-2">
@@ -548,7 +551,7 @@ export default function AISearchTab() {
 
       {/* Results Header */}
       {!loading && results && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <p className="text-green-700 font-medium">
               Found {results.summary.total_courses} relevant courses in{" "}
@@ -558,14 +561,14 @@ export default function AISearchTab() {
               <div className="flex gap-2">
                 <button
                   onClick={handleSelectAll}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium"
                 >
                   {selectedCourses.size > 0 ? "Deselect All" : "Select All"}
                 </button>
                 {selectedCourses.size > 0 && (
                   <button
                     onClick={() => handleOpenSaveModal("selected")}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-md text-sm"
+                    className="px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-medium shadow-md text-sm"
                   >
                     Save Selected ({selectedCourses.size})
                   </button>
@@ -573,7 +576,7 @@ export default function AISearchTab() {
                 <button
                   onClick={() => handleOpenSaveModal("all")}
                   disabled={saving}
-                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all font-medium disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md text-sm flex items-center gap-2"
+                  className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-medium disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md text-sm flex items-center gap-2"
                 >
                   {saving ? (
                     <>
@@ -600,7 +603,7 @@ export default function AISearchTab() {
               Advanced: {results.summary.advanced_count}
             </span>
             {results.summary.cross_domain_count > 0 && (
-              <span className="text-purple-600 font-medium">
+              <span className="text-blue-600 font-medium">
                 Cross-Domain: {results.summary.cross_domain_count}
               </span>
             )}
@@ -611,7 +614,7 @@ export default function AISearchTab() {
                 onClick={() => setViewMode("list")}
                 className={`px-4 py-1 rounded-md font-medium text-sm transition-all ${
                   viewMode === "list"
-                    ? "bg-white text-indigo-600 shadow"
+                    ? "bg-white text-blue-700 shadow"
                     : "text-gray-600 hover:text-gray-800"
                 }`}
               >
@@ -621,7 +624,7 @@ export default function AISearchTab() {
                 onClick={() => setViewMode("graph")}
                 className={`px-4 py-1 rounded-md font-medium text-sm transition-all ${
                   viewMode === "graph"
-                    ? "bg-white text-indigo-600 shadow"
+                    ? "bg-white text-blue-700 shadow"
                     : "text-gray-600 hover:text-gray-800"
                 }`}
               >
@@ -646,7 +649,7 @@ export default function AISearchTab() {
           {/* Beginner Courses */}
           {results.learning_path.beginner.length > 0 && (
             <div>
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg p-4 mb-4">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-2xl font-bold flex items-center gap-2">
@@ -703,7 +706,7 @@ export default function AISearchTab() {
                 <div className="mt-4 text-center">
                   <button
                     onClick={() => setBeginnerPage(beginnerPage + 1)}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium shadow-md"
+                    className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-medium shadow-sm"
                   >
                     Load More Beginner Courses (
                     {getRemainingCount(
@@ -720,11 +723,12 @@ export default function AISearchTab() {
           {/* Intermediate Courses */}
           {results.learning_path.intermediate.length > 0 && (
             <div>
-              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg p-4 mb-4">
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-2xl p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-2xl font-bold flex items-center gap-2">
-                      Intermediate Level ({results.learning_path.intermediate.length})
+                      Intermediate Level (
+                      {results.learning_path.intermediate.length})
                     </h3>
                     <p className="text-yellow-100 mt-1">
                       Build on your foundation • Showing{" "}
@@ -777,7 +781,7 @@ export default function AISearchTab() {
                 <div className="mt-4 text-center">
                   <button
                     onClick={() => setIntermediatePage(intermediatePage + 1)}
-                    className="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all font-medium shadow-md"
+                    className="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all font-medium shadow-sm"
                   >
                     Load More Intermediate Courses (
                     {getRemainingCount(
@@ -794,7 +798,7 @@ export default function AISearchTab() {
           {/* Advanced Courses */}
           {results.learning_path.advanced.length > 0 && (
             <div>
-              <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg p-4 mb-4">
+              <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-2xl p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-2xl font-bold flex items-center gap-2">
@@ -851,7 +855,7 @@ export default function AISearchTab() {
                 <div className="mt-4 text-center">
                   <button
                     onClick={() => setAdvancedPage(advancedPage + 1)}
-                    className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium shadow-md"
+                    className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium shadow-sm"
                   >
                     Load More Advanced Courses (
                     {getRemainingCount(
@@ -868,18 +872,19 @@ export default function AISearchTab() {
           {/* Cross-Domain Recommendations */}
           {results.cross_domain_courses.length > 0 && (
             <div>
-              <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg p-4 mb-4">
+              <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-2xl p-4 mb-4">
                 <h3 className="text-2xl font-bold flex items-center gap-2">
-                  Cross-Domain Discoveries ({results.cross_domain_courses.length})
+                  Cross-Domain Discoveries (
+                  {results.cross_domain_courses.length})
                 </h3>
-                <p className="text-purple-100 mt-1">
+                <p className="text-blue-100 mt-1">
                   Expand your horizons with related courses from other domains
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-4">
                 {results.cross_domain_courses.map((item) => (
-                  <CrossDomainCard 
-                    key={item.id} 
+                  <CrossDomainCard
+                    key={item.id}
                     item={item}
                     isSelected={selectedCourses.has(item.id)}
                     onToggleSelect={handleToggleSelection}
@@ -893,7 +898,7 @@ export default function AISearchTab() {
       )}
 
       {!loading && results && results.summary.total_courses === 0 && query && (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center">
           <p className="text-gray-600 text-lg font-medium">
             No courses found matching your query. Try different keywords or
             check if embeddings are generated.
@@ -902,7 +907,7 @@ export default function AISearchTab() {
       )}
 
       {!query && !loading && (
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-lg p-12 text-center">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-50 border-2 border-blue-200 rounded-lg p-12 text-center">
           <h3 className="text-2xl font-bold text-gray-800 mb-3">
             Ready to discover your learning path?
           </h3>
@@ -935,68 +940,88 @@ export default function AISearchTab() {
 
       {/* Save Modal */}
       {showSaveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">
-              Save Learning Path
-            </h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                Save Learning Path
+              </h3>
+              <button
+                onClick={handleCloseSaveModal}
+                disabled={saving}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                ✕
+              </button>
+            </div>
 
             {saveSuccess ? (
               <div className="text-center py-8">
-                <div className="inline-block w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    className="w-8 h-8 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
                 <p className="text-lg font-semibold text-green-600">
-                  Learning Path Saved Successfully!
+                  Saved Successfully!
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Path Name *
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Path Name
                   </label>
                   <input
                     type="text"
                     value={customPathName}
                     onChange={(e) => setCustomPathName(e.target.value)}
                     placeholder="e.g., My AI Learning Path"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                     autoFocus
                   />
                 </div>
 
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                  <p className="text-sm text-purple-800 font-medium">
-                    {saveMode === "all" 
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                  <p className="text-sm text-blue-800 font-medium">
+                    {saveMode === "all"
                       ? `Saving all ${results?.summary.total_courses} courses from AI search`
                       : `Saving ${selectedCourses.size} selected courses`}
                   </p>
-                  <p className="text-xs text-purple-700 mt-1">
+                  <p className="text-xs text-blue-600 mt-1">
                     Target Skill: {query}
                   </p>
                 </div>
 
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3">
                     <p className="text-sm text-red-600 font-medium">{error}</p>
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-3 pt-1">
                   <button
                     onClick={handleSaveFromModal}
                     disabled={saving}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? "Saving..." : "Save Learning Path"}
                   </button>
                   <button
                     onClick={handleCloseSaveModal}
                     disabled={saving}
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>

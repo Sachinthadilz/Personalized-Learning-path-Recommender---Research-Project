@@ -194,19 +194,19 @@ export default function LearningPathTab() {
   return (
     <div className="space-y-6">
       {/* AI Feature Banner */}
-      <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-lg p-6">
+      <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-2xl p-6">
         <h2 className="text-2xl font-bold mb-2">
           AI-Powered Learning Path Generator
         </h2>
-        <p className="text-purple-100">
+        <p className="text-blue-100">
           Using Groq AI to create intelligent, personalized learning paths
           tailored to your goals
         </p>
       </div>
 
       {/* Input Section */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 className="text-base font-bold text-gray-900 mb-4">
           What do you want to learn?
         </h3>
         <p className="text-gray-600 mb-6">
@@ -224,25 +224,25 @@ export default function LearningPathTab() {
               placeholder="e.g., Machine Learning, Python, Data Science"
               value={targetSkill}
               onChange={(e) => setTargetSkill(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Information Box */}
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-purple-900 mb-1">
+                <h4 className="text-sm font-semibold text-blue-900 mb-1">
                   AI-Powered Smart Start
                 </h4>
-                <p className="text-sm text-purple-700">
+                <p className="text-sm text-blue-700">
                   Our AI automatically determines the best starting point based
                   on your target skill. It will begin with beginner courses and
                   progressively advance to intermediate and advanced levels.
@@ -255,7 +255,7 @@ export default function LearningPathTab() {
         <button
           onClick={handleGeneratePath}
           disabled={!targetSkill || loading}
-          className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed font-medium shadow-lg"
+          className="w-full mt-6 px-6 py-3 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed font-medium shadow-sm"
         >
           {loading ? (
             <>
@@ -274,7 +274,7 @@ export default function LearningPathTab() {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600">
           <p className="font-medium">{error}</p>
           {error.includes("Failed to generate") && (
             <p className="text-sm mt-2">
@@ -286,9 +286,9 @@ export default function LearningPathTab() {
 
       {/* Loading State */}
       {loading && (
-        <div className="bg-white rounded-lg shadow p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-700"></div>
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
                 AI is curating your learning path...
@@ -311,10 +311,10 @@ export default function LearningPathTab() {
 
       {/* Learning Path Results */}
       {!loading && courses.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
+              <h3 className="text-base font-bold text-gray-900 mb-2">
                 Your Learning Path to "{targetSkill}"
               </h3>
               <p className="text-gray-600">
@@ -326,14 +326,14 @@ export default function LearningPathTab() {
               <div className="flex gap-2">
                 <button
                   onClick={handleSelectAllVisible}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap"
                 >
                   {selectedCourses.size > 0 ? "Deselect All" : "Select All"}
                 </button>
                 {selectedCourses.size > 0 && (
                   <button
                     onClick={() => handleOpenSaveModal("selected")}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-md text-sm whitespace-nowrap"
+                    className="px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-medium shadow-md text-sm whitespace-nowrap"
                   >
                     Save Selected ({selectedCourses.size})
                   </button>
@@ -341,7 +341,7 @@ export default function LearningPathTab() {
                 <button
                   onClick={() => handleOpenSaveModal("all")}
                   disabled={saving}
-                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all font-medium disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md text-sm flex items-center gap-2 whitespace-nowrap"
+                  className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-medium disabled:bg-gray-300 disabled:cursor-not-allowed shadow-md text-sm flex items-center gap-2 whitespace-nowrap"
                 >
                   {saving ? (
                     <>
@@ -363,19 +363,19 @@ export default function LearningPathTab() {
               <div key={course.id} className="relative">
                 {/* Connector Line */}
                 {idx < courses.length - 1 && (
-                  <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-indigo-200 -mb-4"></div>
+                  <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-blue-200 -mb-4"></div>
                 )}
 
                 <div className="flex gap-4">
                   {/* Step Number */}
-                  <div className="flex-shrink-0 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg z-10">
+                  <div className="flex-shrink-0 w-12 h-12 bg-blue-700 text-white rounded-full flex items-center justify-center font-bold text-lg z-10">
                     {idx + 1}
                   </div>
 
                   {/* Course Card */}
-                  <div className={`flex-1 border-2 rounded-lg p-4 hover:shadow-lg transition-all ${
+                  <div className={`flex-1 border rounded-2xl p-4 hover:shadow-lg transition-all ${
                     selectedCourses.has(course.id) 
-                      ? "border-purple-500 bg-purple-50" 
+                      ? "border-blue-500 bg-blue-50" 
                       : "border-gray-200 bg-white"
                   }`}>
                     {user && (
@@ -384,7 +384,7 @@ export default function LearningPathTab() {
                           type="checkbox"
                           checked={selectedCourses.has(course.id)}
                           onChange={() => handleToggleSelection(course.id)}
-                          className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                          className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                         />
                         <span className="text-sm font-medium text-gray-700">
                           {selectedCourses.has(course.id) ? "Selected" : "Select"}
@@ -444,7 +444,7 @@ export default function LearningPathTab() {
                               skill
                                 .toLowerCase()
                                 .includes(targetSkill.toLowerCase())
-                                ? "bg-indigo-100 text-indigo-600 font-semibold"
+                                ? "bg-blue-100 text-blue-700 font-semibold"
                                 : "bg-gray-100 text-gray-600"
                             }`}
                           >
@@ -458,7 +458,7 @@ export default function LearningPathTab() {
                       href={course.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors text-sm"
+                      className="inline-block px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-colors text-sm"
                     >
                       Enroll Now
                     </a>
@@ -473,7 +473,7 @@ export default function LearningPathTab() {
             <div className="mt-6 text-center">
               <button
                 onClick={loadMoreCourses}
-                className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
+                className="px-8 py-3 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-colors font-medium shadow-sm"
               >
                 Load More Courses ({allCourses.length - courses.length}{" "}
                 remaining)
@@ -505,16 +505,16 @@ export default function LearningPathTab() {
       )}
 
       {!loading && courses.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-600">
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center text-gray-600">
           Enter a target skill above to generate your personalized learning path
         </div>
       )}
 
       {/* Save Modal */}
       {showSaveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
               Save Learning Path
             </h3>
 
@@ -538,18 +538,18 @@ export default function LearningPathTab() {
                     value={customPathName}
                     onChange={(e) => setCustomPathName(e.target.value)}
                     placeholder="e.g., My AI Learning Path"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     autoFocus
                   />
                 </div>
 
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                  <p className="text-sm text-purple-800">
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                  <p className="text-sm text-blue-800">
                     {saveMode === "all" 
                       ? `Saving all ${allCourses.length} courses from AI generator`
                       : `Saving ${selectedCourses.size} selected courses`}
                   </p>
-                  <p className="text-xs text-purple-700 mt-1">
+                  <p className="text-xs text-blue-700 mt-1">
                     Target Skill: {targetSkill}
                   </p>
                 </div>
@@ -564,14 +564,14 @@ export default function LearningPathTab() {
                   <button
                     onClick={handleSaveFromModal}
                     disabled={saving}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? "Saving..." : "Save Learning Path"}
                   </button>
                   <button
                     onClick={handleCloseSaveModal}
                     disabled={saving}
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>

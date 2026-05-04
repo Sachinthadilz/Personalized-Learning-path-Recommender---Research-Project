@@ -26,10 +26,6 @@ const YEAR_OPTIONS = [
   { value: 2, label: "Year 2" },
   { value: 3, label: "Year 3" },
   { value: 4, label: "Year 4" },
-  { value: 5, label: "Year 5" },
-  { value: 6, label: "Year 6" },
-  { value: 7, label: "Year 7" },
-  { value: 8, label: "Year 8" },
 ];
 
 export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
@@ -220,7 +216,7 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700" />
         <p className="text-sm text-gray-500">Loading your profile…</p>
       </div>
     );
@@ -240,13 +236,13 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
         <div className="flex gap-3">
           <button
             onClick={loadProfile}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition"
+            className="px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 text-sm font-medium transition"
           >
             Retry
           </button>
           <button
             onClick={() => { setLoadError(false); setHasExisting(false); setIsEditing(true); }}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition"
+            className="px-4 py-2 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium transition"
           >
             Set up new profile
           </button>
@@ -261,28 +257,28 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
     return (
       <div className="space-y-6">
         {savedSuccess && (
-          <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm">
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 text-sm">
             <CheckCircle className="w-4 h-4 flex-shrink-0" />
             Academic profile saved successfully.
           </div>
         )}
 
         {/* Banner */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl px-6 py-5 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 rounded-2xl px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <GraduationCap className="text-white w-7 h-7" />
             <div>
               <p className="text-white font-bold text-lg leading-tight">{university}</p>
-              {degree && <p className="text-indigo-100 text-sm">{degree}</p>}
+              {degree && <p className="text-blue-100 text-sm">{degree}</p>}
             </div>
           </div>
-          <span className="text-indigo-100 text-sm font-medium bg-white/20 px-3 py-1 rounded-full">{yearLabel}</span>
+          <span className="text-blue-100 text-sm font-medium bg-white/20 px-3 py-1 rounded-full">{yearLabel}</span>
         </div>
 
         {/* Modules table */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="w-4 h-4 text-indigo-500" />
+            <BookOpen className="w-4 h-4 text-blue-600" />
             <h3 className="text-sm font-semibold text-gray-700">Modules</h3>
             <span className="text-xs text-gray-400">({modules.length})</span>
           </div>
@@ -307,7 +303,7 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
         <div className="flex justify-end">
           <button
             onClick={() => { setSavedSuccess(false); setIsEditing(true); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 transition"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-50 transition"
           >
             <Pencil className="w-4 h-4" />
             Edit Profile
@@ -365,257 +361,256 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
   return (
 
     <>
-        {/* Header card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6">
-            <div className="flex items-center gap-3 mb-2">
-              <GraduationCap className="text-white w-8 h-8" />
-              <h1 className="text-2xl font-bold text-white">
-                {hasExisting ? "Edit Academic Profile" : "Set Up Academic Profile"}
-              </h1>
+      {/* Header card */}
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 px-8 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <GraduationCap className="text-white w-8 h-8" />
+            <h1 className="text-2xl font-bold text-white">
+              {hasExisting ? "Edit Academic Profile" : "Set Up Academic Profile"}
+            </h1>
+          </div>
+          <p className="text-blue-100 text-sm">
+            {hasExisting
+              ? "Update your university details and modules below."
+              : "Tell us about your academic background so we can personalise your experience."}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-8 py-6 space-y-6">
+          {errors.general && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+              {errors.general}
             </div>
-            <p className="text-indigo-100 text-sm">
-              {hasExisting
-                ? "Update your university details and modules below."
-                : "Tell us about your academic background so we can personalise your experience."}
-            </p>
+          )}
+
+          {/* University */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              University <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={university}
+              onChange={(e) => setUniversity(e.target.value)}
+              placeholder="e.g. University of Plymouth"
+              className={`w-full px-4 py-2.5 rounded-xl border ${errors.university ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50"
+                } focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-sm`}
+            />
+            {errors.university && (
+              <p className="mt-1 text-xs text-red-500">{errors.university}</p>
+            )}
           </div>
 
-          <form onSubmit={handleSubmit} className="px-8 py-6 space-y-6">
-            {errors.general && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-                {errors.general}
+          {/* Degree */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Degree / Programme
+            </label>
+            <input
+              type="text"
+              value={degree}
+              onChange={(e) => setDegree(e.target.value)}
+              placeholder="e.g. BSc Computer Science"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-sm"
+            />
+          </div>
+
+          {/* Year of Study */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Year of Study
+            </label>
+            <select
+              value={yearOfStudy}
+              onChange={(e) => setYearOfStudy(Number(e.target.value))}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-sm"
+            >
+              {YEAR_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Modules */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-semibold text-gray-700">
+                <span className="flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-blue-600" />
+                  University Modules <span className="text-red-500">*</span>
+                </span>
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_100px_36px] gap-2 px-1">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Module Name</span>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Credits</span>
+                <span />
               </div>
+
+              {modules.map((mod, idx) => (
+                <div key={mod.id} className="grid grid-cols-[1fr_100px_36px] gap-2 items-center">
+                  <input
+                    type="text"
+                    value={mod.name}
+                    onChange={(e) => updateModule(mod.id, "name", e.target.value)}
+                    placeholder={`Module ${idx + 1}`}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-sm"
+                  />
+                  <input
+                    type="number"
+                    value={mod.credits}
+                    onChange={(e) => updateModule(mod.id, "credits", e.target.value)}
+                    placeholder="Credits"
+                    min={1}
+                    max={120}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeModule(mod.id)}
+                    disabled={modules.length === 1}
+                    className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    title="Remove module"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {errors.modules && (
+              <p className="mt-1.5 text-xs text-red-500">{errors.modules}</p>
             )}
 
-            {/* University */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                University <span className="text-red-500">*</span>
+            <button
+              type="button"
+              onClick={addModule}
+              className="mt-3 flex items-center gap-1.5 text-sm text-blue-700 font-medium hover:text-blue-800 transition"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Add another module
+            </button>
+          </div>
+
+          {/* ── Weak Subjects ──────────────────────────────────────────── */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-semibold text-gray-700">
+                <span className="flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  Weak Subjects
+                  <span className="text-xs font-normal text-gray-400 ml-1">(optional)</span>
+                </span>
               </label>
-              <input
-                type="text"
-                value={university}
-                onChange={(e) => setUniversity(e.target.value)}
-                placeholder="e.g. University of Plymouth"
-                className={`w-full px-4 py-2.5 rounded-lg border ${
-                  errors.university ? "border-red-400 bg-red-50" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-sm`}
-              />
-              {errors.university && (
-                <p className="mt-1 text-xs text-red-500">{errors.university}</p>
-              )}
             </div>
+            <p className="text-xs text-gray-500 mb-3">
+              List subjects you find difficult with your grade and marks. This helps personalise your learning plan.
+            </p>
 
-            {/* Degree */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Degree / Programme
-              </label>
-              <input
-                type="text"
-                value={degree}
-                onChange={(e) => setDegree(e.target.value)}
-                placeholder="e.g. BSc Computer Science"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-sm"
-              />
-            </div>
-
-            {/* Year of Study */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Year of Study
-              </label>
-              <select
-                value={yearOfStudy}
-                onChange={(e) => setYearOfStudy(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-sm bg-white"
-              >
-                {YEAR_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Modules */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-gray-700">
-                  <span className="flex items-center gap-1.5">
-                    <BookOpen className="w-4 h-4 text-indigo-500" />
-                    University Modules <span className="text-red-500">*</span>
-                  </span>
-                </label>
-              </div>
-
-              <div className="space-y-2">
+            {weakSubjects.length > 0 && (
+              <div className="space-y-2 mb-3">
                 {/* Column headers */}
-                <div className="grid grid-cols-[1fr_100px_36px] gap-2 px-1">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Module Name</span>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Credits</span>
+                <div className="grid grid-cols-[1fr_80px_90px_36px] gap-2 px-1">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Subject Name</span>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Grade</span>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Marks %</span>
                   <span />
                 </div>
 
-                {modules.map((mod, idx) => (
-                  <div key={mod.id} className="grid grid-cols-[1fr_100px_36px] gap-2 items-center">
+                {weakSubjects.map((ws) => (
+                  <div key={ws.id} className="grid grid-cols-[1fr_80px_90px_36px] gap-2 items-center">
                     <input
                       type="text"
-                      value={mod.name}
-                      onChange={(e) => updateModule(mod.id, "name", e.target.value)}
-                      placeholder={`Module ${idx + 1}`}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-sm"
+                      value={ws.name}
+                      onChange={(e) => updateWeakSubject(ws.id, "name", e.target.value)}
+                      placeholder="e.g. Databases"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400 transition text-sm"
                     />
+                    <select
+                      value={ws.grade}
+                      onChange={(e) => updateWeakSubject(ws.id, "grade", e.target.value)}
+                      className="w-full px-2 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400 transition text-sm"
+                    >
+                      {["A", "B", "C", "D", "E", "F"].map((g) => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
                     <input
                       type="number"
-                      value={mod.credits}
-                      onChange={(e) => updateModule(mod.id, "credits", e.target.value)}
-                      placeholder="Credits"
-                      min={1}
-                      max={120}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-sm"
+                      value={ws.marks}
+                      onChange={(e) => updateWeakSubject(ws.id, "marks", e.target.value)}
+                      placeholder="0–100"
+                      min={0}
+                      max={100}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400 transition text-sm"
                     />
                     <button
                       type="button"
-                      onClick={() => removeModule(mod.id)}
-                      disabled={modules.length === 1}
-                      className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                      title="Remove module"
+                      onClick={() => removeWeakSubject(ws.id)}
+                      className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+                      title="Remove"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
               </div>
+            )}
 
-              {errors.modules && (
-                <p className="mt-1.5 text-xs text-red-500">{errors.modules}</p>
-              )}
+            <button
+              type="button"
+              onClick={addWeakSubject}
+              className="flex items-center gap-1.5 text-sm text-red-500 font-medium hover:text-red-700 transition"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Add a weak subject
+            </button>
+          </div>
 
+          {/* Submit */}
+          <div className="pt-2 flex gap-3">
+            {hasExisting && (
               <button
                 type="button"
-                onClick={addModule}
-                className="mt-3 flex items-center gap-1.5 text-sm text-indigo-600 font-medium hover:text-indigo-800 transition"
+                onClick={handleCancelEdit}
+                className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition"
               >
-                <PlusCircle className="w-4 h-4" />
-                Add another module
+                <X className="w-4 h-4" />
+                Cancel
               </button>
-            </div>
-
-            {/* ── Weak Subjects ──────────────────────────────────────────── */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-gray-700">
-                  <span className="flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4 text-red-500" />
-                    Weak Subjects
-                    <span className="text-xs font-normal text-gray-400 ml-1">(optional)</span>
-                  </span>
-                </label>
-              </div>
-              <p className="text-xs text-gray-500 mb-3">
-                List subjects you find difficult with your grade and marks. This helps personalise your learning plan.
-              </p>
-
-              {weakSubjects.length > 0 && (
-                <div className="space-y-2 mb-3">
-                  {/* Column headers */}
-                  <div className="grid grid-cols-[1fr_80px_90px_36px] gap-2 px-1">
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Subject Name</span>
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Grade</span>
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Marks %</span>
-                    <span />
-                  </div>
-
-                  {weakSubjects.map((ws) => (
-                    <div key={ws.id} className="grid grid-cols-[1fr_80px_90px_36px] gap-2 items-center">
-                      <input
-                        type="text"
-                        value={ws.name}
-                        onChange={(e) => updateWeakSubject(ws.id, "name", e.target.value)}
-                        placeholder="e.g. Databases"
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400 transition text-sm"
-                      />
-                      <select
-                        value={ws.grade}
-                        onChange={(e) => updateWeakSubject(ws.id, "grade", e.target.value)}
-                        className="w-full px-2 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400 transition text-sm bg-white"
-                      >
-                        {["A", "B", "C", "D", "E", "F"].map((g) => (
-                          <option key={g} value={g}>{g}</option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        value={ws.marks}
-                        onChange={(e) => updateWeakSubject(ws.id, "marks", e.target.value)}
-                        placeholder="0–100"
-                        min={0}
-                        max={100}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400 transition text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeWeakSubject(ws.id)}
-                        className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
-                        title="Remove"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+            )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 flex items-center justify-center gap-2 bg-blue-700 text-white font-semibold py-3 rounded-xl hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  {hasExisting ? "Save Changes" : "Complete Setup"}
+                </>
               )}
+            </button>
+          </div>
+        </form>
+      </div>
 
-              <button
-                type="button"
-                onClick={addWeakSubject}
-                className="flex items-center gap-1.5 text-sm text-red-500 font-medium hover:text-red-700 transition"
-              >
-                <PlusCircle className="w-4 h-4" />
-                Add a weak subject
-              </button>
-            </div>
-
-            {/* Submit */}
-            <div className="pt-2 flex gap-3">
-              {hasExisting && (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition"
-                >
-                  <X className="w-4 h-4" />
-                  Cancel
-                </button>
-              )}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    Saving…
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    {hasExisting ? "Save Changes" : "Complete Setup"}
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {!hasExisting && (
-          <p className="text-center text-xs text-gray-400 mt-4">
-            You can update this information later from your profile settings.
-          </p>
-        )}
+      {!hasExisting && (
+        <p className="text-center text-xs text-gray-400 mt-4">
+          You can update this information later from your profile settings.
+        </p>
+      )}
     </>
   );
 }

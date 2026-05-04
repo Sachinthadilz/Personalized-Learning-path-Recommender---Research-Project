@@ -160,10 +160,11 @@ export interface QuizResult {
 }
 
 export interface QuizData {
+  quizId?: string;
   courseId: string;
   courseName: string;
   questions: { question: string; options: string[] }[];
-  _quizKey: string;
+  _quizKey?: string;
 }
 
 // Course endpoints
@@ -358,7 +359,11 @@ export const deleteLearningPath = async (
 // Enrollment & Quiz endpoints (Auth API)
 export const enrollInPath = async (
   pathId: string,
-): Promise<{ success: boolean; message: string; data: { enrollment: EnrollmentData } }> => {
+): Promise<{
+  success: boolean;
+  message: string;
+  data: { enrollment: EnrollmentData };
+}> => {
   const response = await authApi.post(`/api/learning-paths/${pathId}/enroll`);
   return response.data;
 };
@@ -366,7 +371,9 @@ export const enrollInPath = async (
 export const getEnrollmentStatus = async (
   pathId: string,
 ): Promise<{ success: boolean; data: { enrollment: EnrollmentData } }> => {
-  const response = await authApi.get(`/api/learning-paths/${pathId}/enrollment`);
+  const response = await authApi.get(
+    `/api/learning-paths/${pathId}/enrollment`,
+  );
   return response.data;
 };
 
@@ -405,6 +412,174 @@ export const unenrollFromPath = async (
   pathId: string,
 ): Promise<{ success: boolean; message: string }> => {
   const response = await authApi.post(`/api/learning-paths/${pathId}/unenroll`);
+  return response.data;
+};
+
+// ── Activity Timeline ─────────────────────────────────────────────────────────
+
+export interface TimelineDataPoint {
+  date: string; // "YYYY-MM-DD"
+  events: number;
+  total_duration: number; // seconds
+}
+
+export const fetchActivityTimeline = async (
+  studentId: string,
+  courseId?: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<TimelineDataPoint[]> => {
+  const params: Record<string, string> = {};
+  if (courseId) params.course_id = courseId;
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  const response = await authApi.get(`/logs/timeline/${studentId}`, { params });
+  return response.data;
+};
+
+// ── Video Activity Logs ───────────────────────────────────────────────────────
+
+export interface VideoActivityLog {
+  log_id: string;
+  student_id: string;
+  course_id: string;
+  event_type: string;
+  timestamp: string;
+  duration: number | null;
+}
+
+export const fetchVideoActivityLogs = async (
+  studentId: string,
+  courseId?: string,
+): Promise<VideoActivityLog[]> => {
+  const baseParams: Record<string, string> = { limit: "500" };
+  if (courseId) baseParams.course_id = courseId;
+
+  // Fetch play events (for session counts) + pause/complete events (for watch durations)
+  // in parallel, then combine.
+  const [playRes, pauseRes, completeRes] = await Promise.all([
+    authApi.get(`/logs/${studentId}`, {
+      params: { ...baseParams, event_type: "video_play" },
+    }),
+    authApi.get(`/logs/${studentId}`, {
+      params: { ...baseParams, event_type: "video_pause" },
+    }),
+    authApi.get(`/logs/${studentId}`, {
+      params: { ...baseParams, event_type: "video_complete" },
+    }),
+  ]);
+
+  return [...playRes.data, ...pauseRes.data, ...completeRes.data];
+};
+
+// ── Quiz Marks ────────────────────────────────────────────────────────────────
+
+export interface CourseQuizMark {
+  pathId: string;
+  pathName: string;
+  courseId: string;
+  courseName: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  completedAt: string;
+}
+
+export interface ProgressQuizMark {
+  subjectId: string;
+  subjectName: string;
+  score: number;
+  total: number;
+  percentage: number;
+  band: string;
+  takenAt: string;
+}
+
+export interface SubjectMark {
+  subjectName: string;
+  marks: number; // 0–100
+  grade: string | null;
+  isWeak: boolean;
+  difficulty: number | null;
+  confidence: number | null;
+  source: "study_material" | "profile" | "adaptive";
+}
+
+export interface QuizMarksResponse {
+  courseQuizMarks: CourseQuizMark[];
+  progressQuizMarks: ProgressQuizMark[];
+  subjectMarks: SubjectMark[];
+  summary: {
+    totalCourseQuizzes: number;
+    totalProgressQuizzes: number;
+    totalSubjectMarks: number;
+    overallAverage: number | null;
+  };
+}
+
+export const fetchQuizMarks = async (): Promise<QuizMarksResponse> => {
+  const response = await authApi.get("/api/quiz-marks");
+  // Controller wraps in { success, data: { ... } }
+  return response.data.data ?? response.data;
+};
+
+// ── Learner Profile Prediction ────────────────────────────────────────────────
+
+export interface LearnerProfileInput {
+  gender: string;
+  region: string;
+  highest_education: string;
+  imd_band: string;
+  age_band: string;
+  disability: string;
+  code_module: string;
+  code_presentation: string;
+  total_clicks: number;
+  days_active: number;
+  max_daily_clicks: number;
+  mean_daily_clicks: number;
+  early_clicks: number;
+  mean_score: number;
+  num_assessments: number;
+  first_reg_before_start: number;
+  ever_unregistered: number;
+  num_of_prev_attempts: number;
+  studied_credits: number;
+}
+
+export interface AutoLearnerProfileInput {
+  student_id: string;
+  course_id?: string;
+  code_module?: string;
+  code_presentation?: string;
+}
+
+export interface LearnerProfileResult {
+  learner_profile: string;
+  profile_confidence: number;
+  predicted_outcome: string;
+  outcome_confidence: number;
+  risk_prediction: string;
+  risk_score: number;
+  learning_path_recommendation: Record<string, any>;
+}
+
+export const predictLearnerProfile = async (
+  input: LearnerProfileInput,
+): Promise<LearnerProfileResult> => {
+  const response = await api.post("/predict-learner-profile", input);
+  return response.data;
+};
+
+export const predictLearnerProfileAuto = async (
+  input: AutoLearnerProfileInput,
+): Promise<LearnerProfileResult> => {
+  const response = await authApi.post("/predict/auto", input, {
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+  });
   return response.data;
 };
 
