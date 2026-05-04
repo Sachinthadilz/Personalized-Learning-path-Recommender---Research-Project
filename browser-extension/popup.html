@@ -3,91 +3,228 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Learning Activity Tracker</title>
+  <title>LearnPath AI — Activity Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * {
+    /* ── Reset & Base ── */
+    *, *::before, *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
     body {
-      width: 350px;
-      min-height: 400px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      padding: 16px;
-      background: #f5f5f5;
+      width: 360px;
+      min-height: 480px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      -webkit-font-smoothing: antialiased;
     }
 
+    /* ── Header ── */
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 16px;
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 60%, #1d4ed8 100%);
+      padding: 18px 16px 16px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .header h1 {
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -20px;
+      width: 120px;
+      height: 120px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 50%;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      left: 30%;
+      width: 70px;
+      height: 70px;
+      background: rgba(245,158,11,0.15);
+      border-radius: 50%;
+    }
+
+    .header-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-logo {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 18px;
-      margin-bottom: 4px;
+      flex-shrink: 0;
     }
 
-    .header p {
+    .header-text .title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.2;
+      letter-spacing: -0.2px;
+    }
+
+    .header-text .title span {
+      color: #fbbf24;
+    }
+
+    .header-text .subtitle {
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.65);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 1px;
+    }
+
+    /* ── Content Area ── */
+    .content {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── Card / Section ── */
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 11px 14px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .card-header-icon {
+      width: 26px;
+      height: 26px;
+      background: #eff6ff;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .card-header-title {
       font-size: 12px;
-      opacity: 0.9;
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    .section {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    .card-body {
+      padding: 12px 14px;
     }
 
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      color: #333;
-    }
-
+    /* ── Form Elements ── */
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
     }
 
     label {
       display: block;
-      font-size: 12px;
-      font-weight: 500;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
       margin-bottom: 4px;
-      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
     }
 
     input[type="text"] {
       width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 13px;
+      padding: 8px 10px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+      background: #f8fafc;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]::placeholder {
+      color: #94a3b8;
+    }
+
+    input[type="text"]:hover {
+      border-color: #cbd5e1;
+      background: #fff;
     }
 
     input[type="text"]:focus {
-      outline: none;
-      border-color: #667eea;
+      border-color: #1d4ed8;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(29,78,216,0.08);
     }
 
-    .toggle-container {
+    .input-hint {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 3px;
+      display: block;
+      line-height: 1.4;
+    }
+
+    /* ── Toggle ── */
+    .toggle-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 2px 0;
+    }
+
+    .toggle-label-text {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .toggle-label-sub {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 1px;
     }
 
     .toggle {
       position: relative;
       display: inline-block;
-      width: 48px;
-      height: 24px;
+      width: 42px;
+      height: 22px;
+      flex-shrink: 0;
     }
 
     .toggle input {
@@ -99,220 +236,332 @@
     .slider {
       position: absolute;
       cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: 0.3s;
-      border-radius: 24px;
+      inset: 0;
+      background: #cbd5e1;
+      transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 22px;
     }
 
-    .slider:before {
+    .slider::before {
       position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
+      content: '';
+      height: 16px;
+      width: 16px;
       left: 3px;
       bottom: 3px;
-      background-color: white;
-      transition: 0.3s;
+      background: #fff;
+      transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
 
     input:checked + .slider {
-      background-color: #667eea;
+      background: #1d4ed8;
     }
 
-    input:checked + .slider:before {
-      transform: translateX(24px);
+    input:checked + .slider::before {
+      transform: translateX(20px);
     }
 
+    /* ── Buttons ── */
     .btn {
       width: 100%;
-      padding: 10px;
-      background: #667eea;
-      color: white;
+      padding: 9px 14px;
       border: none;
-      border-radius: 4px;
-      font-size: 13px;
-      font-weight: 500;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
-    .btn:hover {
-      background: #5568d3;
+    .btn-primary {
+      background: linear-gradient(135deg, #1d4ed8, #1e40af);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(29,78,216,0.25);
     }
 
-    .btn:active {
-      transform: translateY(1px);
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      box-shadow: 0 4px 14px rgba(29,78,216,0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 4px rgba(29,78,216,0.2);
     }
 
     .btn-secondary {
-      background: #6c757d;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1.5px solid #e2e8f0;
       margin-top: 8px;
     }
 
     .btn-secondary:hover {
-      background: #5a6268;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
     }
 
-    .stats {
+    .btn-secondary:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ── Stats Grid ── */
+    .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 8px;
     }
 
     .stat-card {
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 4px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 12px;
       text-align: center;
+      transition: background 0.2s;
+    }
+
+    .stat-card:hover {
+      background: #eff6ff;
+      border-color: #bfdbfe;
     }
 
     .stat-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: #667eea;
-      margin-bottom: 4px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #1d4ed8;
+      line-height: 1.1;
+      margin-bottom: 3px;
+      font-variant-numeric: tabular-nums;
     }
 
     .stat-label {
-      font-size: 11px;
-      color: #666;
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #94a3b8;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
     }
 
+    /* ── Status Badge ── */
     .status {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px;
-      background: #d4edda;
-      border: 1px solid #c3e6cb;
-      border-radius: 4px;
-      font-size: 12px;
-      color: #155724;
-      margin-top: 12px;
+      padding: 9px 12px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 9px;
+      margin-top: 10px;
     }
 
     .status.inactive {
-      background: #f8d7da;
-      border-color: #f5c6cb;
-      color: #721c24;
+      background: #fef2f2;
+      border-color: #fecaca;
     }
 
     .status-indicator {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #28a745;
-      animation: pulse 2s infinite;
+      background: #22c55e;
+      flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
     }
 
     .status.inactive .status-indicator {
-      background: #dc3545;
+      background: #ef4444;
       animation: none;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+      50%       { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
     }
 
+    .status-text {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #166534;
+    }
+
+    .status.inactive .status-text {
+      color: #991b1b;
+    }
+
+    /* ── Message Toast ── */
     .message {
-      padding: 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 500;
       margin-top: 8px;
       display: none;
+      align-items: center;
+      gap: 6px;
+      animation: slide-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .message.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
     }
 
     .message.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, #1d4ed8 0%, #f59e0b 100%);
+      margin: 0 14px;
+      opacity: 0.25;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 8px 14px 12px;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 10px;
+      color: #cbd5e1;
+      font-weight: 500;
+      letter-spacing: 0.3px;
     }
   </style>
 </head>
 <body>
+
+  <!-- ── Header ── -->
   <div class="header">
-    <h1>🎓 Activity Tracker</h1>
-    <p>Monitor your learning progress</p>
+    <div class="header-inner">
+      <div class="header-logo">🎓</div>
+      <div class="header-text">
+        <div class="title">LearnPath <span>AI</span></div>
+        <div class="subtitle">Activity Tracker</div>
+      </div>
+    </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Configuration</div>
-    
-    <div class="form-group">
-      <label for="studentId">Student ID</label>
-      <input type="text" id="studentId" placeholder="Enter your student ID">
-    </div>
+  <!-- ── Content ── -->
+  <div class="content">
 
-    <div class="form-group">
-      <label for="courseId">Course ID</label>
-      <input type="text" id="courseId" placeholder="Auto-detected or enter manually">
-      <small style="font-size: 11px; color: #666; margin-top: 4px; display: block;">
-        ℹ️ Auto-detected on Coursera, Udemy, edX. Set manually for other sites.
-      </small>
-    </div>
+    <!-- Configuration Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon">⚙️</div>
+        <span class="card-header-title">Configuration</span>
+      </div>
+      <div class="card-body">
 
-    <div class="form-group">
-      <label for="apiBaseURL">API URL</label>
-      <input type="text" id="apiBaseURL" placeholder="http://localhost:5001">
-    </div>
+        <div class="form-group">
+          <label for="studentId">Student ID</label>
+          <input type="text" id="studentId" placeholder="Enter your student ID">
+        </div>
 
-    <div class="form-group">
-      <label for="frontendBaseURL">Frontend URL</label>
-      <input type="text" id="frontendBaseURL" placeholder="http://localhost:3000">
-      <small style="font-size: 11px; color: #666; margin-top: 4px; display: block;">
-        ℹ️ Used to sync the logged-in student ID from your learning platform frontend.
-      </small>
-    </div>
+        <div class="form-group">
+          <label for="courseId">Course ID</label>
+          <input type="text" id="courseId" placeholder="Auto-detected or enter manually">
+          <span class="input-hint">ℹ️ Auto-detected on Coursera, Udemy, edX. Set manually for other sites.</span>
+        </div>
 
-    <div class="form-group">
-      <div class="toggle-container">
-        <label>Enable Tracking</label>
-        <label class="toggle">
-          <input type="checkbox" id="trackingEnabled">
-          <span class="slider"></span>
-        </label>
+        <div class="form-group">
+          <label for="apiBaseURL">API Base URL</label>
+          <input type="text" id="apiBaseURL" placeholder="http://localhost:5001">
+        </div>
+
+        <div class="form-group">
+          <label for="frontendBaseURL">Frontend URL</label>
+          <input type="text" id="frontendBaseURL" placeholder="http://localhost:3000">
+          <span class="input-hint">ℹ️ Used to sync the logged-in student ID from your learning platform.</span>
+        </div>
+
+        <div class="divider" style="margin: 12px -14px 12px;"></div>
+
+        <div class="form-group">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label-text">Enable Tracking</div>
+              <div class="toggle-label-sub">Track learning activity events</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="trackingEnabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="saveConfig">
+          💾 Save Configuration
+        </button>
+
+        <div class="message" id="message"></div>
       </div>
     </div>
 
-    <button class="btn" id="saveConfig">Save Configuration</button>
-    
-    <div class="message" id="message"></div>
+    <!-- Statistics Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon">📊</div>
+        <span class="card-header-title">Session Statistics</span>
+      </div>
+      <div class="card-body">
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="totalEvents">0</div>
+            <div class="stat-label">Events Logged</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="failedEvents" style="color: #f59e0b;">0</div>
+            <div class="stat-label">Failed Events</div>
+          </div>
+        </div>
+
+        <div class="status" id="status">
+          <span class="status-indicator"></span>
+          <span class="status-text">Tracking Active</span>
+        </div>
+
+        <button class="btn btn-secondary" id="retryFailed">
+          🔄 Retry Failed Events
+        </button>
+
+      </div>
+    </div>
+
   </div>
 
-  <div class="section">
-    <div class="section-title">Statistics</div>
-    
-    <div class="stats">
-      <div class="stat-card">
-        <div class="stat-value" id="totalEvents">0</div>
-        <div class="stat-label">Events Logged</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="failedEvents">0</div>
-        <div class="stat-label">Failed Events</div>
-      </div>
-    </div>
-
-    <div class="status" id="status">
-      <span class="status-indicator"></span>
-      <span>Tracking Active</span>
-    </div>
-
-    <button class="btn btn-secondary" id="retryFailed">Retry Failed Events</button>
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <span class="footer-text">LearnPath AI · Personalized Learning</span>
   </div>
 
   <script src="popup.js"></script>
