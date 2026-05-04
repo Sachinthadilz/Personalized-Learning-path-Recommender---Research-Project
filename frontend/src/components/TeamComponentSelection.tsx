@@ -5,6 +5,7 @@ import Header from "./Header";
 import UserProfile from "./UserProfile";
 import OnboardingForm from "./OnboardingForm";
 import { Network, Code2, Layers, PenTool, X, ArrowRight } from "lucide-react";
+import ProgressTrackerBanner from "./ProgressTrackerBanner";
 
 interface TeamComponentSelectionProps {
   onSelectComponent: () => void;
@@ -49,7 +50,7 @@ const TeamComponentSelection = ({
     {
       id: 1,
       name: "Explore Courses",
-      desc: "Browse 10K+ courses from top universities worldwide",
+      desc: "Browse 3K+ courses from top universities worldwide",
       color: "border-blue-500",
       iconBg: "bg-blue-700",
       Icon: Network,
@@ -133,11 +134,11 @@ const TeamComponentSelection = ({
               </button>
             </div>
             <div className="p-6">
-              <OnboardingForm 
+              <OnboardingForm
                 onComplete={() => {
                   setHasAcademicProfile(true);
                   setIsAcademicProfileOpen(false);
-                }} 
+                }}
               />
             </div>
           </div>
@@ -160,11 +161,10 @@ const TeamComponentSelection = ({
           {components.map((component) => (
             <div
               key={component.id}
-              className={`group relative bg-white rounded-2xl border-2 border-gray-100 overflow-hidden transition-all duration-300 ${
-                component.available
-                  ? "hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-blue-200"
-                  : "opacity-60 cursor-not-allowed"
-              }`}
+              className={`group relative bg-white rounded-2xl border-2 border-gray-100 overflow-hidden transition-all duration-300 ${component.available
+                ? "hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-blue-200"
+                : "opacity-60 cursor-not-allowed"
+                }`}
               onClick={component.available ? component.onClick : undefined}
             >
               <div className="p-6">
@@ -193,6 +193,11 @@ const TeamComponentSelection = ({
               <div className={`h-1 w-0 group-hover:w-full transition-all duration-500 ${component.iconBg}`} />
             </div>
           ))}
+        </div>
+
+        {/* ── Browser Extension: Progress Tracker ── */}
+        <div className="mt-8 mb-6">
+          <ProgressTrackerBanner />
         </div>
       </main>
     </div>

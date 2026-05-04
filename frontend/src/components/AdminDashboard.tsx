@@ -710,6 +710,7 @@ export default function AdminDashboard({ onBack }: { onBack?: () => void }) {
                     <th className="px-5 py-3 text-left font-medium">User</th>
                     <th className="px-5 py-3 text-left font-medium">Role</th>
                     <th className="px-5 py-3 text-left font-medium">Status</th>
+                    <th className="px-5 py-3 text-left font-medium">Verified</th>
                     <th className="px-5 py-3 text-left font-medium hidden md:table-cell">
                       Last Login
                     </th>
@@ -754,6 +755,19 @@ export default function AdminDashboard({ onBack }: { onBack?: () => void }) {
                         {/* Status */}
                         <td className="px-5 py-3">
                           <StatusDot active={u.isActive ?? true} />
+                        </td>
+                        {/* Verified */}
+                        <td className="px-5 py-3">
+                          {u.isEmailVerified ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Verified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-200">
+                              Unverified
+                            </span>
+                          )}
                         </td>
                         {/* Last login */}
                         <td className="px-5 py-3 text-xs text-gray-400 hidden md:table-cell">

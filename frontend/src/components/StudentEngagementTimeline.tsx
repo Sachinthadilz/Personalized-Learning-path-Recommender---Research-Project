@@ -9,7 +9,6 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Legend,
 } from "recharts";
 import { Activity, Calendar, TrendingUp, Loader2, Clock } from "lucide-react";
 import { fetchActivityTimeline, type TimelineDataPoint } from "../api";
@@ -49,7 +48,7 @@ function ChartTooltip({ active, payload, label }: any) {
       <p className="font-semibold text-gray-700 mb-2">{formatDate(label)}</p>
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <Activity className="w-3 h-3 text-indigo-600" />
+          <Activity className="w-3 h-3 text-blue-700" />
           <span className="text-gray-500">Events:</span>
           <span className="font-medium text-gray-800">{dataPoint.events}</span>
         </div>
@@ -102,7 +101,6 @@ export default function StudentEngagementTimeline({
 
   // Summary stats
   const totalEvents = data.reduce((sum, d) => sum + d.events, 0);
-  const totalDuration = data.reduce((sum, d) => sum + d.total_duration, 0);
   const daysActive = data.length;
   const peakDay = data.reduce<TimelineDataPoint | null>(
     (best, d) => (!best || d.events > best.events ? d : best),
@@ -166,7 +164,7 @@ export default function StudentEngagementTimeline({
             onClick={() => setMode("area")}
             className={`px-3 py-1.5 transition-colors ${
               mode === "area"
-                ? "bg-indigo-50 text-indigo-700"
+                ? "bg-blue-50 text-blue-700"
                 : "text-gray-500 hover:bg-gray-50"
             }`}
           >
@@ -176,7 +174,7 @@ export default function StudentEngagementTimeline({
             onClick={() => setMode("bar")}
             className={`px-3 py-1.5 transition-colors border-l border-gray-200 ${
               mode === "bar"
-                ? "bg-indigo-50 text-indigo-700"
+                ? "bg-blue-50 text-blue-700"
                 : "text-gray-500 hover:bg-gray-50"
             }`}
           >

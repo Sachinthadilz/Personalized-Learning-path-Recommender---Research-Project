@@ -229,11 +229,11 @@ export default function AutoLearnerProfileTab() {
   return (
     <div className="space-y-5">
       {/* ── Page header ────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <Brain className="w-6 h-6 text-indigo-600" />
+            <h2 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
+              <Brain className="w-6 h-6 text-blue-700" />
               Automatic Learner Profile Analysis
             </h2>
             <p className="text-gray-500 text-sm mt-1">
@@ -244,20 +244,17 @@ export default function AutoLearnerProfileTab() {
           </div>
 
           {user && (
-            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl">
               <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-indigo-600" />
-                <div>
-                  <p className="text-sm font-semibold text-indigo-900">
-                    {user.fullName}
-                  </p>
-                  <p className="text-xs text-indigo-500">ID: {user.id}</p>
-                </div>
+                <User className="w-5 h-5 text-blue-700" />
+                <p className="text-sm font-semibold text-gray-900">
+                  {user.fullName}
+                </p>
               </div>
               <button
                 onClick={handleReanalyze}
                 disabled={loading}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-700 text-white rounded-xl hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-semibold"
               >
                 {loading ? (
                   <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Analyzing…</>
@@ -297,25 +294,25 @@ export default function AutoLearnerProfileTab() {
             <p className="text-sm font-medium text-gray-700">Get started with these activities:</p>
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
                 <span>Browse and enroll in courses</span>
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
                 <span>Watch video lectures</span>
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
                 <span>Complete quizzes and assessments</span>
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
                 <span>Download learning resources</span>
               </li>
             </ul>
             <button
               onClick={() => window.location.href = '/'}
-              className="mt-3 w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+              className="mt-3 w-full px-4 py-2.5 bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition-colors text-sm font-semibold"
             >
               Start Learning Now
             </button>
@@ -326,7 +323,7 @@ export default function AutoLearnerProfileTab() {
       {/* ── Loading skeleton ─────────────────────────────────────────── */}
       {loading && !result && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center gap-3">
-          <RefreshCw className="w-8 h-8 text-indigo-400 animate-spin" />
+          <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
           <p className="text-sm text-gray-500">Analyzing your learner profile…</p>
         </div>
       )}
@@ -343,10 +340,10 @@ export default function AutoLearnerProfileTab() {
           {/* KPI cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Learner Profile */}
-            <div className="bg-white rounded-xl border border-indigo-100 shadow-sm p-5">
+            <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
-                  <Brain className="w-4 h-4 text-indigo-600" />
+                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Brain className="w-4 h-4 text-blue-700" />
                 </div>
                 <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Learner Profile
@@ -358,7 +355,7 @@ export default function AutoLearnerProfileTab() {
               <div className="text-xs text-gray-400 mb-1">Confidence</div>
               <ConfidenceBar
                 value={result.profile_confidence}
-                color="bg-indigo-500"
+                color="bg-blue-600"
               />
             </div>
 
@@ -453,18 +450,18 @@ export default function AutoLearnerProfileTab() {
           {/* Learning Track panel */}
           {result.learning_path_recommendation &&
             Object.keys(result.learning_path_recommendation).length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <h4 className="text-base font-semibold text-gray-800">
                       Recommended Learning Track
                     </h4>
-                    <p className="text-sm text-indigo-600 font-medium mt-0.5">
+                    <p className="text-sm text-blue-700 font-medium mt-0.5">
                       {result.learning_path_recommendation.learning_path}
                     </p>
                   </div>
                   {result.learning_path_recommendation.profile && (
-                    <span className="flex-shrink-0 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-semibold">
+                    <span className="flex-shrink-0 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
                       {result.learning_path_recommendation.profile}
                     </span>
                   )}
@@ -487,7 +484,7 @@ export default function AutoLearnerProfileTab() {
                               key={idx}
                               className="flex items-start gap-2 text-sm text-gray-700"
                             >
-                              <ChevronRight className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+                              <ChevronRight className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                               {action}
                             </li>
                           ),
@@ -502,7 +499,7 @@ export default function AutoLearnerProfileTab() {
 
       {/* ── Engagement Timeline ──────────────────────────────────────────── */}
       {user && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5 text-sky-600" />
             My Engagement Timeline
@@ -628,7 +625,7 @@ function QuizMarksChart({ quizMarks }: { quizMarks: QuizMarksResponse | null }) 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <h3 className="text-base font-semibold text-gray-800 mb-1 flex items-center gap-2">
-        <Award className="w-5 h-5 text-indigo-600" />
+        <Award className="w-5 h-5 text-blue-700" />
         Quiz Marks
       </h3>
       <p className="text-xs text-gray-400 mb-4">

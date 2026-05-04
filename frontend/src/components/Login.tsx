@@ -150,7 +150,16 @@ export default function Login({
             </button>
           </form>
 
-          <p className="mt-8 text-center text-gray-500 text-sm">
+          <div className="mt-4 text-center">
+            <a
+              href="/forgot-password"
+              className="text-sm text-gray-400 hover:text-blue-700 transition-colors font-medium"
+            >
+              Forgot your password?
+            </a>
+          </div>
+
+          <p className="mt-6 text-center text-gray-500 text-sm">
             Don't have an account?{" "}
             <button onClick={onSwitchToSignup} className="text-blue-700 hover:text-blue-800 font-semibold">
               Create account

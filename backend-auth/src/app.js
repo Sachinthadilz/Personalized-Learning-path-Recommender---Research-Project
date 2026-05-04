@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
 const authRoutes = require("./routes/authRoutes");
 const learningPathRoutes = require("./routes/learningPathRoutes");
 const enrollmentRoutes = require("./routes/enrollmentRoutes");
@@ -38,18 +37,6 @@ app.use(
     optionsSuccessStatus: 200,
   }),
 );
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Apply rate limiting to all routes
-app.use("/api/", limiter);
 
 /**
  * Body Parser Middleware

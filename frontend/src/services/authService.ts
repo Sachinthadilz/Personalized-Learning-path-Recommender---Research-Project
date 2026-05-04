@@ -506,6 +506,37 @@ export const authService = {
   },
 
   /**
+   * Request a new email verification link (for logged-in user)
+   */
+  async requestVerification(): Promise<{ success: boolean; message: string }> {
+    const response = await authApi.post("/api/auth/request-verification");
+    return response.data;
+  },
+
+  /**
+   * Request password reset email (public)
+   */
+  async forgotPassword(
+    email: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await authApi.post("/api/auth/forgot-password", { email });
+    return response.data;
+  },
+
+  /**
+   * Reset password with token (public)
+   */
+  async resetPassword(
+    token: string,
+    password: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await authApi.post(`/api/auth/reset-password/${token}`, {
+      password,
+    });
+    return response.data;
+  },
+
+  /**
    * Get academic profile for the logged-in user (null if not yet created)
    */
   async getAcademicProfile(): Promise<AcademicProfileResponse> {

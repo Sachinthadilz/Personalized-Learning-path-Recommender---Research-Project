@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 /**
  * User Schema
@@ -66,6 +67,14 @@ const userSchema = new mongoose.Schema(
     ],
     // savedLearningPaths moved to separate LearningPath model for better performance
     // Use LearningPath.findByUser(userId) to get user's learning paths
+
+    // Email verification
+    emailVerificationToken: { type: String },
+    emailVerificationExpires: { type: Date },
+
+    // Password reset
+    passwordResetToken: { type: String },
+    passwordResetExpires: { type: Date },
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt
@@ -157,6 +166,34 @@ userSchema.methods.removeRefreshToken = async function (token) {
  */
 userSchema.statics.findByEmailWithPassword = function (email) {
   return this.findOne({ email }).select("+password");
+};
+
+/**
+ * Instance method to generate email verification token
+ * @returns {String} Plain-text token (hash stored in DB)
+ */
+userSchema.methods.generateEmailVerificationToken = function () {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  this.emailVerificationToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+  this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 h
+  return rawToken;
+};
+
+/**
+ * Instance method to generate password reset token
+ * @returns {String} Plain-text token (hash stored in DB)
+ */
+userSchema.methods.generatePasswordResetToken = function () {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+  this.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 h
+  return rawToken;
 };
 
 const User = mongoose.model("User", userSchema);
