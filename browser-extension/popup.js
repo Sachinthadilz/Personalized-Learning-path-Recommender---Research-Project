@@ -200,13 +200,14 @@ async function retryFailedEvents() {
  */
 function updateStatus(isActive) {
   const statusElement = document.getElementById('status');
-  
+  const statusText = statusElement.querySelector('.status-text');
+
   if (isActive) {
     statusElement.className = 'status';
-    statusElement.querySelector('span:last-child').textContent = 'Tracking Active';
+    statusText.textContent = 'Tracking Active';
   } else {
     statusElement.className = 'status inactive';
-    statusElement.querySelector('span:last-child').textContent = 'Tracking Disabled';
+    statusText.textContent = 'Tracking Disabled';
   }
 }
 
@@ -217,7 +218,7 @@ function showMessage(text, type) {
   const messageElement = document.getElementById('message');
   messageElement.textContent = text;
   messageElement.className = `message ${type}`;
-  messageElement.style.display = 'block';
+  messageElement.style.display = 'flex';
 
   setTimeout(() => {
     messageElement.style.display = 'none';
